@@ -27,7 +27,10 @@
       body.__route = route;
       init.method = "POST";
       init.body = JSON.stringify(body);
-      init.headers = Object.assign({ "Content-Type": "application/json; charset=utf-8" }, init.headers || {});
+      var hh = Object.assign({}, init.headers || {});
+      delete hh["Content-Type"];
+      delete hh["content-type"];
+      init.headers = hh;  /* 无 Content-Type = CORS 简单请求，跳过 OPTIONS 预检（预检 404 不可用） */
       return _f(route.indexOf("/api/structure") === 0 ? SGI : GW, init);
     }
     return _f(input, init);
