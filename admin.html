@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script>
+/* 云端 API 网关适配：内网部署直连本地 server；公网(静态托管)走云函数网关 */
+(function(){
+  var h = location.hostname || "";
+  if (/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|localhost$|127\.)/.test(h)) return;
+  var GW = "https://vlabmat-d9gh3999c21421e1b.service.tcloudbase.com/apigw";
+  var SGI = "https://vlabmat-d9gh3999c21421e1b.service.tcloudbase.com/structgw";
+  var _f = window.fetch ? window.fetch.bind(window) : null;
+  if (!_f) return;
+  window.fetch = function(input, init){
+    init = init || {};
+    var url = (typeof input === "string") ? input : (input && input.url) || "";
+    if (url.indexOf("/api/") === 0) {
+      var route = url.split("?")[0];
+      var qi = url.indexOf("?");
+      var body = {};
+      if (init.body) { try { body = JSON.parse(init.body); } catch (e) { body = { _raw: String(init.body) }; } }
+      if (qi >= 0) {
+        url.slice(qi + 1).split("&").forEach(function(kv){
+          if (kv) { var t = kv.split("=");
+            body[decodeURIComponent(t[0])] = decodeURIComponent((t[1] || "").replace(/\+/g, " ")); }
+        });
+      }
+      body.__route = route;
+      init.method = "POST";
+      init.body = JSON.stringify(body);
+      init.headers = Object.assign({ "Content-Type": "application/json; charset=utf-8" }, init.headers || {});
+      return _f(route.indexOf("/api/structure") === 0 ? SGI : GW, init);
+    }
+    return _f(input, init);
+  };
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>教师管理后台 · AI赋能光催化分解水制氢材料设计虚拟仿真实验</title>
+<style>
+  :root{--ink:#1a2332;--sub:#5a6b80;--line:#dfe6ee;--bg:#f3f6fa;--blue:#1a5dab;--blue-d:#12447e;
+        --gold:#c9a227;--green:#2e8b57;--red:#c0392b;--card:#fff}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+  .topbar{background:linear-gradient(135deg,#0e3a6d,#1a5dab);color:#fff;padding:10px 20px;
+          display:flex;justify-content:space-between;align-items:center}
+  .topbar .t{font-size:16px;font-weight:700}
+  .topbar .meta{font-size:13.5px;display:flex;gap:16px;align-items:center}
+  .topbar a{color:#ffd97a;text-decoration:none;cursor:pointer}
+  /* login */
+  .loginwrap{display:flex;justify-content:center;align-items:center;min-height:calc(100vh - 56px)}
+  .loginbox{background:#fff;border:1px solid var(--line);border-radius:12px;padding:34px 38px;width:360px;
+            box-shadow:0 6px 24px rgba(18,68,126,.10)}
+  .loginbox h2{font-size:19px;color:var(--blue-d);margin-bottom:4px}
+  .loginbox .sub{font-size:12.5px;color:var(--sub);margin-bottom:18px}
+  .loginbox label{display:block;font-size:13px;color:#33404f;margin:10px 0 4px}
+  .loginbox input{width:100%;padding:10px 12px;border:1.5px solid #ccd6e2;border-radius:8px;font-size:14px;
+                  font-family:inherit;outline:none}
+  .loginbox input:focus{border-color:var(--blue)}
+  .loginbox button{width:100%;margin-top:16px;background:var(--blue-d);color:#fff;border:none;padding:11px 0;
+                   border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+  .loginbox button:hover{filter:brightness(1.08)}
+  .lmsg{font-size:13px;color:var(--red);margin-top:10px;min-height:18px}
+  /* main */
+  .wrap{max-width:1180px;margin:18px auto 40px;padding:0 18px}
+  .tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .tab{padding:9px 18px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;
+       font-size:14px;color:#33404f;font-family:inherit}
+  .tab.on{background:var(--blue-d);color:#fff;border-color:var(--blue-d);font-weight:700}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:14px}
+  .card h3{font-size:15px;color:var(--blue-d);margin-bottom:10px}
+  .toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+  .toolbar input,.toolbar select{padding:8px 10px;border:1.5px solid #ccd6e2;border-radius:7px;font-size:13.5px;
+        font-family:inherit;outline:none}
+  .btn{background:var(--blue);color:#fff;border:none;border-radius:7px;padding:8px 16px;cursor:pointer;
+       font-size:13.5px;font-family:inherit}
+  .btn.gold{background:var(--gold);color:#3a2c00;font-weight:700}
+  .btn.gray{background:#8a97a8}
+  .btn.red{background:var(--red)}
+  .btn.mini{padding:4px 10px;font-size:12.5px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{background:#eef4fb;color:var(--blue-d);text-align:left;padding:8px 10px;border:1px solid var(--line);
+     white-space:nowrap;font-size:13px}
+  td{padding:8px 10px;border:1px solid var(--line);vertical-align:top}
+  tr:nth-child(even) td{background:#fafcfe}
+  .num{text-align:center;font-weight:700;color:var(--blue-d)}
+  .tag{display:inline-block;border-radius:10px;padding:2px 10px;font-size:12px}
+  .tag.pend{background:#fdf3d7;color:#8a6d00}
+  .tag.done{background:#e2f3e8;color:var(--green)}
+  details summary{cursor:pointer;color:var(--blue);font-size:13px;user-select:none}
+  details pre{white-space:pre-wrap;word-break:break-word;background:#f7fafd;border:1px solid var(--line);
+              border-radius:8px;padding:10px;font-size:13px;margin-top:6px;max-height:300px;overflow:auto}
+  .scorein{width:70px;padding:5px 8px;border:1.5px solid #ccd6e2;border-radius:6px;font-size:13px;font-family:inherit}
+  .fbin{width:150px;padding:5px 8px;border:1.5px solid #ccd6e2;border-radius:6px;font-size:13px;font-family:inherit}
+  .hint{font-size:12.5px;color:#9aa7b6;margin-top:8px}
+  .okmsg{color:var(--green);font-weight:700;font-size:13px}
+  .errmsg{color:var(--red);font-weight:700;font-size:13px}
+  .empty{color:#9aa7b6;font-size:13.5px;padding:14px 0;text-align:center}
+  .passform{max-width:420px}
+  .passform label{display:block;font-size:13px;color:#33404f;margin:10px 0 4px}
+  .passform input{width:100%;padding:9px 12px;border:1.5px solid #ccd6e2;border-radius:7px;font-size:14px;
+                  font-family:inherit;outline:none}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="t">🛠 教师管理后台 · AI赋能光催化分解水制氢材料设计虚拟仿真实验</div>
+  <div class="meta"><span id="who"></span><a onclick="logout()">退出登录</a></div>
+</div>
+
+<div class="loginwrap" id="loginWrap">
+  <div class="loginbox">
+    <h2>教师登录</h2>
+    <div class="sub">管理员账号 · 数据存储于本机服务器（10.31.22.8）</div>
+    <form onsubmit="return doLogin(event)">
+      <label>用户名</label>
+      <input id="lgUser" autocomplete="username" placeholder="用户名" required>
+      <label>密码</label>
+      <input id="lgPass" type="password" autocomplete="current-password" placeholder="密码" required>
+      <button type="submit">登 录</button>
+      <div class="lmsg" id="lgMsg"></div>
+    </form>
+  </div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+  <div class="tabs">
+    <button class="tab on" id="tb-students" onclick="show('students')">👥 学生管理</button>
+    <button class="tab" id="tb-searches" onclick="show('searches')">🔍 检索记录</button>
+    <button class="tab" id="tb-subs" onclick="show('subs')">📄 提交与打分</button>
+    <button class="tab" id="tb-grades" onclick="show('grades')">📊 成绩总览</button>
+    <button class="tab" id="tb-pass" onclick="show('pass')">🔑 修改密码</button>
+  </div>
+  <div id="view"></div>
+</div>
+
+<script>
+var TOKEN = sessionStorage.getItem('admin_token') || '';
+function dlSub(id, name){
+  fetch('/api/download?id=' + id + '&t=' + encodeURIComponent(TOKEN))
+    .then(function(r){ return r.blob(); })
+    .then(function(b){
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(b);
+      a.download = name || ('attachment_' + id);
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 3000);
+    })
+    .catch(function(e){ alert('下载失败：' + e); });
+}
+function api(path, data, cb){
+  fetch(path, {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(data || {})})
+    .then(function(r){ return r.json(); }).then(cb)
+    .catch(function(){ cb({ok:false, msg:'服务器连接失败'}); });
+}
+function esc(s){
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtScore(s){ return (s === null || s === undefined || s === '') ? '—' : s; }
+
+/* ---------- login ---------- */
+function doLogin(ev){
+  ev.preventDefault();
+  var u = document.getElementById('lgUser').value.trim();
+  var p = document.getElementById('lgPass').value;
+  api('/api/admin/login', {username:u, pass:p}, function(res){
+    if(res.ok){
+      TOKEN = res.token;
+      sessionStorage.setItem('admin_token', TOKEN);
+      enter();
+    }else{
+      document.getElementById('lgMsg').textContent = res.msg || '登录失败';
+    }
+  });
+  return false;
+}
+function logout(){
+  TOKEN = ''; sessionStorage.removeItem('admin_token');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginWrap').style.display = '';
+  document.getElementById('who').textContent = '';
+}
+function enter(){
+  document.getElementById('loginWrap').style.display = 'none';
+  document.getElementById('app').style.display = '';
+  document.getElementById('who').textContent = '👤 admin';
+  show('students');
+}
+
+/* ---------- view switch ---------- */
+var RENDER = {
+  students: renderStudents,
+  searches: renderSearches,
+  subs: renderSubs,
+  grades: renderGrades,
+  pass: renderPass
+};
+function show(name){
+  ['students','searches','subs','grades','pass'].forEach(function(k){
+    var tb = document.getElementById('tb-' + k);
+    if(tb) tb.className = (k === name) ? 'tab on' : 'tab';
+  });
+  RENDER[name]();
+}
+
+/* ---------- 学生管理 ---------- */
+function renderStudents(){
+  var v = document.getElementById('view');
+  v.innerHTML = '<div class="card"><h3>注册学生</h3>' +
+    '<div class="toolbar"><button class="btn" onclick="loadStudents()">↻ 刷新</button>' +
+    '<span class="hint">可重置学生密码、删除违规账号（删除将同时清除其检索与提交记录）</span></div>' +
+    '<div id="stuBox"><div class="empty">加载中…</div></div></div>';
+  loadStudents();
+}
+function loadStudents(){
+  api('/api/admin/students', {token: TOKEN}, function(res){
+    var box = document.getElementById('stuBox');
+    if(!box) return;
+    if(!res.ok){ box.innerHTML = '<div class="errmsg">' + esc(res.msg) + '</div>'; return; }
+    if(!res.students.length){ box.innerHTML = '<div class="empty">暂无注册学生</div>'; return; }
+    var rows = res.students.map(function(s){
+      return '<tr><td><b>' + esc(s.sid) + '</b></td><td>' + esc(s.name) + '</td>' +
+        '<td>' + esc(s.created_at || '—') + '</td><td>' + esc(s.last_login || '—') + '</td>' +
+        '<td class="num">' + s.subs + '</td><td class="num">' + s.searches + '</td>' +
+        '<td><button class="btn mini gold" onclick="resetPass(\'' + esc(s.sid) + '\')">重置密码</button> ' +
+        '<button class="btn mini red" onclick="delStudent(\'' + esc(s.sid) + '\',\'' + esc(s.name) + '\')">删除</button></td></tr>';
+    }).join('');
+    box.innerHTML = '<table><tr><th>学号/工号</th><th>姓名</th><th>注册时间</th><th>最近登录</th>' +
+      '<th>提交数</th><th>检索数</th><th>操作</th></tr>' + rows + '</table>';
+  });
+}
+function resetPass(sid){
+  var np = prompt('为 [' + sid + '] 设置新密码（至少 4 位）：');
+  if(!np) return;
+  api('/api/admin/reset_pass', {token: TOKEN, sid: sid, newpass: np}, function(res){
+    alert(res.ok ? '✓ 密码已重置' : (res.msg || '操作失败'));
+  });
+}
+function delStudent(sid, name){
+  if(!confirm('确认删除学生 [' + name + ' ' + sid + '] ？其全部检索与提交记录将一并删除，且不可恢复。')) return;
+  if(!confirm('再次确认：删除操作不可恢复！')) return;
+  api('/api/admin/delete_student', {token: TOKEN, sid: sid}, function(res){
+    if(res.ok){ loadStudents(); } else { alert(res.msg || '操作失败'); }
+  });
+}
+
+/* ---------- 检索记录 ---------- */
+var searchFilter = '';
+function renderSearches(){
+  var v = document.getElementById('view');
+  v.innerHTML = '<div class="card"><h3>学生检索记录（深度模式使用 + 关键词记录）</h3>' +
+    '<div class="toolbar"><input id="fSid" placeholder="按学号筛选（留空=全部）" value="' + esc(searchFilter) + '">' +
+    '<button class="btn" onclick="loadSearches()">查询</button>' +
+    '<button class="btn gray" onclick="document.getElementById(\'fSid\').value=\'\';searchFilter=\'\';loadSearches()">重置</button></div>' +
+    '<div id="seaBox"><div class="empty">加载中…</div></div></div>';
+  loadSearches();
+}
+function loadSearches(){
+  searchFilter = (document.getElementById('fSid').value || '').trim();
+  api('/api/admin/searches', {token: TOKEN, sid: searchFilter}, function(res){
+    var box = document.getElementById('seaBox');
+    if(!box) return;
+    if(!res.ok){ box.innerHTML = '<div class="errmsg">' + esc(res.msg) + '</div>'; return; }
+    if(!res.searches.length){ box.innerHTML = '<div class="empty">暂无检索记录</div>'; return; }
+    var modeName = {deep:'深度模式', deep_open:'打开深度模式', keyword:'关键词记录'};
+    var rows = res.searches.map(function(s){
+      return '<tr><td style="white-space:nowrap">' + esc(s.created_at) + '</td>' +
+        '<td><b>' + esc(s.sid) + '</b></td><td>' + esc(s.name || '—') + '</td>' +
+        '<td>' + esc(s.keywords) + '</td><td>' + (modeName[s.mode] || esc(s.mode)) + '</td></tr>';
+    }).join('');
+    box.innerHTML = '<table><tr><th>时间</th><th>学号/工号</th><th>姓名</th><th>关键词 / 事件</th><th>来源</th></tr>' +
+      rows + '</table><div class="hint">最多显示最近 500 条。</div>';
+  });
+}
+
+/* ---------- 提交与打分 ---------- */
+function renderSubs(){
+  var v = document.getElementById('view');
+  v.innerHTML = '<div class="card"><h3>学生提交结果 · 打分</h3>' +
+    '<div class="toolbar"><button class="btn" onclick="loadSubs()">↻ 刷新</button>' +
+    '<span class="hint">未批阅的排在最前；填写得分与评语后点"保存"即可发布成绩（学生端立即可见）</span></div>' +
+    '<div id="subBox"><div class="empty">加载中…</div></div></div>';
+  loadSubs();
+}
+function loadSubs(){
+  api('/api/admin/submissions', {token: TOKEN}, function(res){
+    var box = document.getElementById('subBox');
+    if(!box) return;
+    if(!res.ok){ box.innerHTML = '<div class="errmsg">' + esc(res.msg) + '</div>'; return; }
+    if(!res.submissions.length){ box.innerHTML = '<div class="empty">暂无学生提交</div>'; return; }
+    var rows = res.submissions.map(function(s){
+      var scored = (s.score !== null && s.score !== undefined && s.score !== '');
+      var tag = scored ? '<span class="tag done">已批阅</span>' : '<span class="tag pend">待批阅</span>';
+      var att = s.file_name
+        ? '<a href="javascript:void(0)" onclick="dlSub(' + s.id + ',\'' + esc(s.file_name).replace(/'/g,"\\'") + '\')" style="color:var(--blue)">📎 下载</a><br><span class="hint">' + esc(s.file_name) +
+          (s.file_size ? ' · ' + (s.file_size >= 1048576
+            ? (s.file_size/1048576).toFixed(1) + ' MB'
+            : Math.round(s.file_size/1024) + ' KB') : '') + '</span>'
+        : '—';
+      return '<tr>' +
+        '<td style="white-space:nowrap">' + esc(s.created_at) + '</td>' +
+        '<td><b>' + esc(s.sid) + '</b><br>' + esc(s.name || '—') + '</td>' +
+        '<td>' + esc(s.kind) + '<br><span class="hint">' + esc(s.step || '') + '</span></td>' +
+        '<td><b>' + esc(s.title) + '</b><br><details><summary>查看内容</summary>' +
+        '<pre>' + esc(s.content || '（无正文，见附件）') + '</pre></details></td>' +
+        '<td>' + att + '</td>' +
+        '<td>' + tag + '<br><span style="font-weight:700;color:' + (scored ? '#c9a227' : '#9aa7b6') + '">' +
+        fmtScore(s.score) + '</span></td>' +
+        '<td><input class="scorein" id="sc-' + s.id + '" type="number" step="0.5" min="0" value="' +
+        (scored ? esc(s.score) : '') + '" placeholder="得分">' +
+        '<input class="fbin" id="fb-' + s.id + '" value="' + esc(s.feedback || '') + '" placeholder="评语（可空）"><br>' +
+        '<button class="btn mini" style="margin-top:6px" onclick="saveScore(' + s.id + ')">保存</button>' +
+        (scored ? '<div class="hint">' + esc(s.scored_at || '') + '</div>' : '') + '</td></tr>';
+    }).join('');
+    box.innerHTML = '<table><tr><th>提交时间</th><th>学生</th><th>类型/步骤</th><th>标题与内容</th>' +
+      '<th>附件</th><th>状态</th><th>打分</th></tr>' + rows + '</table>';
+  });
+}
+function saveScore(id){
+  var sc = document.getElementById('sc-' + id).value;
+  var fb = document.getElementById('fb-' + id).value;
+  api('/api/admin/score', {token: TOKEN, id: id, score: sc, feedback: fb}, function(res){
+    if(res.ok){ loadSubs(); } else { alert(res.msg || '保存失败'); }
+  });
+}
+
+/* ---------- 成绩总览（100 分制） ---------- */
+/*
+  预习模块 30 分 = 预习测验 10 分（10 题正确率，自动）+ 过程调研 20 分（AI 按提交报告打分）
+  实验模块 40 分 = 实验过程数据（3D 仿真提交，AI 打分）
+  报告模块 30 分 = 实验报告（教师手动批改）
+*/
+var GRADE_ROWS = [];
+function renderGrades(){
+  var v = document.getElementById('view');
+  v.innerHTML = '<div class="card"><h3>成绩总览 · 总分 100 分</h3>' +
+    '<div class="toolbar"><button class="btn" onclick="show(\'grades\')">↻ 刷新</button>' +
+    '<button class="btn" onclick="toggleLlmCfg()">⚙ AI 打分设置</button>' +
+    '<span class="hint">预习测验 10 分（10 题正确率·自动）＋ 过程调研 20 分（AI）＋ 实验数据 40 分（AI）＋ 实验报告 30 分（手动批改）</span></div>' +
+    '<div id="llmBox" style="display:none;margin:8px 0;padding:10px;border:1.5px solid #d9e4ef;border-radius:8px;background:#f7fafd">' +
+    '<b style="font-size:13px">AI 打分设置（DeepSeek，OpenAI 兼容接口）</b>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;align-items:center">' +
+    '<input id="llmBase" class="scorein" style="width:230px" placeholder="接口地址，如 https://api.deepseek.com">' +
+    '<input id="llmKey" class="scorein" style="width:250px" placeholder="API Key（sk-...）">' +
+    '<input id="llmModel" class="scorein" style="width:150px" placeholder="模型，默认 deepseek-chat">' +
+    '<button class="btn" onclick="saveLlmCfg()">保存配置</button><span id="llmMsg" class="hint"></span></div></div>' +
+    '<div id="gradeBox"><div class="empty">加载中…</div></div></div>';
+  loadLlmCfg();
+  loadGrades();
+}
+function toggleLlmCfg(){
+  var b = document.getElementById('llmBox');
+  b.style.display = (b.style.display === 'none') ? '' : 'none';
+}
+function loadLlmCfg(){
+  api('/api/admin/llm', {token: TOKEN}, function(res){
+    if(!res.ok) return;
+    document.getElementById('llmBase').value = res.base_url || '';
+    document.getElementById('llmModel').value = res.model || 'deepseek-chat';
+    document.getElementById('llmKey').placeholder = res.has_key ?
+      ('已配置（' + res.key_mask + '），留空则不修改') : 'API Key（sk-...）';
+  });
+}
+function saveLlmCfg(){
+  var base = document.getElementById('llmBase').value.trim();
+  var key = document.getElementById('llmKey').value.trim();
+  var model = document.getElementById('llmModel').value.trim();
+  api('/api/admin/llm', {token: TOKEN, op: 'save', base_url: base, api_key: key, model: model},
+    function(res){
+      document.getElementById('llmMsg').textContent = res.msg || (res.ok ? '已保存' : '保存失败');
+      if(res.ok) loadLlmCfg();
+    });
+}
+function loadGrades(){
+  var box = document.getElementById('gradeBox');
+  api('/api/admin/grades', {token: TOKEN}, function(res){
+    if(!res.ok){ box.innerHTML = '<div class="errmsg">' + esc(res.msg) + '</div>'; return; }
+    GRADE_ROWS = res.grades || [];
+    if(!GRADE_ROWS.length){ box.innerHTML = '<div class="empty">暂无学生账号</div>'; return; }
+    var rows = GRADE_ROWS.map(function(g){
+      var total = (g.quiz || 0) + (g.research || 0) + (g.experiment || 0) + (g.report || 0);
+      var done = [g.quiz, g.research, g.experiment, g.report].every(function(x){ return x !== null; });
+      function cell(val, fb, max){
+        var dot = (val === null) ? '<span class="tag pend">未评</span>'
+                                 : '<span class="tag done">' + val + ' / ' + max + '</span>';
+        return dot + (fb ? '<div class="hint" title="' + esc(fb) + '">' + esc(fb.slice(0, 42)) + (fb.length > 42 ? '…' : '') + '</div>' : '');
+      }
+      return '<tr><td><b>' + esc(g.name) + '</b><br><span class="hint">' + esc(g.sid) + '</span></td>' +
+        '<td style="text-align:center">' + cell(g.quiz, null, 10) + '</td>' +
+        '<td style="text-align:center">' + cell(g.research, g.research_fb, 20) +
+          '<br><button class="btn" style="margin-top:3px" onclick="aiScore(\'' + esc(g.sid) + '\',\'research\',this)">🤖 AI 打分</button></td>' +
+        '<td style="text-align:center">' + cell(g.experiment, g.experiment_fb, 40) +
+          '<br><button class="btn" style="margin-top:3px" onclick="aiScore(\'' + esc(g.sid) + '\',\'experiment\',this)">🤖 AI 打分</button></td>' +
+        '<td style="text-align:center"><input class="scorein" id="rpt-' + esc(g.sid) + '" type="number" step="0.5" min="0" max="30" value="' +
+          (g.report === null ? '' : g.report) + '" placeholder="0~30">' +
+          '<br><input class="scorein" style="width:120px" id="rptfb-' + esc(g.sid) + '" value="' + esc(g.report_fb || '') + '" placeholder="评语">' +
+          '<br><button class="btn" style="margin-top:3px" onclick="saveReport(\'' + esc(g.sid) + '\')">保存报告分</button></td>' +
+        '<td style="text-align:center;font-weight:700;color:' + (done ? '#c9a227' : '#9aa7b6') + ';font-size:15px">' +
+          (done ? total.toFixed(1) : '—') + (done ? ' / 100' : '<div class="hint">待评齐</div>') + '</td></tr>';
+    });
+    box.innerHTML = '<table><tr><th>学生</th><th>预习测验<br>/10（自动）</th><th>过程调研<br>/20（AI）</th>' +
+      '<th>实验数据<br>/40（AI）</th><th>实验报告<br>/30（手动）</th><th>总分<br>/100</th></tr>' +
+      rows.join('') + '</table>' +
+      '<div class="hint">预习测验分自动取该生历次预习测评中的最高答对题数（允许多次答题）；AI 打分调用 DeepSeek 评阅提交内容（多次提交以最好一次为准）；实验报告由教师手动批改。明细内容见「提交与打分」页。</div>';
+  });
+}
+function aiScore(sid, cat, btn){
+  var old = btn.textContent;
+  btn.textContent = '⏳ 评分中…'; btn.disabled = true;
+  api('/api/admin/autoscore', {token: TOKEN, sid: sid, category: cat}, function(res){
+    btn.textContent = old; btn.disabled = false;
+    if(!res.ok){ alert('AI 打分失败：' + (res.msg || '')); return; }
+    loadGrades();
+  });
+}
+function saveReport(sid){
+  var sc = document.getElementById('rpt-' + sid).value;
+  var fb = document.getElementById('rptfb-' + sid).value;
+  if(sc === ''){ alert('请先填写报告得分（0~30）。'); return; }
+  api('/api/admin/report_score', {token: TOKEN, sid: sid, score: sc, feedback: fb}, function(res){
+    if(!res.ok){ alert('保存失败：' + (res.msg || '')); return; }
+    loadGrades();
+  });
+}
+
+/* ---------- 修改密码 ---------- */
+function renderPass(){
+  var v = document.getElementById('view');
+  v.innerHTML = '<div class="card passform"><h3>修改管理员密码</h3>' +
+    '<label>原密码</label><input id="pOld" type="password" autocomplete="current-password">' +
+    '<label>新密码（至少 5 位）</label><input id="pNew" type="password" autocomplete="new-password">' +
+    '<label>确认新密码</label><input id="pNew2" type="password" autocomplete="new-password">' +
+    '<div style="margin-top:14px"><button class="btn" onclick="changePass()">保存新密码</button></div>' +
+    '<div class="lmsg" id="pMsg"></div>' +
+    '<div class="hint">初始账号 admin / admin，首次登录后请立即修改。密码以加盐 SHA-256 哈希存储。</div></div>';
+}
+function changePass(){
+  var o = document.getElementById('pOld').value;
+  var n = document.getElementById('pNew').value;
+  var n2 = document.getElementById('pNew2').value;
+  var msg = document.getElementById('pMsg');
+  msg.className = 'errmsg';
+  if(!o || !n){ msg.textContent = '请填写完整。'; return; }
+  if(n !== n2){ msg.textContent = '两次输入的新密码不一致。'; return; }
+  api('/api/admin/change_password', {token: TOKEN, old: o, new: n}, function(res){
+    if(res.ok){
+      msg.className = 'okmsg';
+      msg.textContent = '✓ 密码修改成功，请牢记新密码。';
+      document.getElementById('pOld').value = '';
+      document.getElementById('pNew').value = '';
+      document.getElementById('pNew2').value = '';
+    }else{
+      msg.textContent = res.msg || '修改失败';
+    }
+  });
+}
+
+/* ---------- init ---------- */
+if(TOKEN){
+  api('/api/admin/students', {token: TOKEN}, function(res){
+    if(res.ok){ enter(); } else { logout(); }
+  });
+}
+</script>
+</body>
+</html>

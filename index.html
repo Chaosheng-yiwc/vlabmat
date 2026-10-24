@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script>
+/* 云端 API 网关适配：内网部署直连本地 server；公网(静态托管)走云函数网关 */
+(function(){
+  var h = location.hostname || "";
+  if (/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|localhost$|127\.)/.test(h)) return;
+  var GW = "https://vlabmat-d9gh3999c21421e1b.service.tcloudbase.com/apigw";
+  var SGI = "https://vlabmat-d9gh3999c21421e1b.service.tcloudbase.com/structgw";
+  var _f = window.fetch ? window.fetch.bind(window) : null;
+  if (!_f) return;
+  window.fetch = function(input, init){
+    init = init || {};
+    var url = (typeof input === "string") ? input : (input && input.url) || "";
+    if (url.indexOf("/api/") === 0) {
+      var route = url.split("?")[0];
+      var qi = url.indexOf("?");
+      var body = {};
+      if (init.body) { try { body = JSON.parse(init.body); } catch (e) { body = { _raw: String(init.body) }; } }
+      if (qi >= 0) {
+        url.slice(qi + 1).split("&").forEach(function(kv){
+          if (kv) { var t = kv.split("=");
+            body[decodeURIComponent(t[0])] = decodeURIComponent((t[1] || "").replace(/\+/g, " ")); }
+        });
+      }
+      body.__route = route;
+      init.method = "POST";
+      init.body = JSON.stringify(body);
+      init.headers = Object.assign({ "Content-Type": "application/json; charset=utf-8" }, init.headers || {});
+      return _f(route.indexOf("/api/structure") === 0 ? SGI : GW, init);
+    }
+    return _f(input, init);
+  };
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI赋能光催化分解水制氢材料设计虚拟仿真实验 | 曲阜师范大学</title>
+<style>
+  :root{
+    --ink:#1a2332; --sub:#5a6b80; --line:#dfe6ee; --bg:#f6f8fb;
+    --blue:#1a5dab; --blue-d:#12447e; --gold:#c9a227; --card:#ffffff;
+    --green:#2f9e63;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"Source Han Sans SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.75}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  /* header */
+  header{background:linear-gradient(135deg,#0e3a6d 0%,#1a5dab 60%,#2a77c9 100%);color:#fff}
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 0;
+          font-size:14px;opacity:.92;border-bottom:1px solid rgba(255,255,255,.18)}
+  .topbar b{letter-spacing:1px}
+  .hero{padding:64px 0 56px;display:flex;gap:36px;align-items:center;flex-wrap:wrap}
+  .hero-txt{flex:1 1 520px}
+  .hero h1{font-size:34px;line-height:1.35;font-weight:700;letter-spacing:1px}
+  .hero .sub{margin-top:14px;font-size:17px;opacity:.88}
+  .hero .tags{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
+  .tag{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);
+       padding:4px 14px;border-radius:999px;font-size:13.5px}
+  .hero-img{flex:0 1 300px;background:#fff;border-radius:12px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .hero-img img{width:100%;display:block;border-radius:6px}
+  .hero-img figcaption{font-size:12.5px;color:var(--sub);text-align:center;margin-top:8px}
+  /* nav */
+  nav{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:9;
+      box-shadow:0 2px 8px rgba(20,40,80,.06)}
+  nav .wrap{display:flex;gap:6px;overflow-x:auto}
+  nav a{white-space:nowrap;padding:13px 16px;font-size:15px;color:var(--ink);text-decoration:none;border-bottom:3px solid transparent}
+  nav a:hover{color:var(--blue);border-bottom-color:var(--blue)}
+  /* sections */
+  section{padding:52px 0 12px}
+  h2{font-size:25px;color:var(--blue-d);padding-left:14px;border-left:5px solid var(--gold);margin-bottom:8px}
+  .lead{color:var(--sub);margin-bottom:26px;font-size:15.5px}
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:10px 0 8px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px;text-align:center}
+  .stat .num{font-size:30px;font-weight:700;color:var(--blue)}
+  .stat .lab{font-size:14px;color:var(--sub);margin-top:4px}
+  /* cards */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:24px}
+  .card h3{font-size:17.5px;color:var(--blue-d);margin-bottom:10px}
+  .card p{font-size:14.5px;color:#3c4a5c}
+  .card .k{color:var(--blue);font-weight:600}
+  /* svg figures */
+  .figure{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px;margin:6px 0}
+  .figure svg{width:100%;height:auto;display:block}
+  .figure figcaption,.figcap{font-size:13px;color:var(--sub);text-align:center;margin-top:10px}
+  /* gallery */
+  .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+  .shot{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .shot img{width:100%;display:block;background:#fff}
+  .shot .cap{padding:12px 16px;font-size:13.5px;color:var(--sub)}
+  .shot .cap b{color:var(--ink);display:block;font-size:14.5px;margin-bottom:2px}
+  /* table */
+  .tbl-wrap{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13.8px;min-width:640px}
+  th{background:#eef3fa;color:var(--blue-d);padding:9px 10px;text-align:left;white-space:nowrap}
+  td{padding:8px 10px;border-top:1px solid var(--line);color:#33404f}
+  tr:nth-child(even) td{background:#fafcfe}
+  .stage-td{font-weight:600;color:var(--blue);white-space:nowrap}
+  /* footer */
+  footer{margin-top:60px;background:#12263f;color:#c8d4e2;padding:30px 0;font-size:14px}
+  footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  footer a{color:#9cc3ee;text-decoration:none}
+  .btn{border:none;cursor:pointer;font-size:16.5px;padding:12px 34px;border-radius:8px;
+       font-family:inherit;font-weight:600;letter-spacing:1px;transition:transform .12s, box-shadow .12s}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.3)}
+  .btn-go{background:var(--gold);color:#3a2c00}
+  .btn-ghost{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.65)}
+  /* auth modal */
+  .modal-mask{display:none;position:fixed;inset:0;background:rgba(10,25,45,.55);z-index:99;
+              align-items:center;justify-content:center}
+  .modal-mask.show{display:flex}
+  .modal{background:#fff;border-radius:12px;width:400px;max-width:92vw;padding:30px 32px 26px;
+         box-shadow:0 20px 60px rgba(0,0,0,.35);position:relative}
+  .modal .x{position:absolute;right:16px;top:10px;font-size:22px;color:#9aa7b6;cursor:pointer;border:none;background:none}
+  .auth-tabs{display:flex;gap:0;margin-bottom:22px;border-bottom:2px solid var(--line)}
+  .auth-tabs button{flex:1;background:none;border:none;font-size:16px;padding:10px 0;cursor:pointer;
+                    color:var(--sub);border-bottom:3px solid transparent;font-family:inherit;margin-bottom:-2px}
+  .auth-tabs button.on{color:var(--blue);font-weight:700;border-bottom-color:var(--blue)}
+  .auth-form label{display:block;font-size:13.5px;color:var(--sub);margin:12px 0 5px}
+  .auth-form input{width:100%;padding:10px 12px;border:1.5px solid #ccd6e2;border-radius:7px;
+                   font-size:15px;font-family:inherit;outline:none}
+  .auth-form input:focus{border-color:var(--blue)}
+  .auth-submit{width:100%;margin-top:20px;padding:11px;border:none;border-radius:8px;
+               background:var(--blue);color:#fff;font-size:16px;cursor:pointer;font-family:inherit}
+  .auth-submit:hover{background:var(--blue-d)}
+  .auth-msg{font-size:13px;color:#c0392b;margin-top:10px;min-height:18px}
+  @media (max-width:640px){.hero h1{font-size:26px}.hero{padding:44px 0}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="topbar">
+      <b>曲阜师范大学 · 物理工程学院</b>
+      <span id="user-area">
+        <a href="#" onclick="openAuth('register');return false" style="color:#ffd97a;text-decoration:none;margin-right:14px">注册</a>
+        <a href="#" onclick="openAuth('login');return false" style="color:#fff;text-decoration:none">登录</a>
+      </span>
+    </div>
+    <div class="hero">
+      <div class="hero-txt">
+        <h1>AI赋能光催化分解水制氢<br>材料设计虚拟仿真实验</h1>
+        <div class="sub">面向未来能源方向 · 以 g-C<sub>3</sub>N<sub>4</sub> 光催化材料为载体的研究探索型计算实验<br>智能体全程协同 · 23 步交互 · 4 学时完成一次真实材料研发训练</div>
+        <div class="tags">
+          <span class="tag">AI for Science</span>
+          <span class="tag">第一性原理计算（VASP）</span>
+          <span class="tag">大模型智能体协同</span>
+          <span class="tag">研究探索型实验</span>
+        </div>
+        <div style="margin-top:26px;display:flex;gap:14px;flex-wrap:wrap">
+          <button class="btn btn-go" onclick="startExperiment()">▶ 开始实验</button>
+          <button class="btn btn-ghost" onclick="location.href='#intro'">了解实验</button>
+        </div>
+      </div>
+      <figure class="hero-img">
+        <img src="gcn4.png" alt="g-C3N4 晶体结构">
+        <figcaption>类石墨相氮化碳 g-C<sub>3</sub>N<sub>4</sub> 晶体结构（2×2 超胞）</figcaption>
+      </figure>
+    </div>
+  </div>
+</header>
+
+<nav><div class="wrap">
+  <a href="#intro">项目简介</a>
+  <a href="#arch">平台架构</a>
+  <a href="#flow">实验流程</a>
+  <a href="#steps">23 步交互与赋分</a>
+  <a href="#gallery">计算算例展示</a>
+  <a href="#contest">教学课件与视频</a>
+  <a href="#teachvideos" style="color:var(--gold);font-weight:bold">▶ 实验教学视频</a>
+  <a href="#feature">教学特色</a>
+  <a href="#team">教学团队</a>
+</div></nav>
+
+<div class="wrap">
+
+<section id="intro">
+  <h2>项目简介</h2>
+  <p class="lead">围绕"双碳"战略与未来能源方向，把整门《材料计算物理》课程微缩为一个完整的研究项目。</p>
+  <div class="stats">
+    <div class="stat"><div class="num">4 学时</div><div class="lab">一次完整材料研发训练</div></div>
+    <div class="stat"><div class="num">23 步</div><div class="lab">学生交互性操作步骤</div></div>
+    <div class="stat"><div class="num">6 阶段</div><div class="lab">真实研发全流程组织</div></div>
+    <div class="stat"><div class="num">2 人/组</div><div class="lab">任务驱动 · 全程留痕可评可测</div></div>
+  </div>
+  <div class="cards" style="margin-top:18px">
+    <div class="card"><h3>真实问题牵引</h3><p>以<span class="k">"如何设计一种能高效分解水制氢的光催化材料"</span>为总任务，学生扮演新能源材料企业研发工程师，按照企业"研究资料调研→计算筛选→方案优化→出具评估报告"的标准研发流程完成学习任务。</p></div>
+    <div class="card"><h3>解决真实实验瓶颈</h3><p>第一性原理计算<span class="k">集群机时成本高、试错不可逆</span>，传统课堂学生"按方抓药"。本实验以虚拟仿真提供可重复、可承受的现实保障，支撑从验证性操作向研究探索性实验转变。</p></div>
+    <div class="card"><h3>真实数据支撑</h3><p>全部算例数据取自负责人<span class="k">省级科研项目与校高性能计算中心</span>的真实计算结果，仿真严格遵循客观物理规律；实验不设唯一标准答案，学生数据互不雷同、结论互为印证。</p></div>
+  </div>
+</section>
+
+<section id="arch">
+  <h2>平台架构</h2>
+  <p class="lead">依托学校网络中心智能体平台，构建"基础大模型 ＋ 材料计算知识库 ＋ 实验智能体"三层 AI 应用架构。</p>
+  <figure class="figure">
+    <svg viewBox="0 0 960 400" xmlns="http://www.w3.org/2000/svg" font-family="Microsoft YaHei,sans-serif">
+      <defs>
+        <marker id="arr" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <path d="M0,0 L10,4 L0,8 z" fill="#8aa4c0"/>
+        </marker>
+      </defs>
+      <!-- Layer 1 -->
+      <rect x="30" y="24" width="900" height="92" rx="10" fill="#eaf2fc" stroke="#9cc0e8"/>
+      <text x="52" y="56" font-size="17" font-weight="bold" fill="#12447e">智能体协同层</text>
+      <g font-size="13.5" fill="#28517e" text-anchor="middle">
+        <rect x="60"  y="72" width="150" height="30" rx="15" fill="#fff" stroke="#7fa8d4"/><text x="135" y="92">研究资料调研智能体</text>
+        <rect x="240" y="72" width="150" height="30" rx="15" fill="#fff" stroke="#7fa8d4"/><text x="315" y="92">结构生成智能体</text>
+        <rect x="420" y="72" width="150" height="30" rx="15" fill="#fff" stroke="#7fa8d4"/><text x="495" y="92">报错诊断智能体</text>
+        <rect x="600" y="72" width="150" height="30" rx="15" fill="#fff" stroke="#7fa8d4"/><text x="675" y="92">报告点评智能体</text>
+        <rect x="780" y="72" width="120" height="30" rx="15" fill="#fff" stroke="#7fa8d4"/><text x="840" y="92">"小碳老师"</text>
+      </g>
+      <line x1="480" y1="116" x2="480" y2="150" stroke="#8aa4c0" stroke-width="2" marker-end="url(#arr)"/>
+      <!-- Layer 2 -->
+      <rect x="30" y="154" width="900" height="92" rx="10" fill="#fdf6e6" stroke="#dcc98a"/>
+      <text x="52" y="186" font-size="17" font-weight="bold" fill="#8a6d1a">计算调度层</text>
+      <g font-size="13.5" fill="#6d5514" text-anchor="middle">
+        <rect x="90"  y="202" width="200" height="30" rx="15" fill="#fff" stroke="#c9a227"/><text x="190" y="222">VASP 第一性原理计算引擎</text>
+        <rect x="330" y="202" width="180" height="30" rx="15" fill="#fff" stroke="#c9a227"/><text x="420" y="222">校高性能计算中心集群</text>
+        <rect x="550" y="202" width="160" height="30" rx="15" fill="#fff" stroke="#c9a227"/><text x="630" y="222">作业调度与监控</text>
+        <rect x="750" y="202" width="150" height="30" rx="15" fill="#fff" stroke="#c9a227"/><text x="825" y="222">机器学习符号回归</text>
+      </g>
+      <line x1="480" y1="246" x2="480" y2="280" stroke="#8aa4c0" stroke-width="2" marker-end="url(#arr)"/>
+      <!-- Layer 3 -->
+      <rect x="30" y="284" width="900" height="92" rx="10" fill="#eaf7ef" stroke="#93c9a8"/>
+      <text x="52" y="316" font-size="17" font-weight="bold" fill="#1e6b45">数据分析层</text>
+      <g font-size="13.5" fill="#275c3d" text-anchor="middle">
+        <rect x="70"  y="332" width="160" height="30" rx="15" fill="#fff" stroke="#6fb78a"/><text x="150" y="352">能带 / 态密度分析</text>
+        <rect x="260" y="332" width="160" height="30" rx="15" fill="#fff" stroke="#6fb78a"/><text x="340" y="352">光吸收谱计算</text>
+        <rect x="450" y="332" width="160" height="30" rx="15" fill="#fff" stroke="#6fb78a"/><text x="530" y="352">带边位置对齐</text>
+        <rect x="640" y="332" width="140" height="30" rx="15" fill="#fff" stroke="#6fb78a"/><text x="710" y="352">计算报告生成</text>
+        <rect x="810" y="332" width="90"  height="30" rx="15" fill="#fff" stroke="#6fb78a"/><text x="855" y="352">能力画像</text>
+      </g>
+    </svg>
+    <figcaption>图 1  "基础大模型＋材料计算知识库＋实验智能体"三层应用架构</figcaption>
+  </figure>
+</section>
+
+<section id="flow">
+  <h2>实验流程：六阶段研究项目</h2>
+  <p class="lead">学生全程主导、AI 全程协同，完整经历真实研发全流程。</p>
+  <figure class="figure">
+    <svg viewBox="0 0 960 168" xmlns="http://www.w3.org/2000/svg" font-family="Microsoft YaHei,sans-serif">
+      <g text-anchor="middle">
+        <g><rect x="14"  y="34" width="136" height="64" rx="10" fill="#1a5dab"/><text x="82"  y="60" font-size="14.5" fill="#fff" font-weight="bold">① 研究资料调研</text><text x="82"  y="82" font-size="11.5" fill="#cfe2f7">智能体检索与综述</text></g>
+        <g><rect x="174" y="34" width="136" height="64" rx="10" fill="#2470b8"/><text x="242" y="60" font-size="14.5" fill="#fff" font-weight="bold">② 结构建模</text><text x="242" y="82" font-size="11.5" fill="#d8e9fa">智能体生成 g-C<tspan font-size="9" dy="2.5">3</tspan><tspan dy="-2.5">N</tspan><tspan font-size="9" dy="2.5">4</tspan><tspan dy="-2.5"> 模型</tspan></text></g>
+        <g><rect x="334" y="34" width="136" height="64" rx="10" fill="#3d86c6"/><text x="402" y="60" font-size="14.5" fill="#fff" font-weight="bold">③ 提交计算</text><text x="402" y="82" font-size="11.5" fill="#e0eefb">收敛测试 · 集群计算</text></g>
+        <g><rect x="494" y="34" width="136" height="64" rx="10" fill="#5a9ad2"/><text x="562" y="60" font-size="14.5" fill="#fff" font-weight="bold">④ 结果后处理</text><text x="562" y="82" font-size="11.5" fill="#eaf4fd">能带 · 态密度 · 光谱</text></g>
+        <g><rect x="654" y="34" width="136" height="64" rx="10" fill="#7caddd"/><text x="722" y="60" font-size="14.5" fill="#fff" font-weight="bold">⑤ 报告撰写</text><text x="722" y="82" font-size="11.5" fill="#f0f7fd">AI 点评 · 计算报告</text></g>
+        <g><rect x="814" y="34" width="136" height="64" rx="10" fill="#9cc0e8"/><text x="882" y="60" font-size="14.5" fill="#123c6b" font-weight="bold">⑥ 讨论反思</text><text x="882" y="82" font-size="11.5" fill="#1c4a77">答辩互评 · 能力画像</text></g>
+      </g>
+      <g stroke="#8aa4c0" stroke-width="2" fill="none">
+        <line x1="150" y1="66" x2="172" y2="66"/><line x1="310" y1="66" x2="332" y2="66"/>
+        <line x1="470" y1="66" x2="492" y2="66"/><line x1="630" y1="66" x2="652" y2="66"/>
+        <line x1="790" y1="66" x2="812" y2="66"/>
+      </g>
+      <g fill="#8aa4c0"><path d="M172,62 l8,4 -8,4 z"/><path d="M332,62 l8,4 -8,4 z"/><path d="M492,62 l8,4 -8,4 z"/><path d="M652,62 l8,4 -8,4 z"/><path d="M812,62 l8,4 -8,4 z"/></g>
+      <text x="480" y="140" font-size="13.5" fill="#5a6b80" text-anchor="middle">前三阶段人人过关，保证计算方法与 AI 协同能力落地；后三阶段分组自主推进调控方案、报告与答辩</text>
+    </svg>
+    <figcaption>图 2  六阶段实验流程（共 23 个交互步骤）</figcaption>
+  </figure>
+</section>
+
+<section id="steps">
+  <h2>23 步交互操作与赋分评价</h2>
+  <p class="lead">过程评价与结果评价结合，23 步赋分全过程留痕，动态生成学生能力画像与成长档案。</p>
+  <div class="tbl-wrap">
+  <table>
+    <tr><th>阶段</th><th>#</th><th>步骤名称</th><th>用时</th><th>满分</th><th>成绩类型</th></tr>
+    <tr><td class="stage-td" rowspan="5">一、研究资料调研<br><small>预习成绩 8 分</small></td><td>1</td><td>预习测评与任务认领（研究资料调研）</td><td>5 分钟</td><td>3</td><td>预习成绩</td></tr>
+    <tr><td>2</td><td>智能体研究资料调研</td><td>12 分钟</td><td>5</td><td>预习成绩</td></tr>
+    <tr><td>3</td><td>智能体辅助方案设计</td><td>8 分钟</td><td>4</td><td>操作成绩</td></tr>
+    <tr><td>4</td><td>智能体生成结构模型</td><td>10 分钟</td><td>5</td><td>操作成绩</td></tr>
+    <tr><td>5</td><td>输入文件生成与核验</td><td>8 分钟</td><td>5</td><td>操作成绩</td></tr>
+    <tr><td class="stage-td" rowspan="6">二、提交计算<br><small>操作成绩 25 分</small></td><td>6</td><td>AI 参数审查答辩</td><td>5 分钟</td><td>4</td><td>教师评价报告</td></tr>
+    <tr><td>7</td><td>截断能收敛测试</td><td>10 分钟</td><td>4</td><td>操作成绩</td></tr>
+    <tr><td>8</td><td>k 点收敛测试</td><td>8 分钟</td><td>4</td><td>操作成绩</td></tr>
+    <tr><td>9</td><td>计算任务提交</td><td>3 分钟</td><td>3</td><td>操作成绩</td></tr>
+    <tr><td>10</td><td>作业监控与 AI 报错诊断</td><td>12 分钟</td><td>5</td><td>操作成绩</td></tr>
+    <tr><td>11</td><td>态密度后处理</td><td>10 分钟</td><td>5</td><td>操作成绩</td></tr>
+    <tr><td class="stage-td" rowspan="8">三、结果后处理<br>四、报告与反思</td><td>12</td><td>能带后处理</td><td>8 分钟</td><td>5</td><td>操作成绩</td></tr>
+    <tr><td>13</td><td>带隙提取与实验值比对</td><td>5 分钟</td><td>5</td><td>实验报告</td></tr>
+    <tr><td>14</td><td>调控模型构建</td><td>10 分钟</td><td>5</td><td>操作成绩</td></tr>
+    <tr><td>15</td><td>调控体系计算</td><td>15 分钟</td><td>5</td><td>操作成绩</td></tr>
+    <tr><td>16</td><td>带边与光谱后处理</td><td>10 分钟</td><td>6</td><td>实验报告</td></tr>
+    <tr><td>17</td><td>数据汇总与可行性论证</td><td>5 分钟</td><td>5</td><td>实验报告</td></tr>
+    <tr><td>18</td><td>机器学习构效关系建模</td><td>10 分钟</td><td>5</td><td>操作成绩</td></tr>
+    <tr><td>19</td><td>计算报告生成</td><td>课后</td><td>5</td><td>实验报告</td></tr>
+    <tr><td class="stage-td" rowspan="4">五、答辩反思<br><small>教师评价 9 分</small></td><td>20</td><td>AI 报告点评与修改</td><td>课后</td><td>3</td><td>实验报告</td></tr>
+    <tr><td>21</td><td>小组答辩与同伴互评</td><td>10 分钟</td><td>4</td><td>教师评价报告</td></tr>
+    <tr><td>22</td><td>反思与改进</td><td>课后</td><td>3</td><td>实验报告</td></tr>
+    <tr><td>23</td><td>能力画像查看与拓展</td><td>5 分钟</td><td>2</td><td>教师评价报告</td></tr>
+  </table>
+  </div>
+  <p class="figcap">表 1  学生交互性操作步骤（按研究项目六阶段组织，共计 100 分）</p>
+</section>
+
+<section id="gallery">
+  <h2>计算算例展示</h2>
+  <p class="lead">取自教学与科研一线的真实计算结果，构成实验的算例库与知识库基础。</p>
+  <div class="gallery">
+    <div class="shot">
+      <img src="band.png" alt="投影能带结构">
+      <div class="cap"><b>二维晶体投影能带结构</b>基于 DFT（VASP/PBE）的能带计算与原子轨道投影分析，用于"能带后处理""带隙提取与实验值比对"等步骤的教学演示。</div>
+    </div>
+    <div class="shot">
+      <img src="chg.png" alt="差分电荷密度">
+      <div class="cap"><b>差分电荷密度三维等值面</b>成键与电荷转移的空间分布可视化，支撑"催化活性位点与电子结构调控"教学环节。</div>
+    </div>
+    <div class="shot">
+      <img src="gcn4.png" alt="g-C3N4 结构模型">
+      <div class="cap"><b>g-C<sub>3</sub>N<sub>4</sub> 光催化材料结构模型</b>实验主算例体系：以 heptazine（三-s-三嗪）单元为骨架的类石墨相氮化碳，学生在此基础上开展掺杂、缺陷与应变调控设计。</div>
+    </div>
+  </div>
+</section>
+
+<section id="contest">
+  <h2>材料计算模拟教学课件和视频</h2>
+  <p class="lead">《材料计算物理》课程配套讲课稿与计算模拟视频——实验教学内容与算例库的直接来源。</p>
+  <div class="cards" style="margin-bottom:6px">
+    <div class="card"><h3>① 基于密度泛函理论探究 CO<sub>2</sub> 分子的结构与成键</h3>
+      <p style="font-size:13.8px">《材料计算物理》第二章 · AI &amp; 材料研发 第 4 节。以 CO<sub>2</sub> 分子为算例，讲解几何结构优化、差分电荷密度与分子轨道分析，演示计算模拟视频。</p>
+      <p style="margin-top:8px;font-size:13.5px">
+        <a href="files/course1.pptx" style="color:var(--blue)">📥 下载课件</a>　
+        <a href="files/course1-script.docx" style="color:var(--blue)">📥 讲课稿</a></p></div>
+    <div class="card"><h3>② 小分子在固体表面的吸附——从"闻香识梅"到气敏传感器</h3>
+      <p style="font-size:13.8px">《材料计算物理》第六章 · AI &amp; 材料研发 第 2 节。以诗词情境导入，讲解吸附机理与吸附能计算，Pt(111) 表面分子动力学模拟视频展示 CO / CO<sub>2</sub> / H<sub>2</sub>O 吸附行为。</p>
+      <p style="margin-top:8px;font-size:13.5px">
+        <a href="files/course2.pptx" style="color:var(--blue)">📥 下载课件</a>　
+        <a href="files/course2-script.docx" style="color:var(--blue)">📥 讲课稿</a></p></div>
+    <div class="card"><h3>③ 金刚石能带结构的计算</h3>
+      <p style="font-size:13.8px">《材料计算物理》第七章 第 2 节。从第一性原理计算金刚石能带结构，对比 PBE 与杂化泛函 HSE06，介绍能带反折叠方法与"带隙调控"教学案例。</p>
+      <p style="margin-top:8px;font-size:13.5px">
+        <a href="files/course3.pptx" style="color:var(--blue)">📥 下载课件</a>　
+        <a href="files/course3-script.docx" style="color:var(--blue)">📥 讲课稿</a></p></div>
+  </div>
+  <div class="gallery" style="margin-top:16px">
+    <div class="shot">
+      <video src="media/co2_opt.mp4" controls preload="metadata" style="width:100%;display:block;background:#000"></video>
+      <div class="cap"><b>视频 · CO<sub>2</sub> 分子结构优化过程</b>DFT 几何优化中 CO<sub>2</sub> 分子构型与受力逐步收敛的动态演示（课件①）。</div>
+    </div>
+    <div class="shot">
+      <video src="media/md_pt111.mp4" controls preload="metadata" style="width:100%;display:block;background:#000"></video>
+      <div class="cap"><b>视频 · 小分子在 Pt(111) 表面的分子动力学</b>分子动力学模拟展示小分子在 Pt(111) 催化剂表面的吸附与扩散行为（课件②）。</div>
+    </div>
+    <div class="shot">
+      <img src="contest3.png" alt="金刚石能带反折叠" style="background:#fff">
+      <div class="cap"><b>能带反折叠计算结果</b>超胞掺杂体系能带反折叠至原胞倒空间，展示掺杂对金刚石能带结构的调控（课件③）。</div>
+    </div>
+  </div>
+
+  <h3 id="teachvideos" style="margin-top:30px;font-size:19px">实验配套教学视频 · g-C<sub>3</sub>N<sub>4</sub> 光催化材料电子结构计算模拟</h3>
+  <p class="lead">学生课前预习与课后回顾的完整操作录像（Materials Studio 建模 → 提交计算 → 能带 / 光谱后处理），共 6 讲，另含实验教学引导视频。</p>
+  <div class="gallery" style="margin-top:14px">
+    <div class="shot">
+      <video src="media/guide_5min.mp4" controls preload="metadata" style="width:100%;display:block;background:#000"></video>
+      <div class="cap"><b>教学引导视频（5 分钟）</b>实验总览：企业研发委托任务、光催化三判据、六阶段 23 步全流程引导。</div>
+    </div>
+    <div class="shot">
+      <video src="media/v1_intro.mp4" controls preload="metadata" style="width:100%;display:block;background:#000"></video>
+      <div class="cap"><b>第 1 讲 · 前言</b>光催化分解水制氢背景与第一性原理计算模拟方法概述。</div>
+    </div>
+    <div class="shot">
+      <video src="media/v2_ms_ui.mp4" controls preload="metadata" style="width:100%;display:block;background:#000"></video>
+      <div class="cap"><b>第 2 讲 · 熟悉 Materials Studio 界面</b>建模环境与常用模块操作入门。</div>
+    </div>
+    <div class="shot">
+      <video src="media/v3_nanotube.mp4" controls preload="metadata" style="width:100%;display:block;background:#000"></video>
+      <div class="cap"><b>第 3 讲 · 实验任务一</b>建立碳纳米管与乙醇乙烯分子模型，练习基本建模操作。</div>
+    </div>
+    <div class="shot">
+      <video src="media/v4_gcn4_model.mp4" controls preload="metadata" style="width:100%;display:block;background:#000"></video>
+      <div class="cap"><b>第 4 讲 · 建立 g-C<sub>3</sub>N<sub>4</sub> 结构模型</b>搭建类石墨相氮化碳晶体结构并导出结构图。</div>
+    </div>
+    <div class="shot">
+      <video src="media/v5_submit_job.mp4" controls preload="metadata" style="width:100%;display:block;background:#000"></video>
+      <div class="cap"><b>第 5 讲 · 提交计算任务</b>设置 g-C<sub>3</sub>N<sub>4</sub> 能带结构与光学性质计算参数并提交任务。</div>
+    </div>
+    <div class="shot">
+      <video src="media/v6_band_spec.mp4" controls preload="metadata" style="width:100%;display:block;background:#000"></video>
+      <div class="cap"><b>第 6 讲 · 能带结构与光谱数据计算绘图</b>计算结果后处理：能带图绘制与光吸收谱分析。</div>
+    </div>
+  </div>
+</section>
+
+<section id="feature">
+  <h2>教学特色</h2>
+  <p class="lead">"AI 协同但不代劳"：训练学生批判性使用 AI 的素养与 AI 伦理意识。</p>
+  <div class="cards">
+    <div class="card"><h3>三关流程：AI 生成 — 人工核验 — 计算验证</h3><p>智能体输出必须经<span class="k">学生核验、计算验证</span>方可采信；学生须逐行说明计算参数物理含义、核验结构几何合理性方可提交，并以对照实验（AI 协同组 / 传统查阅手册组）量化 AI 的真实效用。</p></div>
+    <div class="card"><h3>真数据 · 真仿真 · 真交互</h3><p>全部算例取自真实科研计算，仿真遵循客观物理规律；实验<span class="k">不设唯一标准答案</span>，学生自主设计掺杂 / 缺陷 / 应变方案，数据互不雷同、结论互为印证。</p></div>
+    <div class="card"><h3>赋分评价 · 能力画像</h3><p>23 步赋分评价模型覆盖预习、操作、报告与教师评价四类成绩，全过程留痕，<span class="k">动态生成学生能力画像与成长档案</span>，支撑过程性赋分评价。</p></div>
+  </div>
+</section>
+
+<section id="team">
+  <h2>教学团队与联系</h2>
+  <div class="cards">
+    <div class="card"><h3>项目负责人</h3><p><span class="k">易文才</span> · 副教授 · 曲阜师范大学物理工程学院<br>主讲《材料计算物理》，研究方向：计算材料学与凝聚态物理；主持省级虚拟仿真实验教学项目与校级实验室教改项目，自主研发 qvasp、GSASP 等计算软件并获软件著作权。</p></div>
+    <div class="card"><h3>团队分工</h3><p>算例库建设与集群教学环境维护 · 光学性质与光谱模块教学 · 虚拟仿真平台开发与 AI 接口技术支持。团队成员来自物理工程学院、实验教学与设备管理中心及合作企业。</p></div>
+    <div class="card"><h3>联系方式</h3><p>邮箱：<span class="k">yiwc@qfnu.edu.cn</span><br>地址：山东省曲阜市静轩西路 57 号 曲阜师范大学物理工程学院<br>本平台面向校内《材料科学与工程专业实验Ⅰ》等课程开放，并按计划向高校与社会学习者开放共享。</p></div>
+  </div>
+</section>
+
+</div>
+
+<!-- 登录 / 注册模态框 -->
+<div class="modal-mask" id="authMask">
+  <div class="modal">
+    <button class="x" onclick="closeAuth()">×</button>
+    <div class="auth-tabs">
+      <button id="tab-login" onclick="openAuth('login')">登 录</button>
+      <button id="tab-register" onclick="openAuth('register')">注 册</button>
+    </div>
+    <form class="auth-form" onsubmit="return doAuth(event)">
+      <label>学号 / 工号</label>
+      <input id="auth-user" autocomplete="username" placeholder="请输入学号或工号" required>
+      <label id="label-name">姓名</label>
+      <input id="auth-name" placeholder="请输入真实姓名">
+      <label>密码</label>
+      <input id="auth-pass" type="password" autocomplete="current-password" placeholder="请输入密码" required>
+      <button class="auth-submit" id="authBtn" type="submit">登 录</button>
+      <div class="auth-msg" id="authMsg"></div>
+    </form>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div>© 2025–2026 曲阜师范大学物理工程学院 · 材料计算虚拟仿真实验教学平台</div>
+    <div>当前访问地址：<a href="./" id="self-url"></a> · 建议使用 Chrome / Edge 浏览器</div>
+  </div>
+</footer>
+
+</body>
+
+<script>
+/* ---------- 登录 / 注册（服务端存储，教师后台可管理；正式版可对接教务统一身份认证） ---------- */
+var AUTH_KEY = 'ai_lab_auth';
+function authMode(m){
+  document.getElementById('tab-login').classList.toggle('on', m==='login');
+  document.getElementById('tab-register').classList.toggle('on', m==='register');
+  document.getElementById('authBtn').textContent = m==='login' ? '登 录' : '注册并登录';
+  var reg = (m === 'register');
+  document.getElementById('label-name').style.display = reg ? '' : 'none';
+  document.getElementById('auth-name').style.display  = reg ? '' : 'none';
+  document.getElementById('auth-name').required = reg;
+  document.getElementById('authMsg').textContent = '';
+  document.getElementById('authMask').dataset.mode = m;
+}
+function openAuth(m){
+  authMode(m);
+  document.getElementById('authMask').classList.add('show');
+}
+function closeAuth(){ document.getElementById('authMask').classList.remove('show'); }
+function currentUser(){
+  try{ return JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); }catch(e){ return null; }
+}
+function renderUser(){
+  var u = currentUser(), area = document.getElementById('user-area');
+  if(u){
+    area.innerHTML = '<span>👤 ' + u.name + '（' + u.sid + '）</span>　' +
+      '<a href="#" onclick="logout();return false" style="color:#ffd97a;text-decoration:none">退出</a>';
+  }else{
+    area.innerHTML = '<a href="#" onclick="openAuth(\'register\');return false" style="color:#ffd97a;text-decoration:none;margin-right:14px">注册</a>' +
+      '<a href="#" onclick="openAuth(\'login\');return false" style="color:#fff;text-decoration:none">登录</a>';
+  }
+}
+function doAuth(ev){
+  ev.preventDefault();
+  var mode = document.getElementById('authMask').dataset.mode || 'login';
+  var sid  = document.getElementById('auth-user').value.trim();
+  var name = document.getElementById('auth-name').value.trim();
+  var pass = document.getElementById('auth-pass').value;
+  var msg  = document.getElementById('authMsg');
+  if(!sid || !pass || (mode === 'register' && !name)){ msg.textContent = '请填写完整信息。'; return false; }
+  fetch('/api/' + (mode === 'register' ? 'register' : 'login'), {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(mode === 'register' ? {sid: sid, name: name, pass: pass} : {sid: sid, pass: pass})
+  }).then(function(r){ return r.json(); }).then(function(res){
+    if(!res.ok){ msg.textContent = res.msg || '操作失败，请重试。'; return; }
+    localStorage.setItem(AUTH_KEY, JSON.stringify({sid: sid, name: res.name || name, token: res.token}));
+    renderUser();
+    closeAuth();
+    startExperiment();
+  }).catch(function(){ msg.textContent = '服务器连接失败，请稍后再试。'; });
+  return false;
+}
+function logout(){
+  localStorage.removeItem(AUTH_KEY);
+  renderUser();
+}
+function startExperiment(){
+  if(!currentUser()){ openAuth('login');
+    document.getElementById('authMsg').textContent = '开始实验前请先登录（未注册请先注册）。';
+    return;
+  }
+  location.href = 'lab.html';
+}
+document.getElementById('authMask').addEventListener('click', function(e){
+  if(e.target === this) closeAuth();
+});
+renderUser();
+// 旧版登录态兼容：无 token 的旧登录自动清除，弹出登录窗（预填学号）
+(function(){
+  try{
+    var u = currentUser();
+    if(u && !u.token){
+      localStorage.removeItem(AUTH_KEY);
+      renderUser();
+      openAuth('login');
+      document.getElementById('authMsg').textContent = '检测到旧版登录状态，请输入密码重新登录一次（仅需一次）。';
+      var su = document.getElementById('auth-user');
+      if(su && u.sid){ su.value = u.sid; }
+    }
+  }catch(e){}
+})();
+// 页脚地址动态生成：校内 IP / 未来外网域名（vlab-mat.qfnu.edu.cn）均自动适配
+(function(){
+  try{
+    var el = document.getElementById('self-url');
+    if(el){ el.href = location.origin + '/'; el.textContent = location.origin + '/'; }
+  }catch(e){}
+})();
+</script>
+</html>

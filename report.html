@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script>
+/* 云端 API 网关适配：内网部署直连本地 server；公网(静态托管)走云函数网关 */
+(function(){
+  var h = location.hostname || "";
+  if (/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|localhost$|127\.)/.test(h)) return;
+  var GW = "https://vlabmat-d9gh3999c21421e1b.service.tcloudbase.com/apigw";
+  var SGI = "https://vlabmat-d9gh3999c21421e1b.service.tcloudbase.com/structgw";
+  var _f = window.fetch ? window.fetch.bind(window) : null;
+  if (!_f) return;
+  window.fetch = function(input, init){
+    init = init || {};
+    var url = (typeof input === "string") ? input : (input && input.url) || "";
+    if (url.indexOf("/api/") === 0) {
+      var route = url.split("?")[0];
+      var qi = url.indexOf("?");
+      var body = {};
+      if (init.body) { try { body = JSON.parse(init.body); } catch (e) { body = { _raw: String(init.body) }; } }
+      if (qi >= 0) {
+        url.slice(qi + 1).split("&").forEach(function(kv){
+          if (kv) { var t = kv.split("=");
+            body[decodeURIComponent(t[0])] = decodeURIComponent((t[1] || "").replace(/\+/g, " ")); }
+        });
+      }
+      body.__route = route;
+      init.method = "POST";
+      init.body = JSON.stringify(body);
+      init.headers = Object.assign({ "Content-Type": "application/json; charset=utf-8" }, init.headers || {});
+      return _f(route.indexOf("/api/structure") === 0 ? SGI : GW, init);
+    }
+    return _f(input, init);
+  };
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>报告撰写 · 计算报告与答辩反思提交</title>
+<style>
+  :root{--ink:#1a2332;--sub:#5a6b80;--line:#dfe6ee;--bg:#f3f6fa;--blue:#1a5dab;--blue-d:#12447e;
+        --gold:#c9a227;--green:#2e8b57;--card:#fff}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);
+       min-height:100vh;display:flex;flex-direction:column}
+  .topbar{background:linear-gradient(135deg,#0e3a6d,#1a5dab);color:#fff;padding:10px 20px;
+          display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+  .topbar .t{font-size:16px;font-weight:700}
+  .topbar .meta{font-size:13.5px;display:flex;gap:18px;align-items:center}
+  .topbar .meta b{color:#ffd97a}
+  .quit{color:#ffd97a;text-decoration:none;font-size:13.5px}
+  .jump{background:var(--gold);color:#3a2c00;padding:4px 12px;border-radius:6px;font-weight:700}
+  .main{flex:1;max-width:880px;width:100%;margin:0 auto;padding:24px 20px 50px}
+  .hero{background:linear-gradient(135deg,#12447e,#1a5dab);color:#fff;border-radius:12px;
+        padding:22px 26px;margin-bottom:18px}
+  .hero h1{font-size:21px;margin-bottom:6px}
+  .hero p{font-size:13.5px;opacity:.9;line-height:1.8}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;
+         padding:20px 24px;margin-bottom:16px}
+  .panel h3{font-size:16px;color:var(--blue-d);margin-bottom:4px}
+  .panel .meta{font-size:12.5px;color:var(--sub);margin-bottom:12px}
+  .panel p.desc{font-size:13.8px;color:#33404f;line-height:1.8;margin-bottom:12px}
+  .in{width:100%;padding:10px 12px;border:1.5px solid #ccd6e2;border-radius:7px;font-size:14px;
+      font-family:inherit;outline:none;margin-bottom:10px;background:#fff}
+  .in:focus{border-color:var(--blue)}
+  textarea.in{resize:vertical;line-height:1.7}
+  .filebtn{display:inline-block;background:#eef4fb;border:1px solid #c9dbef;color:var(--blue-d);
+           border-radius:7px;padding:9px 16px;font-size:13.5px;cursor:pointer;user-select:none}
+  .filebtn:hover{background:#e0edfa}
+  .filetag{display:inline-block;background:#fdf6e3;border:1px solid #ecd9a0;color:#7a5d00;
+           border-radius:6px;padding:2px 8px;font-size:12px;margin-left:6px}
+  .go-btn{background:var(--gold);color:#3a2c00;border:none;padding:11px 30px;border-radius:8px;
+          font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+  .go-btn:hover{filter:brightness(1.06)}
+  .submsg-ok{color:var(--green);font-weight:700;font-size:13px;margin-left:10px}
+  .submsg-err{color:#c0392b;font-weight:700;font-size:13px;margin-left:10px}
+  .hint{font-size:12px;color:#9aa7b6;margin-top:6px;line-height:1.7}
+  .mysub{border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:8px;background:#fff;font-size:13.5px}
+  .mysub .score{color:var(--gold);font-weight:700}
+  .mysub .fb{color:#5a6b80;margin-top:4px}
+  .mysub .kind{display:inline-block;background:#eef4fb;color:#2b527e;border-radius:10px;
+               padding:1px 9px;font-size:11.5px;margin-right:6px}
+  /* 智能体窗口（与 experiment.html 同款跨域裁剪方案） */
+  .ai-crop{position:relative;height:620px;overflow:hidden;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .ai-crop iframe{position:absolute;top:0;left:50%;transform:translateX(-50%);width:1280px;height:100%;border:0}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="t">📄 报告撰写 · 《材料筛选评估报告》与答辩反思</div>
+  <div class="meta">
+    <span>学生：<b id="stuName">—</b></span>
+    <a class="quit jump" href="experiment.html">📖 研究资料调研</a>
+    <a class="quit jump" href="simulation.html">🔬 3D 仿真实验台</a>
+    <a class="quit" href="lab.html">返回首页</a>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="hero">
+    <h1>实验的最后两个环节：报告与反思</h1>
+    <p>完成 23 步实验流程与 3D 仿真计算后，请先在下方<b>与智能体讨论计算结果的物理含义</b>（带隙与可见光吸收、带边位置与水分解电势匹配、应变/掺杂/缺陷的调控机理等），并让 AI 辅助生成报告初稿；再按学术规范修改定稿，提交<b>《材料筛选评估报告》</b>（第 19–20 步 · 实验报告）与<b>答辩反思</b>（第 21–22 步）。
+       报告建议结构：研究背景 → 计算方法（VASP/PBE、ENCUT、K 网格）→ 结果与讨论（带隙 / 带边 / 光催化活性）→ 结论与展望。</p>
+  </div>
+
+  <div class="panel" id="aiPanel">
+    <h3>🤖 实验智能体"小碳老师" · 计算结果讨论<span style="font-size:12px;color:#7a8798;font-weight:normal">· 由学校网络中心大模型平台（DeepSeek）驱动</span></h3>
+    <div class="ai-crop" id="aiCrop">
+      <iframe id="aiFrame" src="ai.html?embed=1" style="top:0;left:0;transform:none;width:100%;height:100%" allow="microphone"></iframe>
+    </div>
+    <div class="hint">与 AI 助教"小碳老师"（自建 DeepSeek，需登录实验账号）讨论计算结果的物理含义，建议围绕：① 计算得到的带隙值与可见光吸收范围（λg = 1240/Eg）的关系；② 带边位置（VBM/CBM）相对水的氧化还原电势（0 / −4.44 eV vs 真空）是否满足全解水；③ 双轴应变、O-掺杂、C-空位各自如何调控能带结构及其物理机理；④ ENCUT 与 K 网格收敛性测试结论。讨论完成后，请让助教按"研究背景 → 计算方法 → 结果与讨论 → 结论与展望"框架引导你梳理《材料筛选评估报告》思路，独立撰写后人工核验数据再到 ② 提交。对话记录全程留痕、教师端可查。</div>
+  </div>
+
+  <div class="panel">
+    <h3>② 《材料筛选评估报告》提交</h3>
+    <div class="meta">对应第 19 步"计算报告生成"、第 20 步"AI 报告点评与修改" · 成绩类型：实验报告</div>
+    <p class="desc">将 AI 辅助生成的报告初稿按学术规范改写定稿后在此提交。支持上传 docx / pdf 附件（≤10MB），或直接粘贴报告正文（数据表、结论等）。若已让 AI 点评，请连同修改说明一起提交。</p>
+    <input id="rptTitle" class="in" placeholder="报告标题，例如：《材料筛选评估报告——O 掺杂 g-C3N4 的光催化活性评估》">
+    <textarea id="rptContent" class="in" rows="7" placeholder="报告摘要或正文（也可仅上传附件）：研究背景、计算方法、结果与讨论（带隙、带边位置、可见光活性）、结论与展望……"></textarea>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <label class="filebtn">📎 选择附件（≤10MB）<input type="file" id="rptFile" style="display:none" onchange="onPick('rptFile','rptFileInfo')"></label>
+      <span id="rptFileInfo" class="hint" style="margin:0"></span>
+    </div>
+    <button class="go-btn" onclick="doSubmit('rpt')">📤 提交计算报告</button>
+    <span id="rptMsg"></span>
+  </div>
+
+  <div class="panel">
+    <h3>③ 答辩反思提交</h3>
+    <div class="meta">对应第 21 步"小组答辩与同伴互评"、第 22 步"反思与改进" · 成绩类型：答辩反思</div>
+    <p class="desc">完成小组答辩后，撰写反思日志：本次实验中 <b>AI 的作用与局限</b>（三关流程：AI 生成 — 人工核验 — 计算验证）、自身<b>计算能力的成长与不足</b>（建模 / 收敛测试 / 后处理）、以及<b>下一步的改进方向</b>（如燃料电池催化、光伏材料等关联体系）。支持附件。</p>
+    <textarea id="refContent" class="in" rows="7" placeholder="反思日志正文……"></textarea>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <label class="filebtn">📎 选择附件（≤10MB）<input type="file" id="refFile" style="display:none" onchange="onPick('refFile','refFileInfo')"></label>
+      <span id="refFileInfo" class="hint" style="margin:0"></span>
+    </div>
+    <button class="go-btn" onclick="doSubmit('ref')">📤 提交答辩反思</button>
+    <span id="refMsg"></span>
+  </div>
+
+  <div class="panel">
+    <h3>④ 我的提交记录与成绩</h3>
+    <div class="meta">全部提交（含实验流程页与 3D 仿真实验台的提交）及教师评分、评语。</div>
+    <div id="mySubs"><span class="hint">加载中……</span></div>
+  </div>
+
+</div>
+
+<script>
+/* ---------- 登录守卫 ---------- */
+var user = null;
+try{ user = JSON.parse(localStorage.getItem('ai_lab_auth') || 'null'); }catch(e){}
+if(!user){ location.href = 'index.html'; }
+document.getElementById('stuName').textContent = user ? user.name + '（' + user.sid + '）' : '—';
+var TOKEN = user && user.token ? user.token : '';
+
+function esc(s){
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function api(path, data, cb){
+  fetch(path, {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(data || {})})
+    .then(function(r){ return r.json(); }).then(cb)
+    .catch(function(){ cb({ok:false, msg:'服务器连接失败'}); });
+}
+function onPick(fileId, infoId){
+  var f = document.getElementById(fileId).files[0];
+  var info = document.getElementById(infoId);
+  if(!f){ info.textContent = ''; return; }
+  if(f.size > 10 * 1024 * 1024){
+    info.textContent = '「' + f.name + '」超过 10MB，请压缩后再选。';
+    info.className = 'submsg-err';
+    document.getElementById(fileId).value = '';
+    return;
+  }
+  info.textContent = '已选：' + f.name + '（' + Math.round(f.size/1024) + ' KB）';
+  info.className = 'submsg-ok';
+}
+function doSubmit(which){
+  var isRpt = (which === 'rpt');
+  var msgEl = document.getElementById(isRpt ? 'rptMsg' : 'refMsg');
+  var fileEl = document.getElementById(isRpt ? 'rptFile' : 'refFile');
+  var file = fileEl.files[0];
+  var kind = isRpt ? '计算报告' : '答辩反思';
+  var step = isRpt ? '第19-20步 · 计算报告与点评' : '第21-22步 · 答辩与反思';
+  var title, content;
+  if (isRpt){
+    title = document.getElementById('rptTitle').value.trim();
+    content = document.getElementById('rptContent').value.trim();
+    if (!title && !file) return setMsg(msgEl, '请填写报告标题（附件文件名不含标题）。', false);
+  } else {
+    title = '答辩反思（' + (user ? user.name : '') + '）';
+    content = document.getElementById('refContent').value.trim();
+    if (!content && !file) return setMsg(msgEl, '请填写反思内容或上传附件。', false);
+  }
+  if (!TOKEN) return setMsg(msgEl, '请先退出并重新登录。', false);
+  var send = function(file_b64){
+    var payload = {token: TOKEN, kind: kind, step: step, title: title || file.name, content: content};
+    if (file){
+      payload.file_name = file.name;
+      payload.file_b64 = file_b64;
+    }
+    api('/api/submit', payload, function(res){
+      if (res.ok){
+        if (isRpt){
+          document.getElementById('rptTitle').value = '';
+          document.getElementById('rptContent').value = '';
+        } else {
+          document.getElementById('refContent').value = '';
+        }
+        fileEl.value = '';
+        document.getElementById(isRpt ? 'rptFileInfo' : 'refFileInfo').textContent = '';
+        setMsg(msgEl, '✓ 提交成功，教师端已收到并可在后台批阅。', true);
+        loadMine();
+      } else setMsg(msgEl, res.msg || '提交失败', false);
+    });
+  };
+  if (file){
+    var reader = new FileReader();
+    reader.onload = function(){ send(reader.result); };
+    reader.onerror = function(){ setMsg(msgEl, '附件读取失败，请重试。', false); };
+    reader.readAsDataURL(file);
+  } else send('');
+}
+function setMsg(el, t, okk){
+  el.textContent = t;
+  el.className = okk ? 'submsg-ok' : 'submsg-err';
+}
+function loadMine(){
+  if (!TOKEN) return;
+  api('/api/my_records', {token: TOKEN}, function(res){
+    var box = document.getElementById('mySubs');
+    if (!res.ok){ box.innerHTML = '<span class="hint">' + esc(res.msg || '加载失败') + '</span>'; return; }
+    var subs = res.submissions || [];
+    box.innerHTML = subs.length ? subs.map(function(s){
+      var sc = (s.score == null) ? '<span style="color:#c9a227;font-weight:700">⏳ 待批阅</span>'
+        : '<span class="score">💯 得分：' + esc(s.score) + '</span>';
+      var fb = s.feedback ? '<div class="fb">教师评语：' + esc(s.feedback) + '</div>' : '';
+      var att = s.file_name ? '<span class="filetag">📎 ' + esc(s.file_name) +
+        (s.file_size ? '（' + Math.round(s.file_size/1024) + ' KB）' : '') + '</span>' : '';
+      return '<div class="mysub"><span class="kind">' + esc(s.kind) + '</span><b>' + esc(s.title) + '</b>' + att +
+        '　<span class="hint" style="margin:0">' + esc(s.step || '') + ' · ' + esc(s.created_at) + '</span>　' + sc + fb + '</div>';
+    }).join('') : '<span class="hint">暂无提交记录。</span>';
+  });
+}
+loadMine();
+
+/* ---------- AI 助教"小碳老师"（自建 ai.html，同源自适应 iframe） ---------- */
+/* src 直接写在 iframe 标签上；保留 loadAI 的留痕打点 */
+function fitAI(){ return; }
+window.addEventListener('resize', fitAI);
+function loadAI(){
+  if(TOKEN){
+    api('/api/log_search', {token: TOKEN, keywords: '[报告页] 打开智能体讨论计算结果物理含义', mode: 'deep_open'}, function(){});
+  }
+}
+/* 页面加载后启动留痕打点（滚动进入视野时） */
+requestAnimationFrame(fitAI);
+if('IntersectionObserver' in window){
+  var _aiObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){ loadAI(); _aiObs.disconnect(); }
+    });
+  }, {threshold: 0.1});
+  _aiObs.observe(document.getElementById('aiPanel'));
+}else{
+  loadAI();
+}
+</script>
+</body>
+</html>

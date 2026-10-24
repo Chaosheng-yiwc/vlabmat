@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script>
+/* 云端 API 网关适配：内网部署直连本地 server；公网(静态托管)走云函数网关 */
+(function(){
+  var h = location.hostname || "";
+  if (/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|localhost$|127\.)/.test(h)) return;
+  var GW = "https://vlabmat-d9gh3999c21421e1b.service.tcloudbase.com/apigw";
+  var SGI = "https://vlabmat-d9gh3999c21421e1b.service.tcloudbase.com/structgw";
+  var _f = window.fetch ? window.fetch.bind(window) : null;
+  if (!_f) return;
+  window.fetch = function(input, init){
+    init = init || {};
+    var url = (typeof input === "string") ? input : (input && input.url) || "";
+    if (url.indexOf("/api/") === 0) {
+      var route = url.split("?")[0];
+      var qi = url.indexOf("?");
+      var body = {};
+      if (init.body) { try { body = JSON.parse(init.body); } catch (e) { body = { _raw: String(init.body) }; } }
+      if (qi >= 0) {
+        url.slice(qi + 1).split("&").forEach(function(kv){
+          if (kv) { var t = kv.split("=");
+            body[decodeURIComponent(t[0])] = decodeURIComponent((t[1] || "").replace(/\+/g, " ")); }
+        });
+      }
+      body.__route = route;
+      init.method = "POST";
+      init.body = JSON.stringify(body);
+      init.headers = Object.assign({ "Content-Type": "application/json; charset=utf-8" }, init.headers || {});
+      return _f(route.indexOf("/api/structure") === 0 ? SGI : GW, init);
+    }
+    return _f(input, init);
+  };
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 赋能 g-C₃N₄ 光催化分解水制氢虚拟仿真实验 · 曲阜师范大学</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"Source Han Sans SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+       min-height:100vh;display:flex;flex-direction:column;
+       background:#e8f6f6}
+  /* ---------- 顶部白条 ---------- */
+  .topbar{background:#fff;display:flex;align-items:center;gap:12px;
+          padding:10px 22px;box-shadow:0 2px 8px rgba(10,40,80,.12);z-index:5}
+  .logo{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7fb2e5,#1a5dab);
+        display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;flex:none}
+  .tb-title{flex:1;font-size:17px;font-weight:700;color:#123c74;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tb-btns{display:flex;gap:8px;flex:none}
+  .tb-btn{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;
+          color:#fff;border-radius:14px;padding:5px 13px;text-decoration:none;
+          background:linear-gradient(135deg,#1f7ad4,#12447e);transition:filter .15s,transform .15s}
+  .tb-btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
+  .tb-btn.gold{background:linear-gradient(135deg,#e0b13e,#a97d12);color:#3a2c00}
+  .tb-btn.teal{background:linear-gradient(135deg,#19b8a6,#0d7d70)}
+  /* ---------- 主体深蓝舞台 ---------- */
+  .stage{flex:1;position:relative;overflow:hidden;color:#fff;
+         background:linear-gradient(180deg,#0c2c5e 0%,#0a2350 45%,#081b3e 100%)}
+  .stage::before{content:"";position:absolute;inset:0;
+         background:radial-gradient(60% 42% at 50% 88%,rgba(46,150,255,.30),transparent 70%),
+                    radial-gradient(38% 30% at 12% 22%,rgba(38,110,220,.18),transparent 70%),
+                    radial-gradient(34% 26% at 88% 18%,rgba(38,110,220,.15),transparent 70%)}
+  /* 地台光圈 */
+  .disc{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);
+        width:min(880px,92vw);height:150px;border-radius:50%;
+        background:radial-gradient(50% 55% at 50% 46%,rgba(64,170,255,.38),rgba(30,90,190,.14) 62%,transparent 75%);
+        filter:blur(2px)}
+  .disc::after{content:"";position:absolute;inset:12% 6%;border-radius:50%;
+        border:1px solid rgba(110,190,255,.35);
+        box-shadow:0 0 24px rgba(80,170,255,.35) inset}
+  .inner{position:relative;z-index:2;max-width:960px;margin:0 auto;
+         padding:38px 20px 20px;text-align:center}
+  .emblem{width:74px;height:74px;margin:0 auto 10px;border-radius:50%;
+          background:radial-gradient(circle at 35% 30%,#8fc0ee,#16467f);
+          display:flex;align-items:center;justify-content:center;font-size:38px;
+          box-shadow:0 0 26px rgba(90,170,255,.45)}
+  .uni{font-size:30px;font-weight:700;letter-spacing:10px;text-shadow:0 2px 10px rgba(0,0,0,.4)}
+  .uni-en{font-size:11.5px;letter-spacing:4px;color:#9fc6ee;margin-top:4px}
+  .proj{margin:20px auto 6px;font-size:24px;font-weight:700;letter-spacing:2px;
+        text-shadow:0 2px 12px rgba(0,40,90,.6)}
+  .proj-sub{font-size:13px;color:#a9cdf2;letter-spacing:1px}
+  /* ---------- 三圆环按钮 ---------- */
+  .rings{display:flex;justify-content:center;gap:min(9vw,110px);margin:44px 0 30px}
+  .ring-item{display:flex;flex-direction:column;align-items:center;gap:14px;text-decoration:none}
+  .ring{width:118px;height:118px;border-radius:50%;position:relative;
+        display:flex;align-items:center;justify-content:center;font-size:42px;
+        background:radial-gradient(circle at 38% 32%,rgba(70,160,255,.28),rgba(20,70,150,.12));
+        border:2px solid rgba(120,200,255,.85);
+        box-shadow:0 0 22px rgba(70,160,255,.55),0 0 46px rgba(70,160,255,.22) inset;
+        transition:transform .18s,box-shadow .18s}
+  .ring::before{content:"";position:absolute;inset:-9px;border-radius:50%;
+        border:1px dashed rgba(120,200,255,.45)}
+  .ring-item:hover .ring{transform:scale(1.08);
+        box-shadow:0 0 34px rgba(110,190,255,.85),0 0 60px rgba(110,190,255,.35) inset}
+  .ring-label{font-size:21px;font-weight:700;color:#8fd6ff;letter-spacing:6px;
+        text-shadow:0 0 14px rgba(90,180,255,.8)}
+  .ring-tip{font-size:11.5px;color:#7fb0dd;margin-top:-8px}
+  /* ---------- 底部 ---------- */
+  .foot{position:relative;z-index:2;text-align:center;padding:16px;
+        font-size:13px;color:#9fc6ee;letter-spacing:2px}
+  @media (max-width:640px){
+    .uni{font-size:22px;letter-spacing:5px}
+    .proj{font-size:17px}
+    .ring{width:92px;height:92px;font-size:32px}
+    .rings{gap:7vw}
+  }
+  /* ---------- 引导视频悬浮层 ---------- */
+  .vwrap{display:none;position:fixed;inset:0;z-index:50;
+         background:rgba(4,14,32,.78);backdrop-filter:blur(3px);
+         align-items:center;justify-content:center;padding:20px}
+  .vwrap.on{display:flex}
+  .vbox{position:relative;width:min(920px,94vw);background:#04122e;border-radius:14px;
+        box-shadow:0 18px 60px rgba(0,0,0,.55);overflow:hidden;
+        border:1px solid rgba(120,200,255,.35)}
+  .vbox video{display:block;width:100%;max-height:76vh;background:#000}
+  .vtitle{display:flex;align-items:center;justify-content:space-between;
+          padding:10px 14px;font-size:14px;font-weight:600;color:#bfe0ff;
+          border-bottom:1px solid rgba(120,200,255,.18)}
+  .vclose{cursor:pointer;border:none;background:rgba(120,200,255,.14);color:#bfe0ff;
+          font-size:15px;border-radius:8px;padding:4px 12px;line-height:1.5}
+  .vclose:hover{background:rgba(120,200,255,.30)}
+  .vbox video{max-height:72vh}
+</style>
+</head>
+<body>
+  <!-- 顶部导航条 -->
+  <div class="topbar">
+    <div class="logo">🔬</div>
+    <div class="tb-title">AI 赋能 g-C₃N₄ 光催化分解水制氢虚拟仿真实验</div>
+    <div class="tb-btns">
+      <a class="tb-btn" href="index.html">🏠 返回首页</a>
+      <a class="tb-btn teal" href="javascript:void(0)" onclick="openVideo()">🎬 引导视频</a>
+      <a class="tb-btn gold" href="admin.html" target="_blank">👨‍🏫 教师端</a>
+    </div>
+  </div>
+
+  <!-- 深蓝舞台 -->
+  <div class="stage">
+    <div class="disc"></div>
+    <div class="inner">
+      <div class="emblem">🎓</div>
+      <div class="uni">曲阜师范大学</div>
+      <div class="uni-en">QUFU NORMAL UNIVERSITY</div>
+      <div class="proj">AI 赋能 g-C₃N₄ 光催化分解水制氢虚拟仿真实验</div>
+      <div class="proj-sub">研究资料调研 → 计算模拟 → 报告撰写 · 全程留痕 · 可评可测</div>
+
+      <div class="rings">
+        <a class="ring-item" href="experiment.html">
+          <div class="ring">📖</div>
+          <div class="ring-label">预 习</div>
+          <div class="ring-tip">研究资料调研</div>
+        </a>
+        <a class="ring-item" href="simulation.html">
+          <div class="ring">🧪</div>
+          <div class="ring-label">教 学</div>
+          <div class="ring-tip">计算模拟实验台</div>
+        </a>
+        <a class="ring-item" href="report.html">
+          <div class="ring">📝</div>
+          <div class="ring-label">考 核</div>
+          <div class="ring-tip">报告撰写提交</div>
+        </a>
+        <a class="ring-item" href="ai.html">
+          <div class="ring">🤖</div>
+          <div class="ring-label">答 疑</div>
+          <div class="ring-tip">AI 助教小碳老师</div>
+        </a>
+      </div>
+    </div>
+    <div class="foot">曲阜师范大学 · 物理工程学院</div>
+  </div>
+
+  <!-- 引导视频悬浮层 -->
+  <div class="vwrap" id="vwrap" onclick="if(event.target===this)closeVideo()">
+    <div class="vbox">
+      <div class="vtitle">
+        <span>🎬 教学引导视频</span>
+        <button class="vclose" onclick="closeVideo()">✕ 关闭</button>
+      </div>
+      <video id="gvideo" src="media/3.教学引导视频1.mp4" controls preload="metadata"></video>
+    </div>
+  </div>
+
+  <script>
+    function openVideo(){
+      document.getElementById('vwrap').classList.add('on');
+      var v = document.getElementById('gvideo');
+      v.play().catch(function(){});
+    }
+    function closeVideo(){
+      var v = document.getElementById('gvideo');
+      v.pause();
+      document.getElementById('vwrap').classList.remove('on');
+    }
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape') closeVideo();
+    });
+  </script>
+</body>
+</html>

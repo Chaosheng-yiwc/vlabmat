@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script>
+/* 云端 API 网关适配：内网部署直连本地 server；公网(静态托管)走云函数网关 */
+(function(){
+  var h = location.hostname || "";
+  if (/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|localhost$|127\.)/.test(h)) return;
+  var GW = "https://vlabmat-d9gh3999c21421e1b.service.tcloudbase.com/apigw";
+  var SGI = "https://vlabmat-d9gh3999c21421e1b.service.tcloudbase.com/structgw";
+  var _f = window.fetch ? window.fetch.bind(window) : null;
+  if (!_f) return;
+  window.fetch = function(input, init){
+    init = init || {};
+    var url = (typeof input === "string") ? input : (input && input.url) || "";
+    if (url.indexOf("/api/") === 0) {
+      var route = url.split("?")[0];
+      var qi = url.indexOf("?");
+      var body = {};
+      if (init.body) { try { body = JSON.parse(init.body); } catch (e) { body = { _raw: String(init.body) }; } }
+      if (qi >= 0) {
+        url.slice(qi + 1).split("&").forEach(function(kv){
+          if (kv) { var t = kv.split("=");
+            body[decodeURIComponent(t[0])] = decodeURIComponent((t[1] || "").replace(/\+/g, " ")); }
+        });
+      }
+      body.__route = route;
+      init.method = "POST";
+      init.body = JSON.stringify(body);
+      init.headers = Object.assign({ "Content-Type": "application/json; charset=utf-8" }, init.headers || {});
+      return _f(route.indexOf("/api/structure") === 0 ? SGI : GW, init);
+    }
+    return _f(input, init);
+  };
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>研究资料调研 · AI赋能光催化分解水制氢材料设计虚拟仿真实验</title>
+<style>
+  :root{--ink:#1a2332;--sub:#5a6b80;--line:#dfe6ee;--bg:#f3f6fa;--blue:#1a5dab;--blue-d:#12447e;
+        --gold:#c9a227;--green:#2e8b57;--card:#fff}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);height:100vh;
+       display:flex;flex-direction:column;overflow:hidden}
+  /* top bar */
+  .topbar{background:linear-gradient(135deg,#0e3a6d,#1a5dab);color:#fff;padding:10px 20px;
+          display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+  .topbar .t{font-size:16px;font-weight:700}
+  .topbar .meta{font-size:13.5px;display:flex;gap:18px;align-items:center}
+  .topbar .meta b{color:#ffd97a}
+  .quit{color:#ffd97a;text-decoration:none;font-size:13.5px}
+  .jump{background:var(--gold);color:#3a2c00;padding:4px 12px;border-radius:6px;font-weight:700}
+  .jump2{background:#7fc7a5;color:#0d3a24;padding:4px 12px;border-radius:6px;font-weight:700}
+  /* layout */
+  .layout{flex:1;display:flex;min-height:0}
+  /* sidebar */
+  .side{width:280px;background:#fff;border-right:1px solid var(--line);overflow-y:auto;flex-shrink:0}
+  .side h4{font-size:12.5px;color:var(--sub);padding:12px 16px 6px;letter-spacing:1px}
+  .stg{font-size:14px;font-weight:700;color:var(--blue-d);padding:8px 16px 4px}
+  .stp{display:flex;align-items:center;gap:8px;padding:6px 16px;font-size:13.5px;cursor:pointer;color:#445263}
+  .stp:hover{background:#f0f5fb}
+  .stp.cur{background:#e8f1fb;color:var(--blue-d);font-weight:700;border-left:3px solid var(--blue)}
+  .stp.done{color:#9aa7b6;text-decoration:line-through}
+  .dot{width:20px;height:20px;border-radius:50%;background:#e3eaf2;color:#7c8ba0;font-size:11px;
+       display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .cur .dot{background:var(--blue);color:#fff}
+  .done .dot{background:var(--green);color:#fff}
+  /* main */
+  .main{flex:1;overflow-y:auto;padding:22px 28px}
+  .crumb{font-size:13px;color:var(--sub);margin-bottom:8px}
+  .main h2{font-size:21px;color:var(--blue-d);margin-bottom:4px}
+  .stepmeta{font-size:13px;color:var(--sub);margin-bottom:16px}
+  .stepmeta span{margin-right:16px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-bottom:16px}
+  .panel h3{font-size:15.5px;color:var(--blue-d);margin-bottom:10px}
+  .panel p,.panel li{font-size:14.5px;color:#33404f;line-height:1.8}
+  .panel ul{padding-left:20px}
+  .ai-tabs{display:flex;gap:8px;margin:8px 0 12px}
+  .ai-tab{padding:8px 16px;border-radius:8px;border:1px solid var(--line);background:#f7fafd;cursor:pointer;font-size:13px;color:#33404f}
+  .ai-tab.active{background:#12447e;color:#fff;border-color:#12447e}
+  .go-btn{background:var(--gold);color:#3a2c00;border:none;padding:11px 30px;border-radius:8px;
+          font-size:15.5px;font-weight:700;cursor:pointer;font-family:inherit}
+  .go-btn:hover{filter:brightness(1.06)}
+  .done-tip{color:var(--green);font-weight:700}
+  /* chat */
+  .chat{display:flex;flex-direction:column;height:340px}
+  .ai-crop{position:relative;height:620px;overflow:hidden;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .ai-crop iframe{position:absolute;top:0;left:50%;transform:translateX(-50%);width:1280px;height:100%;border:0}
+  /* 智能体输入框加宽：平台输入框宽度 = min(58vw, 780px)，把跨域 iframe 视口
+     动态设为 面板宽/0.58 并居中裁剪，使 58vw 恰好铺满可视窗口（fitAI） */
+  .chatlog{flex:1;overflow-y:auto;background:#f7fafd;border:1px solid var(--line);border-radius:8px;padding:12px}
+  .bubble{max-width:78%;margin-bottom:10px;padding:8px 13px;border-radius:10px;font-size:13.8px;line-height:1.7}
+  .ai{background:#e8f1fb;color:#1f3d5f;border-top-left-radius:2px}
+  .me{background:#d9ead9;color:#2c4a2f;margin-left:auto;border-top-right-radius:2px}
+  .chatin{display:flex;gap:8px;margin-top:10px}
+  .chatin input{flex:1;padding:9px 12px;border:1.5px solid #ccd6e2;border-radius:7px;font-size:14px;font-family:inherit;outline:none}
+  .chatin input:focus{border-color:var(--blue)}
+  .chatin button{background:var(--blue);color:#fff;border:none;border-radius:7px;padding:0 20px;cursor:pointer;font-size:14px}
+  .hint{font-size:12px;color:#9aa7b6;margin-top:8px}
+  /* 结果提交 */
+  .sub-block{background:#f7fafd;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+  .sub-block h4{font-size:13.5px;color:var(--blue-d);margin-bottom:6px}
+  .sub-in{width:100%;padding:9px 12px;border:1.5px solid #ccd6e2;border-radius:7px;font-size:14px;
+          font-family:inherit;outline:none;margin-bottom:8px;background:#fff}
+  .sub-in:focus{border-color:var(--blue)}
+  select.sub-in{width:auto}
+  .kwitem{display:inline-block;background:#eef4fb;border:1px solid #d5e3f3;color:#2b527e;border-radius:14px;
+          padding:3px 10px;font-size:12.5px;margin:3px 6px 3px 0}
+  .kwitem i{color:#9aa7b6;font-style:normal;margin-left:4px}
+  .mysub{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:#fff;font-size:13.5px}
+  .mysub .score{color:var(--gold);font-weight:700}
+  .mysub .fb{color:#5a6b80;margin-top:4px}
+  .submsg-ok{color:var(--green);font-weight:700;font-size:13px;margin-left:10px}
+  .submsg-err{color:#c0392b;font-weight:700;font-size:13px;margin-left:10px}
+  .filebtn{display:inline-block;background:#eef4fb;border:1px solid #c9dbef;color:var(--blue-d);
+           border-radius:7px;padding:8px 14px;font-size:13.5px;cursor:pointer;user-select:none}
+  .filebtn:hover{background:#e0edfa}
+  .filetag{display:inline-block;background:#fdf6e3;border:1px solid #ecd9a0;color:#7a5d00;border-radius:6px;
+           padding:2px 8px;font-size:12px;margin-left:6px}
+  /* 任务委托书 */
+  .letter{position:relative;background:#fffdf6;border:1px solid #e6d9b8;border-radius:10px;
+          padding:34px 40px 30px;font-size:14.8px;line-height:2.05;color:#3a3226}
+  .letter:before{content:"";position:absolute;inset:6px;border:1.5px solid #d8c48a;border-radius:7px;pointer-events:none}
+  .letter h3{text-align:center;font-size:19px;letter-spacing:6px;color:#7a5d00;margin-bottom:16px}
+  .letter .to{font-weight:700;margin-bottom:8px}
+  .letter .task{background:#fbf3dd;border:1px dashed #cbb06a;border-radius:8px;padding:14px 18px;margin:14px 0}
+  .letter .task b{color:#7a5d00}
+  .letter .sign{text-align:right;margin-top:18px;line-height:1.9}
+  .stamp{position:absolute;right:54px;bottom:52px;width:104px;height:104px;border:3px solid rgba(190,40,40,.75);
+         border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;
+         color:rgba(190,40,40,.8);font-size:12.5px;font-weight:700;line-height:1.5;transform:rotate(-14deg);
+         padding:10px;pointer-events:none}
+  /* 预习测评 */
+  .qitem{background:#f7fafd;border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:12px}
+  .qitem.right{background:#f0faf3;border-color:#bfe3cd}
+  .qitem.wrong{background:#fdf3f2;border-color:#f0c7c2}
+  .qitem .q{font-size:14.3px;font-weight:700;color:#2c3a4a;margin-bottom:8px}
+  .qitem label{display:block;font-size:13.8px;color:#33404f;padding:5px 8px;border-radius:6px;cursor:pointer;line-height:1.6}
+  .qitem label:hover{background:#eef4fb}
+  .qitem.done label{cursor:default}
+  .qitem label.sel{background:#e3edf9}
+  .qitem.done label.ans{background:#d8f2e0;color:#1d5c36;font-weight:700}
+  .qitem.done label.wrongpick{background:#fadfd9;color:#8c2f21;font-weight:700}
+  .qitem .exp{font-size:12.5px;color:#5a6b80;margin-top:8px;display:none;line-height:1.7}
+  .qitem.done .exp{display:block}
+  .quiz-score{font-size:17px;font-weight:700;color:var(--blue-d);margin:4px 0 10px}
+  .quiz-score b{color:#c9a227;font-size:24px}
+  .quiz-up{font-size:13px;color:var(--green);font-weight:700;margin-left:12px}
+  /* 页面内重新登录弹窗 */
+  .modal-mask{position:fixed;inset:0;background:rgba(15,35,60,.55);display:none;
+              align-items:center;justify-content:center;z-index:999}
+  .modal-mask.show{display:flex}
+  .modal{background:#fff;border-radius:12px;padding:26px 30px;width:360px;max-width:92vw;
+         box-shadow:0 18px 50px rgba(10,30,60,.3)}
+  .modal h3{font-size:17px;color:var(--blue-d);margin-bottom:6px}
+  .modal p{font-size:13px;color:var(--sub);line-height:1.7;margin-bottom:12px}
+  .modal input{width:100%;padding:10px 12px;border:1.5px solid #ccd6e2;border-radius:7px;
+               font-size:14px;font-family:inherit;outline:none;margin-bottom:10px}
+  .modal input:focus{border-color:var(--blue)}
+  .modal .row{display:flex;gap:10px;justify-content:flex-end;margin-top:4px}
+  .modal .btn2{padding:9px 20px;border-radius:8px;border:1px solid var(--line);
+               background:#f4f7fb;cursor:pointer;font-size:14px;font-family:inherit}
+  .modal .btn1{padding:9px 20px;border-radius:8px;border:none;background:var(--blue);
+               color:#fff;cursor:pointer;font-size:14px;font-weight:700;font-family:inherit}
+  #relogMsg{font-size:12.5px;min-height:18px;margin-bottom:6px}
+</style>
+</head>
+<body>
+
+<div class="modal-mask" id="relogMask">
+  <div class="modal">
+    <h3>🔑 重新登录</h3>
+    <p id="relogWhy">检测到本次登录缺少安全令牌（旧版登录）。为同步成绩到教师端，请输入登录密码重新验证；学号已自动填入。</p>
+    <input id="relogSid" placeholder="学号/工号" autocomplete="username">
+    <input id="relogPass" type="password" placeholder="登录密码" autocomplete="current-password">
+    <div id="relogMsg" class="submsg-err"></div>
+    <div class="row">
+      <button class="btn2" onclick="closeRelog()">稍后再说</button>
+      <button class="btn1" onclick="doRelog()">重新登录</button>
+    </div>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="t">AI赋能光催化分解水制氢材料设计虚拟仿真实验 · <span style="font-weight:400;font-size:14px">板块一 · 研究资料调研</span></div>
+  <div class="meta">
+    <span>学生：<b id="stuName">—</b></span>
+    <span>用时 <b id="timer">00:00</b></span>
+    <span>进度 <b id="prog">0 / 6</b></span>
+    <a class="quit jump" href="simulation.html">🔬 3D 仿真实验台</a>
+    <a class="quit jump2" href="report.html">📄 报告提交页</a>
+    <a class="quit" href="lab.html">返回首页</a>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="side" id="side"></div>
+  <div class="main">
+    <div class="crumb" id="crumb"></div>
+    <h2 id="stTitle"></h2>
+    <div class="stepmeta"><span>⏱ 合理用时：<b id="stTime"></b></span><span>💯 本步满分：<b id="stScore"></b></span><span>📄 成绩类型：<b id="stType"></b></span></div>
+
+    <div class="panel">
+      <h3>任务说明</h3>
+      <p id="stDesc" style="white-space:pre-line"></p>
+    </div>
+
+    <div id="stepExtra"></div>
+
+    <div class="panel" id="aiPanel">
+      <h3>🤖 实验智能体"小碳老师"<span style="font-size:12px;color:#7a8798;font-weight:normal">· 由学校网络中心大模型平台（DeepSeek）驱动</span></h3>
+      <div class="ai-tabs">
+        <button class="ai-tab active" id="tabDeep" onclick="switchAI('deep',1)">深度模式 · DeepSeek</button>
+        <button class="ai-tab" id="tabFaq" onclick="switchAI('faq',1)">结果提交</button>
+      </div>
+      <div id="aiDeepWrap">
+        <div class="ai-crop" style="height:640px">
+          <iframe id="aiFrame" src="ai.html?embed=1" style="top:0;left:0;transform:none;width:100%;height:100%" allow="microphone"></iframe>
+        </div>
+        <div class="hint" style="margin-top:8px">深度对话由本平台自建 DeepSeek 助教提供（需登录实验账号，对话记录全程留痕、教师端可查）。AI 生成内容仍须逐条核验（三关流程）。检索完成后请到"结果提交"记录关键词并提交结果。</div>
+      </div>
+      <div id="aiFaqWrap" style="display:none">
+        <div class="sub-block">
+          <h4>① 检索关键词记录</h4>
+          <div class="hint" style="margin:0 0 8px">在"深度模式"完成资料检索后，把使用的关键词记录下来，教师端可查看你的检索轨迹。</div>
+          <div class="chatin" style="margin-top:0">
+            <input id="kwInput" placeholder="输入本次检索关键词，如：g-C3N4 掺杂 带隙">
+            <button type="button" onclick="recordKw()">＋ 记录</button>
+          </div>
+          <div id="myKw" style="margin-top:8px"><span class="hint">暂无检索记录。</span></div>
+        </div>
+        <div class="sub-block">
+          <h4>② 提交作业结果</h4>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:0;align-items:center">
+            <select id="subKind" class="sub-in">
+              <option>阶段性成果</option>
+              <option>调研摘要</option>
+              <option>实验报告</option>
+            </select>
+            <span id="curStepTag" style="font-size:13px;font-weight:700;color:var(--blue-d)">当前提交步骤：第1步 · 预习测评（光催化材料基础）</span>
+            <span class="hint">点击左侧步骤即自动关联，无需选择</span>
+          </div>
+          <textarea id="subContent" class="sub-in" rows="5" placeholder="粘贴或填写提交内容：调研摘要、检索结论、方案设计等（有附件时可为空）"></textarea>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+            <label class="filebtn">📎 选择附件（≤10MB）<input type="file" id="subFile" style="display:none" onchange="onFilePick()"></label>
+            <span id="fileInfo" class="hint" style="margin:0"></span>
+          </div>
+          <button class="go-btn" style="padding:9px 24px;font-size:14px" onclick="doSubmit()">📤 提交给教师</button>
+          <span id="subMsg"></span>
+        </div>
+        <h4 style="font-size:13.5px;color:var(--blue-d);margin:2px 0 6px">我的提交记录（含教师评分与评语）</h4>
+        <div id="mySubs"><span class="hint">暂无提交记录。</span></div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin:6px 0 30px">
+      <button class="go-btn" id="submitBtn" onclick="submitStep()">✓ 完成本步，进入下一步</button>
+      <div id="allDone" class="done-tip" style="margin-top:12px;display:none">🎉 研究资料调研全部完成！请点击右上角"🔬 3D 仿真实验台"进行计算模拟，实验结束后到"📄 报告提交页"提交计算报告与答辩反思。</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- 登录守卫 ---------- */
+var user = null;
+var TOKEN = '';
+try{ user = JSON.parse(localStorage.getItem('ai_lab_auth') || 'null'); }catch(e){}
+if(!user){ location.href = 'index.html'; }
+TOKEN = user && user.token ? user.token : '';
+document.getElementById('stuName').textContent = user ? user.name + '（' + user.sid + '）' : '—';
+
+/* ---------- 研究资料调研 6 步（原阶段一，第一步拆为任务认领 + 预习测评） ---------- */
+var NSTEP = 6;
+var STAGES = [
+  {name:'一、研究资料调研', from:1, to:6}
+];
+var STEPS = {
+  1:['预习测评（光催化材料基础）','10分钟',10,'预习成绩','完成 10 道光催化材料基础选择题，交卷后系统实时评分并自动上传教师端，计入预习成绩。建议先复习光催化与 g-C3N4 相关教材内容再作答。'],
+  2:['任务认领（企业委托书）','5分钟',2,'预习成绩','阅读企业研发委托书，了解"双碳"战略背景、光催化分解水研究的意义与 g-C3N4 研究进展，明确本组研究任务并确认认领。'],
+  3:['智能体研究资料调研','12分钟',5,'预习成绩','与调研智能体对话。\n1、获取光催化分解水材料的种类g-C3N4，截止到今年的典型文献综述\n2、g-C3N4光催化材料的研究现状\n3、梳理掺杂、缺陷、应变等调控策略\n4、调研基于第一性原理对g-C3N4光催化材料的相关研究结果\n形成文献调研报告，从"结果提交"处提交调研结果。'],
+  4:['智能体辅助方案设计','8分钟',4,'操作成绩','与智能体对话讨论：\n1、光催化分解水材料的计算方案。\n2、晶体结构选取、超胞设置。\n3、典型的计算软件及基本原理。\n4、计算流程图。\n形成调研文档，从"结果提交"处提交调研结果。'],
+  5:['智能体生成结构模型','10分钟',5,'操作成绩','与调研智能体对话讨论：\n1、检索g-C3N4原胞的空间群、晶格常数、原子坐标。\n2、生成g-C3N4的晶体结构文件，核验其正确性。\n3、g-C3N4材料的能带调控方法，包括掺杂、缺陷、应变。\n形成调研文档，从"结果提交"处提交调研结果。'],
+  6:['输入文件生成与核验','8分钟',5,'操作成绩','与调研智能体对话：\n1、检索VASP 输入文件（INCAR/POSCAR/KPOINTS/POTCAR）及计算方法。\n2、平面波截断能的物理含义。\n3、交换关联泛函PBE和HSE06的物理含义。\n形成调研文档，从"结果提交"处提交调研结果。\n完成后即可前往"3D 仿真实验台"提交真实计算。']
+};
+var DONE_KEY = 'ai_lab_progress_v2_' + (user ? user.sid : '');
+var done = {};
+try{ done = JSON.parse(localStorage.getItem(DONE_KEY) || '{}'); }catch(e){}
+var cur = 1;
+for(var i=1;i<=NSTEP;i++){ if(!done[i]){ cur=i; break; } if(i===NSTEP) cur=NSTEP+1; }
+var CUR_STEP = '第' + (cur <= NSTEP ? cur : 1) + '步 · ' + STEPS[cur <= NSTEP ? cur : 1][0];
+function syncStepTag(){
+  CUR_STEP = (cur >= 1 && cur <= NSTEP) ? ('第' + cur + '步 · ' + STEPS[cur][0]) : '课后成果';
+  var tag = document.getElementById('curStepTag');
+  if (tag) tag.textContent = '当前提交步骤：' + CUR_STEP;
+}
+
+/* ---------- 企业委托书（第 1 步 · 任务认领） ---------- */
+var LETTER_HTML =
+'<div class="panel"><h3>📋 研发任务委托书</h3>' +
+'<div class="letter">' +
+'  <h3>研发任务委托书</h3>' +
+'  <div class="to">致：材料计算物理虚拟仿真实验平台全体"研发工程师"：</div>' +
+'  <p>贵团队好！我司是省内一家从事新能源材料研发的高新技术企业。当前，我国明确提出<b>2030 年前实现碳达峰、2060 年前实现碳中和</b>的"双碳"战略目标，能源结构正加速向清洁化、低碳化转型。<b>绿氢</b>作为理想的无碳能源与化工原料，是实现"双碳"目标的关键支撑，而如何低成本、高效率地制备绿氢，已成为全行业亟待攻克的课题。</p>' +
+'  <p><b>光催化分解水制氢</b>直接利用太阳光驱动水分子分解产生氢气，一步完成"光能 → 化学能"转化，原料取之不尽、产物零碳排放，被业界誉为"人工光合作用"，是绿氢制备最具前景的技术路线之一。然而，高效、稳定、低成本光催化材料的匮乏，一直是制约该技术走向大规模应用的瓶颈。</p>' +
+'  <p><b>石墨相氮化碳（g-C<sub>3</sub>N<sub>4</sub>）</b>是近年来光催化领域最受瞩目的明星材料之一：它带隙约 2.7 eV，具备良好的可见光响应；热稳定性和化学稳定性优异；原料易得、无毒、成本低，适合规模化制备。自 2009 年被报道用于可见光分解水以来，国内外研究团队围绕 g-C<sub>3</sub>N<sub>4</sub> 开展了大量改性研究，包括<b>非金属元素掺杂（O、S、P、B 等）、缺陷工程（碳/氮空位）、晶格应变调控、形貌设计与异质结构建</b>等策略，其量子效率与可见光利用率已获得显著提升，但距离实用化仍有较大空间——载流子复合严重、带边位置与水氧化还原电位的匹配性仍有优化余地。</p>' +
+'  <div class="task">现委托贵团队完成以下研发任务：<br>' +
+'  <b>基于第一性原理计算方法，探究 g-C<sub>3</sub>N<sub>4</sub> 光催化材料的电子结构及改性方法，评估其可见光分解水制氢的可行性，并出具《材料筛选评估报告》。</b><br>' +
+'  <span style="font-size:13.5px;color:#6b5f47">具体包括：完成预习测评 → 调研研究资料 → 建立本征及改性体系结构模型 → 计算能带、态密度与带边位置 → 对比改性前后电子结构变化 → 形成材料筛选结论与研发建议。</span></div>' +
+'  <p>请贵团队按企业标准研发流程（资料调研 → 计算模拟 → 报告撰写 → 方案答辩）推进，过程数据全部留痕，我司将依据报告质量与答辩表现进行验收评价。</p>' +
+'  <div class="sign">绿源新能源材料有限公司 · 研发中心<br>2026 年 10 月</div>' +
+'  <div class="stamp">绿源新能源材料有限公司<br>研发技术部</div>' +
+'</div>' +
+'<div style="text-align:center;margin-top:14px"><button class="go-btn" onclick="claimTask()" id="claimBtn">✓ 我已阅读并认领本任务</button><span id="claimMsg" class="submsg-ok"></span></div></div>';
+
+/* ---------- 预习测评题库（50 题，进入时随机抽 10 题，选项同步打乱） ---------- */
+var QUIZ = [
+  {q:'光催化分解水制氢所利用的一次能源是？',
+   o:['化石燃料','太阳能','核能','地热能'], a:1,
+   e:'光催化以太阳光为唯一能量驱动，是实现"太阳能 → 化学能"转化的理想途径。'},
+  {q:'半导体光催化分解水的三个基本过程是？',
+   o:['吸附、脱附、扩散','加热蒸发、冷凝、收集',
+      '光吸收产生电子-空穴对、光生载流子迁移与分离、表面氧化还原反应',
+      '电解、电镀、沉淀'], a:2,
+   e:'三个基本过程：① 光吸收激发电子-空穴对；② 载流子在体内/表面迁移与分离；③ 光生电子还原 H⁺、空穴氧化 H₂O。'},
+  {q:'热力学上，光催化全解水要求半导体带隙宽度满足？',
+   o:['大于 1.23 eV（实际还需考虑过电位）','小于 0.5 eV','恰好等于 0 eV','越小越好'], a:0,
+   e:'水分解的 Gibbs 自由能为 1.23 eV/电子，故带隙至少大于 1.23 eV；考虑过电位与损失，实际通常需 1.6～2.4 eV。'},
+  {q:'pH = 0 时，H⁺/H₂ 的还原电位（vs NHE）为？',
+   o:['+1.23 V','−1.23 V','0 V','+0.50 V'], a:2,
+   e:'H⁺/H₂ 为 0 V（还原电位基准），O₂/H₂O 为 +1.23 V。带边位置必须跨越这两个电位才具备全解水热力学驱动力。'},
+  {q:'g-C₃N₄（石墨相氮化碳）的禁带宽度约为？',
+   o:['0.2 eV','1.1 eV','2.7 eV','5.5 eV'], a:2,
+   e:'g-C₃N₄ 带隙约 2.7 eV，对应吸收边约 460 nm，具备良好的可见光响应。'},
+  {q:'g-C₃N₄ 的组成元素是？',
+   o:['C 和 O','C 和 N','Si 和 N','N 和 H'], a:1,
+   e:'g-C₃N₄ 由碳、氮两种元素组成，是典型的有机聚合物半导体，三-s-三嗪环为基本结构单元。'},
+  {q:'g-C₃N₄ 可见光响应良好，但作为光催化剂的主要不足是？',
+   o:['价格过于昂贵','光生电子-空穴对复合严重、量子效率偏低','在空气中不稳定、易分解','完全不能吸收可见光'], a:1,
+   e:'聚合物半导体载流子迁移率低、复合严重，导致量子效率受限，这正是改性研究的核心出发点。'},
+  {q:'下列哪项不属于常用的 g-C₃N₄ 改性策略？',
+   o:['非金属元素掺杂（O、S、P 等）','构建异质结','缺陷工程（碳/氮空位）','将其转变为金属导体'], a:3,
+   e:'常用策略包括元素掺杂、缺陷工程、形貌调控、异质结与应变工程等；"转为金属导体"会丧失半导体光催化特性。'},
+  {q:'采用 PBE 泛函的 DFT 计算得到的带隙通常？',
+   o:['与实验值完全一致','系统性高估实验值','系统性低估实验值','与带隙大小无关'], a:2,
+   e:'PBE 泛函存在"带隙低估"问题：对 g-C₃N₄ 算得约 1.4 eV，而实验约 2.7 eV。教学对比有助于理解泛函局限性。'},
+  {q:'判断一种半导体是否具有可见光分解水活性，除带隙宽度外，还必须考察？',
+   o:['晶体颜色与光泽','带边位置与水的氧化还原电位的相对位置','分子量大小','熔点高低'], a:1,
+   e:'导带底须高于 H⁺/H₂ 还原电位（更负）、价带顶须低于 O₂/H₂O 氧化电位（更正），光生载流子才有氧化还原能力。'},
+  {q:'光催化分解水时，参与还原反应生成氢气的是？',
+   o:['光生空穴','光生电子','缺陷能级','声子'], a:1,
+   e:'光生电子迁移到催化剂表面还原 H⁺ 生成 H₂；光生空穴负责氧化 H₂O 生成 O₂。'},
+  {q:'光催化分解水时，驱动氧化反应（析氧）的是？',
+   o:['光生电子','光生空穴','自由中子','杂质原子'], a:1,
+   e:'光生空穴具有强氧化能力，在表面把 H₂O/OH⁻ 氧化为 O₂。'},
+  {q:'半导体吸收光子产生电子-空穴对的基本条件是？',
+   o:['光子能量大于或等于禁带宽度','光子波长任意均可','晶体必须为金属','温度必须高于室温'], a:0,
+   e:'hν ≥ Eg 时电子才能从价带跃迁到导带，发生本征激发。'},
+  {q:'太阳辐射能量中，可见光部分大约占？',
+   o:['约 7%','约 44%','约 85%','约 98%'], a:1,
+   e:'太阳光谱中紫外约 5%～7%、可见约 43%～45%、红外约 50%。可见光响应是高效利用太阳能的关键。'},
+  {q:'光生电子-空穴对发生复合的后果是？',
+   o:['光催化活性提高','能量以热量或荧光形式耗散，活性降低','产生更多氢气','带隙变宽'], a:1,
+   e:'复合是光催化量子效率低的主要原因，改性策略大多围绕抑制复合展开。'},
+  {q:'光催化产氢实验中，"牺牲剂"（如三乙醇胺、乳酸）的作用是？',
+   o:['为反应提供光照','不可逆消耗光生空穴，抑制电子-空穴复合','降低体系温度','充当催化剂'], a:1,
+   e:'牺牲剂优先被空穴氧化，保护光生电子用于产氢，是产氢半反应实验的常用手段。'},
+  {q:'光催化产氢中负载 Pt 助催化剂的主要作用是？',
+   o:['吸收更多可见光','提供析氢活性位点、捕获光生电子并降低析氢过电位','增强机械强度','替代半导体吸收光子'], a:1,
+   e:'Pt 的费米能级低于半导体导带，可捕获电子并降低 H⁺ 还原势垒，是经典析氢助催化剂。'},
+  {q:'n 型半导体的特征是？',
+   o:['空穴为多子','电子为多数载流子，费米能级靠近导带','不含任何载流子','只能传导离子'], a:1,
+   e:'n 型半导体电子为多子、费米能级靠近导带；p 型则空穴为多子、费米能级靠近价带。'},
+  {q:'Ⅱ 型异质结能带排列的主要优点是？',
+   o:['使带隙完全消失','光生电子与空穴在空间上分离、抑制复合','让两种材料都变成金属','只吸收红外光'], a:1,
+   e:'Ⅱ 型排列中电子与空穴分别聚集在不同半导体上实现空间分离；S-scheme 则进一步保留强氧化还原能力。'},
+  {q:'g-C₃N₄ 的基本结构单元是？',
+   o:['苯环','三-s-三嗪环（heptazine）','硅氧四面体','碳六十'], a:1,
+   e:'g-C₃N₄ 以三-s-三嗪环（C₆N₇）为结构单元，通过末端 N 原子连接形成类石墨层状聚合物。'},
+  {q:'g-C₃N₄ 在材料分类上属于？',
+   o:['金属导电材料','有机聚合物半导体','离子晶体','二维金属'], a:1,
+   e:'g-C₃N₄ 由 C、N 通过共价键连接，是最具代表性的聚合物半导体光催化材料。'},
+  {q:'g-C₃N₄ 的价带顶（VBM）主要由哪个原子轨道贡献？',
+   o:['C 2p 与 N 2p 杂化','N 2p 轨道','C 1s 轨道','N 2s 轨道'], a:1,
+   e:'计算与实验表明 g-C₃N₄ 的价带顶主要由 N 2p 构成，因此 N 位点修饰主要影响价带。'},
+  {q:'g-C₃N₄ 的导带底（CBM）主要由哪些轨道杂化形成？',
+   o:['C 与 N 的 pz 轨道','C 1s 与 N 1s','N 的 d 轨道','C 的 f 轨道'], a:0,
+   e:'CBM 由 C、N 的 pz 轨道杂化形成，因此对 C/N 位点的元素掺杂会显著改变导带位置。'},
+  {q:'实验室制备块体 g-C₃N₄ 最常用的方法是？',
+   o:['三聚氰胺/尿素等前驱体高温热缩聚','水热法生长单晶','磁控溅射镀膜','化学气相外延'], a:0,
+   e:'将三聚氰胺、双氰胺、尿素等富氮前驱体在空气中 500～600 ℃ 热缩聚即可得到 g-C₃N₄，工艺简单、成本低。'},
+  {q:'制备 g-C₃N₄ 的热缩聚温度通常在？',
+   o:['100～150 ℃','300～350 ℃','500～600 ℃','1200～1500 ℃'], a:2,
+   e:'约 550 ℃ 缩聚完全：温度过低聚合不完全，过高则 g-C₃N₄ 开始分解。'},
+  {q:'g-C₃N₄ 层与层之间的作用力主要是？',
+   o:['共价键','离子键','范德华力','金属键'], a:2,
+   e:'层内为强共价键，层间为弱范德华力，因此可剥离为单层 g-C₃N₄（本实验计算采用单层模型）。'},
+  {q:'与 TiO₂（带隙约 3.2 eV）相比，g-C₃N₄ 最突出的优势是？',
+   o:['可响应可见光','密度更大','导电性更强','熔点更高'], a:0,
+   e:'TiO₂ 带隙宽、只能利用约占太阳光 5% 的紫外光；g-C₃N₄ 带隙 2.7 eV 可利用可见光，太阳能利用率大幅提高。'},
+  {q:'实验上测定半导体带隙最常用的光学手段是？',
+   o:['紫外-可见漫反射光谱（Tauc 作图法）','红外碳硫分析','X 射线荧光光谱','电感耦合等离子体质谱'], a:0,
+   e:'由漫反射谱作 Tauc 图，(αhν)^(1/2)～hν 直线外推可得光学带隙，是表征 g-C₃N₄ 带隙的标准方法。'},
+  {q:'O 元素掺杂 g-C₃N₄ 后，对电子结构的典型影响是？',
+   o:['使 g-C₃N₄ 变为金属','调制带隙与带边位置、改善可见光吸收与载流子分离','完全破坏晶体结构','不产生任何影响'], a:1,
+   e:'O 替位 N（或填补空位）会改变局域电子结构，本实验正是以 O 掺杂 g-C₃N₄ 作为改性体系进行计算对比。'},
+  {q:'在 g-C₃N₄ 中引入碳空位的主要影响是？',
+   o:['引入缺陷能级、改变局域电荷分布，可促进载流子分离','使材料完全失去光吸收能力','使带隙必然增大到 5 eV','没有任何电子结构效应'], a:0,
+   e:'空位是典型的零维缺陷，会在带隙中引入局域态；本实验以 C 空位 g-C₃N₄ 作为另一改性体系。'},
+  {q:'应变工程调控光催化材料电子结构的原理是？',
+   o:['改变原子间距与轨道重叠程度，从而调制能带结构','只改变材料颜色','单纯提高熔点','使晶格缺陷消失'], a:0,
+   e:'拉伸/压缩应变改变键长键角，影响轨道交叠与带宽，连续调节带隙与带边位置；本实验设置了 ±4% 应变系列。'},
+  {q:'S-scheme 异质结的优势在于？',
+   o:['在促进电荷分离的同时保留较强的氧化还原能力','使两种半导体都变为金属','完全消除复合','只适用于金属体系'], a:0,
+   e:'S 方案通过内建电场定向迁移载流子，保留强还原电子与强氧化空穴，兼顾分离效率与反应驱动力。'},
+  {q:'增大光催化剂比表面积的意义是？',
+   o:['提供更多表面活性位点、增强吸附与反应能力','使带隙变宽','降低材料稳定性','减少活性位点'], a:0,
+   e:'比表面积越大，暴露的活性位越多，对底物吸附与表面反应越有利，是形貌调控的重要目标。'},
+  {q:'DFT（密度泛函理论）作为"第一性原理"方法，其"第一性"指的是？',
+   o:['仅基于量子力学基本方程与基本物理常数，不依赖经验拟合参数','历史上第一个提出的方法','最节省机时的方法','完全不做任何近似'], a:0,
+   e:'第一性原理方法从量子力学基本方程出发，只用电子质量、电荷、普朗克常数等基本常数，无需经验参数。'},
+  {q:'Kohn-Sham 方程的核心思想是？',
+   o:['把多电子相互作用问题转化为有效势场中的单电子问题','直接精确求解多体 Schrödinger 方程','用经典牛顿力学描述电子','放弃量子力学框架'], a:0,
+   e:'Kohn-Sham 映射把相互作用多体体系化为等效单电子体系，全部复杂性归入交换关联泛函，是 DFT 实用化的基石。'},
+  {q:'VASP 计算中，POSCAR 文件的内容是？',
+   o:['晶胞参数与原子坐标信息','能带计算结果','赝势数据库','作业排队脚本'], a:0,
+   e:'POSCAR 描述晶格矢量、原子种类与坐标（本实验为 g-C₃N₄ 单层 7 原子模型）；本征值结果在 EIGENVAL。'},
+  {q:'进行 k 点收敛测试的目的是？',
+   o:['在计算精度与计算成本之间取得平衡','让程序运行更慢','改变晶体结构','人为增大带隙'], a:0,
+   e:'k 网格越密结果越收敛但耗时越长；收敛测试确定"再加密结果不变"的最低密度，本实验提供 3×3×1 / 5×5×1 / 7×7×1 三档。'},
+  {q:'能带结构图中，费米能级以下最高的能带对应？',
+   o:['价带顶（VBM）','导带底（CBM）','深缺陷能级','真空能级'], a:0,
+   e:'费米能级以下为占据态，其顶部即价带顶；与本实验平台提取 VBM/CBM 的逻辑一致。'},
+  {q:'态密度（DOS）描述的是？',
+   o:['单位能量区间内电子态的数目','原子运动速度分布','晶体颜色深浅','温度空间分布'], a:0,
+   e:'DOS 反映各能量处可容纳电子态的密度，与能带图互补，是分析电子结构的主要工具。'},
+  {q:'PBE 泛函属于交换关联泛函中的哪一类？',
+   o:['LDA（局域密度近似）','GGA（广义梯度近似）','杂化泛函','经验势'], a:1,
+   e:'PBE 是最常用的 GGA 泛函，稳定且成本适中，但存在带隙系统性低估，教学上可与实验值对比讨论。'},
+  {q:'若需更准确地计算半导体带隙，通常可采用？',
+   o:['HSE06 杂化泛函或 GW 方法','把 ENCUT 降到 100 eV','删除部分原子','改用更稀的 k 网格'], a:0,
+   e:'杂化泛函与 GW 方法能显著改善带隙精度，但计算成本比 PBE 高一到两个数量级，适合关键体系精修。'},
+  {q:'分波态密度（PDOS）的主要用途是？',
+   o:['分析各原子与轨道（s/p 等）对电子态的贡献','测量样品厚度','计算作业排队时间','观察晶体形貌'], a:0,
+   e:'PDOS 把总 DOS 按原子与轨道分解，可判断价带顶/导带底由哪些轨道主导，是掺杂改性分析的重要工具。'},
+  {q:'Bader 电荷分析用于研究？',
+   o:['原子之间的电荷转移数量','晶体生长速率','光催化产氢速率','杂质扩散系数'], a:0,
+   e:'Bader 分析按电子密度空间划分原子 basin，定量给出掺杂/吸附前后各原子的得失电子情况。'},
+  {q:'光催化产氢对导带底位置的热力学要求是？',
+   o:['比 H⁺/H₂ 电位更负（能量更高）','比 O₂/H₂O 电位更正','恰好等于真空能级','必须低于价带顶'], a:0,
+   e:'导带底须位于 H⁺/H₂（0 V vs NHE）之上，光生电子才具备还原质子产氢的热力学驱动力。'},
+  {q:'光催化产氧对价带顶位置的热力学要求是？',
+   o:['比 O₂/H₂O 电位（+1.23 V）更正','比 H⁺/H₂ 更负','等于真空能级','无任何要求'], a:0,
+   e:'价带顶须比 +1.23 V 更正，空穴才具备氧化水生成 O₂ 的能力；g-C₃N₄ 价带位置满足该要求。'},
+  {q:'同浓度下，光催化产氢实验中定量检测氢气的标准手段是？',
+   o:['气相色谱（GC）','酸碱滴定','称重法','比色法'], a:0,
+   e:'气相色谱是光催化产氢定量分析的标准手段，可给出产氢速率并进一步计算表观量子效率。'},
+  {q:'全面评估一种光催化材料的可见光活性，需要综合考察？',
+   o:['带隙宽度、带边位置与载流子分离效率','仅看晶体颜色','仅看分子量','仅看硬度'], a:0,
+   e:'三要素缺一不可：带隙决定能否吸收可见光，带边位置决定氧化还原能力，载流子分离效率决定量子效率。'},
+  {q:'本实验计算采用的 g-C₃N₄ 模型是？',
+   o:['含 30 Å 真空层的 g-C₃N₄ 单层（slab）模型','体相三层周期模型','孤立分子团簇模型','无结构模型'], a:0,
+   e:'单层 slab 模型既反映二维特性，又可用真空层计算静电势，进而用功函数法确定带边绝对位置（vs NHE）。'},
+  {q:'本实验用"真空能级法"确定带边绝对位置的步骤是？',
+   o:['计算静电势得真空能级 → 功函数 Φ = E_vac − E_F 定位带边 → 换算 vs NHE','直接读取晶体颜色','只比较总能大小','测量样品厚度'], a:0,
+   e:'scf 中设 LVHAR 得到平均静电势，最大值即真空能级；E_abs = E_eig − E_vac，V(vs NHE) = −(E_abs + 4.44)。'},
+  {q:'本实验平台提交真实计算后，作业经过的三个阶段依次是？',
+   o:['SCF 自洽 → 能带计算 → 态密度计算','能带 → SCF → DOS','DOS → 能带 → SCF','只做 SCF'], a:0,
+   e:'平台以 ICHARG=2 自洽开始，再以 ICHARG=11 读电荷密度分别做能带与 DOS 非自洽计算，一键完成全流程。'}
+];
+var QUIZ_KEY = 'ai_lab_quiz_' + (user ? user.sid : '');
+var quizSaved = null;
+try{ quizSaved = JSON.parse(localStorage.getItem(QUIZ_KEY) || 'null'); }catch(e){}
+
+/* 随机抽题：题序洗牌取 10 道，每题选项顺序再洗牌（答案索引同步重映射） */
+var QUIZ_PICK = 10;
+var QUIZSET = null;
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i = a.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function pickQuiz(){
+  return shuffle(QUIZ).slice(0, QUIZ_PICK).map(function(q){
+    var idx = shuffle([0, 1, 2, 3]);
+    return {q: q.q, o: idx.map(function(k){ return q.o[k]; }),
+            a: idx.indexOf(q.a), e: q.e};
+  });
+}
+
+/* ---------- 侧栏 ---------- */
+function renderSide(){
+  var html = '';
+  STAGES.forEach(function(s){
+    html += '<div class="stg">' + s.name + '</div>';
+    for(var i=s.from;i<=s.to;i++){
+      var cls = done[i] ? 'stp done' : (i===cur ? 'stp cur' : 'stp');
+      html += '<div class="' + cls + '" onclick="gotoStep(' + i + ')"><span class="dot">' +
+              (done[i] ? '✓' : i) + '</span>' + STEPS[i][0] + '</div>';
+    }
+  });
+  html += '<h4>流程衔接</h4><div style="padding:0 16px 20px;font-size:12px;color:#9aa7b6;line-height:1.8">' +
+          '本板块完成研究资料调研后：<br>① 点击右上角 <b style="color:#c9a227">🔬 3D 仿真实验台</b> 进行建模与真实集群计算；<br>② 实验完成后到 <b style="color:#2e8b57">📄 报告提交页</b> 提交计算报告与答辩反思。</div>';
+  document.getElementById('side').innerHTML = html;
+  var ndone = 0;
+  for(var k=1;k<=NSTEP;k++) if(done[k]) ndone++;
+  document.getElementById('prog').textContent = ndone + ' / ' + NSTEP;
+}
+
+/* ---------- 步骤渲染 ---------- */
+function gotoStep(i){
+  if(i < 1 || i > NSTEP + 1) return;
+  cur = i;
+  syncStepTag();
+  var btn = document.getElementById('submitBtn');
+  var extra = document.getElementById('stepExtra');
+  if(i === NSTEP + 1){
+    document.getElementById('aiPanel').style.display = 'none';
+    document.getElementById('crumb').textContent = '全部完成';
+    document.getElementById('stTitle').textContent = '研究资料调研已全部完成';
+    document.getElementById('stTime').textContent = '—';
+    document.getElementById('stScore').textContent = '—';
+    document.getElementById('stType').textContent = '—';
+    document.getElementById('stDesc').textContent = '你已完成本板块全部 ' + NSTEP + ' 步。请点击右上角"🔬 3D 仿真实验台"进行结构建模与真实集群计算，实验结束后到"📄 报告提交页"提交计算报告与答辩反思。';
+    btn.style.display = 'none';
+    document.getElementById('allDone').style.display = '';
+    extra.innerHTML = '';
+    renderSide();
+    document.querySelector('.main').scrollTop = 0;
+    return;
+  }
+  document.getElementById('allDone').style.display = 'none';
+  var st = STEPS[i];
+  var stage = STAGES.filter(function(s){ return i>=s.from && i<=s.to; })[0];
+  document.getElementById('crumb').textContent = stage.name + '　/　第 ' + i + ' 步';
+  document.getElementById('stTitle').textContent = '第 ' + i + ' 步 · ' + st[0];
+  document.getElementById('stTime').textContent  = st[1];
+  document.getElementById('stScore').textContent = st[2];
+  document.getElementById('stType').textContent  = st[3];
+  document.getElementById('stDesc').textContent  = st[4];
+  /* 第 1、2 步（预习测评 / 任务认领）不需要智能体窗口 */
+  document.getElementById('aiPanel').style.display = (i <= 2) ? 'none' : '';
+  if(i > 2){ requestAnimationFrame(fitAI); }
+  /* 特殊步骤：1 预习测评、2 任务认领（按钮内嵌，隐藏通用按钮） */
+  if(i === 1){
+    renderQuiz();
+    btn.style.display = 'none';
+  }else if(i === 2){
+    extra.innerHTML = LETTER_HTML;
+    btn.style.display = 'none';
+    if(done[2]){
+      document.getElementById('claimBtn').style.display = 'none';
+      document.getElementById('claimMsg').textContent = '✓ 任务已认领。';
+    }
+  }else{
+    extra.innerHTML = '';
+    btn.style.display = done[i] ? 'none' : '';
+  }
+  renderSide();
+  document.querySelector('.main').scrollTop = 0;
+}
+function submitStep(){
+  done[cur] = true;
+  localStorage.setItem(DONE_KEY, JSON.stringify(done));
+  gotoStep(Math.min(cur + 1, NSTEP + 1));
+}
+function claimTask(){
+  var msg = document.getElementById('claimMsg');
+  if(!TOKEN){
+    needToken('任务认领记录需同步到教师端，请重新登录验证。', claimTask);
+    return;
+  }
+  api('/api/log_search', {token: TOKEN, keywords: '[任务认领] 已阅读企业研发委托书并认领任务', mode: 'claim'}, function(res){
+    if(res.ok){ msg.className = 'submsg-ok'; msg.textContent = '✓ 认领已记录。'; }
+  });
+  submitStep();
+}
+
+/* ---------- 预习测评 ---------- */
+function renderQuiz(){
+  var extra = document.getElementById('stepExtra');
+  if(quizSaved){
+    var html = '<div class="panel"><h3>📝 预习测评 · 已完成</h3>' +
+      '<div class="quiz-score">你的成绩：<b>' + quizSaved.score + '</b> / 10' +
+      '<span class="quiz-up">✓ 已上传教师端，计入预习成绩</span></div>' + quizSaved.review + '</div>';
+    extra.innerHTML = html;
+    return;
+  }
+  QUIZSET = pickQuiz();
+  var html = '<div class="panel"><h3>📝 预习测评 · 光催化材料基础（随机 10 题）</h3>' +
+    '<div class="hint" style="margin:0 0 12px">系统已从 50 题题库中为您随机抽取 10 题（每人试卷各不相同，选项顺序也已打乱）。全部作答后点击"交卷"，系统实时评分并自动上传教师端。下一步将呈现企业研发委托书，请阅读后确认认领任务。</div>';
+  QUIZSET.forEach(function(q, i){
+    html += '<div class="qitem" id="q' + i + '"><div class="q">' + (i+1) + '. ' + q.q + '</div>';
+    q.o.forEach(function(opt, j){
+      html += '<label id="q' + i + 'o' + j + '"><input type="radio" name="q' + i + '" value="' + j + '"> ' +
+              'ABCDEF'[j] + '. ' + opt + '</label>';
+    });
+    html += '<div class="exp" id="qe' + i + '">💡 ' + q.e + '</div></div>';
+  });
+  html += '<div style="text-align:center;margin-top:14px"><button class="go-btn" onclick="gradeQuiz()">📝 交卷并实时评分</button>' +
+          '<span id="quizMsg"></span></div></div>';
+  extra.innerHTML = html;
+}
+function gradeQuiz(){
+  var msg = document.getElementById('quizMsg');
+  if(!TOKEN){
+    needToken('交卷前需重新登录以同步成绩到教师端。本次作答不会丢失，登录后将自动继续交卷。', gradeQuiz);
+    return;
+  }
+  var unanswered = [];
+  for(var i=0;i<QUIZSET.length;i++){
+    if(document.querySelector('input[name="q' + i + '"]:checked') === null) unanswered.push(i+1);
+  }
+  if(unanswered.length){
+    msg.className = 'submsg-err';
+    msg.textContent = '第 ' + unanswered.join('、') + ' 题尚未作答。';
+    return;
+  }
+  var n = 0, detail = [];
+  QUIZSET.forEach(function(q, i){
+    var box = document.getElementById('q' + i);
+    box.classList.add('done');
+    var pick = parseInt(document.querySelector('input[name="q' + i + '"]:checked').value, 10);
+    var ok = pick === q.a;
+    if(ok) n++; else detail.push('第' + (i+1) + '题（你选 ' + 'ABCDEF'[pick] + '，正确 ' + 'ABCDEF'[q.a] + '）');
+    box.classList.add(ok ? 'right' : 'wrong');
+    for(var j=0;j<q.o.length;j++){
+      var lb = document.getElementById('q' + i + 'o' + j);
+      lb.querySelector('input').disabled = true;
+      if(j === q.a) lb.classList.add('ans');
+      if(j === pick && !ok) lb.classList.add('wrongpick');
+    }
+  });
+  /* 生成回顾 HTML（离线快照） */
+  review = '';
+  QUIZSET.forEach(function(q, i){
+    var cls = document.getElementById('q' + i).classList.contains('right') ? 'right' : 'wrong';
+    var pick = parseInt(document.querySelector('input[name="q' + i + '"]:checked').value, 10);
+    var one = '<div class="qitem ' + cls + ' done"><div class="q">' + (i+1) + '. ' + q.q +
+      '　<span style="color:' + (cls === 'right' ? '#2e8b57' : '#c0392b') + '">' +
+      (cls === 'right' ? '✓ 答对' : '✗ 答错（选 ' + 'ABCDEF'[pick] + '）') + '</span></div>' +
+      '<div class="exp" style="display:block">正确答案：' + 'ABCDEF'[q.a] + '. ' + q.o[q.a] + '　💡 ' + q.e + '</div></div>';
+    review += one;
+  });
+  /* 上传后台 */
+  var content = '预习测评得分：' + n + ' / 10。' +
+    (detail.length ? '错题：' + detail.join('；') + '。' : '全部答对。');
+  api('/api/submit', {
+    token: TOKEN, kind: '预习成绩',
+    step: '第1步 · 预习测评（光催化材料基础）',
+    title: '预习测评得分 ' + n + '/10',
+    content: content
+  }, function(res){
+    msg.className = res.ok ? 'submsg-ok' : 'submsg-err';
+    msg.textContent = res.ok ? '✓ 成绩已自动上传教师端，计入预习成绩。' : ('上传失败：' + (res.msg || '') + '，请截图联系教师。');
+  });
+  quizSaved = {score: n, review: review};
+  localStorage.setItem(QUIZ_KEY, JSON.stringify(quizSaved));
+  msg.className = 'submsg-ok';
+  msg.textContent = '交卷成功！得分 ' + n + ' / 10，成绩正在上传…';
+  done[1] = true;
+  localStorage.setItem(DONE_KEY, JSON.stringify(done));
+  renderSide();
+  /* 滚到顶部查看成绩 */
+  document.querySelector('.main').scrollTop = 0;
+}
+
+/* ---------- 小碳老师双模式（DeepSeek 嵌入 / 结果提交） ---------- */
+/* 自建 ai.html 聊天窗：iframe 与页面同源自适应，不再需要跨域视口裁剪 */
+function fitAI(){ return; }
+window.addEventListener('resize', fitAI);
+function switchAI(mode, manual){
+  var deep = mode === 'deep';
+  document.getElementById('aiDeepWrap').style.display = deep ? '' : 'none';
+  document.getElementById('aiFaqWrap').style.display = deep ? 'none' : '';
+  document.getElementById('tabDeep').className = deep ? 'ai-tab active' : 'ai-tab';
+  document.getElementById('tabFaq').className = deep ? 'ai-tab' : 'ai-tab active';
+  if(deep && manual && TOKEN){
+    api('/api/log_search', {token: TOKEN, keywords: '[深度模式] 打开 DeepSeek 资料检索', mode: 'deep_open'}, function(){});
+  }
+  if(!deep){ loadMine(); }
+  if(deep){ requestAnimationFrame(fitAI); }
+}
+
+/* ---------- 结果提交（检索记录 + 作业提交 + 我的成绩） ---------- */
+function api(path, data, cb){
+  fetch(path, {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(data || {})})
+    .then(function(r){ return r.json(); }).then(cb)
+    .catch(function(){ cb({ok:false, msg:'服务器连接失败'}); });
+}
+function esc(s){
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+var myData = {submissions: [], searches: []};
+function loadMine(){
+  if(!TOKEN) return;
+  api('/api/my_records', {token: TOKEN}, function(res){
+    if(res.ok){ myData = res; renderMine(); }
+  });
+}
+function renderMine(){
+  var kw = document.getElementById('myKw');
+  if(kw) kw.innerHTML = myData.searches.length ? myData.searches.map(function(s){
+        return '<span class="kwitem">' + esc(s.keywords) + '<i>' + esc(s.created_at) + '</i></span>';
+      }).join('') : '<span class="hint">暂无检索记录，检索后点"＋ 记录"保存。</span>';
+  var box = document.getElementById('mySubs');
+  if(box) box.innerHTML = myData.submissions.length ? myData.submissions.map(function(s){
+        var sc = (s.score == null) ? '<span style="color:#c9a227;font-weight:700">⏳ 待批阅</span>'
+          : '<span class="score">💯 得分：' + esc(s.score) + '</span>';
+        var fb = s.feedback ? '<div class="fb">教师评语：' + esc(s.feedback) + '</div>' : '';
+        var att = s.file_name ? '<span class="filetag">📎 ' + esc(s.file_name) +
+          (s.file_size ? '（' + Math.round(s.file_size/1024) + ' KB）' : '') + '</span>' : '';
+        return '<div class="mysub"><b>' + esc(s.title) + '</b>' + att + '　' +
+          '<span class="hint" style="margin:0">' + esc(s.kind) + ' · ' + esc(s.step || '') +
+          ' · ' + esc(s.created_at) + '</span>　' + sc + fb + '</div>';
+      }).join('') : '<span class="hint">暂无提交记录。</span>';
+}
+function recordKw(){
+  var inp = document.getElementById('kwInput');
+  var kw = inp.value.trim();
+  if(!kw) return;
+  if(!TOKEN){ needToken('记录检索前需重新登录以同步到教师端。', recordKw); return; }
+  api('/api/log_search', {token: TOKEN, keywords: kw, mode: 'keyword'}, function(res){
+    if(res.ok){ inp.value = ''; loadMine(); }
+    else setSubMsg(res.msg || '记录失败', false);
+  });
+}
+function onFilePick(){
+  var f = document.getElementById('subFile').files[0];
+  var info = document.getElementById('fileInfo');
+  if(!f){ info.textContent = ''; return; }
+  if(f.size > 10 * 1024 * 1024){
+    info.textContent = '「' + f.name + '」超过 10MB，请压缩后再选。';
+    info.className = 'submsg-err';
+    document.getElementById('subFile').value = '';
+    return;
+  }
+  info.textContent = '已选：' + f.name + '（' + Math.round(f.size/1024) + ' KB）';
+  info.className = 'submsg-ok';
+}
+function doSubmit(){
+  var kind  = document.getElementById('subKind').value;
+  var step  = CUR_STEP || ('第' + cur + '步 · ' + (STEPS[cur] ? STEPS[cur][0] : '课后成果'));
+  var title = step + '（' + (user ? user.name : '') + '）';   // 标题自动生成，无需学生填写
+  var content = document.getElementById('subContent').value.trim();
+  var fileEl = document.getElementById('subFile');
+  var file = fileEl.files[0];
+  if(!TOKEN){ needToken('提交作业前需重新登录以同步到教师端。', doSubmit); return; }
+  if(!content && !file){ setSubMsg('请填写提交内容或选择附件。', false); return; }
+  var send = function(file_b64){
+    var payload = {token: TOKEN, kind: kind, step: step, title: title, content: content};
+    if(file){
+      payload.file_name = file.name;
+      payload.file_b64 = file_b64;
+    }
+    api('/api/submit', payload, function(res){
+      if(res.ok){
+        document.getElementById('subContent').value = '';
+        fileEl.value = '';
+        document.getElementById('fileInfo').textContent = '';
+        setSubMsg('✓ 提交成功，教师端已收到。', true);
+        loadMine();
+      }else setSubMsg(res.msg || '提交失败', false);
+    });
+  };
+  if(file){
+    var reader = new FileReader();
+    reader.onload = function(){ send(reader.result); };
+    reader.onerror = function(){ setSubMsg('附件读取失败，请重试。', false); };
+    reader.readAsDataURL(file);
+  }else send('');
+}
+function setSubMsg(t, okk){
+  var el = document.getElementById('subMsg');
+  el.textContent = t;
+  el.className = okk ? 'submsg-ok' : 'submsg-err';
+}
+
+/* ---------- 页面内重新登录（旧版登录态无 token 的兜底） ---------- */
+var RELogCB = null;   // 登录成功后的续做回调
+function needToken(why, cb){
+  if(TOKEN){ if(cb) cb(); return; }
+  RELogCB = cb || null;
+  document.getElementById('relogWhy').textContent = why;
+  document.getElementById('relogSid').value = user ? user.sid : '';
+  document.getElementById('relogMsg').textContent = '';
+  document.getElementById('relogMask').classList.add('show');
+  setTimeout(function(){ document.getElementById('relogPass').focus(); }, 60);
+}
+function closeRelog(){ document.getElementById('relogMask').classList.remove('show'); }
+function doRelog(){
+  var sid  = document.getElementById('relogSid').value.trim();
+  var pass = document.getElementById('relogPass').value;
+  var msg  = document.getElementById('relogMsg');
+  if(!sid || !pass){ msg.textContent = '请输入学号与密码。'; return; }
+  api('/api/login', {sid: sid, pass: pass}, function(res){
+    if(!res.ok){ msg.textContent = res.msg || '登录失败，请重试。'; return; }
+    user = {sid: sid, name: res.name || (user ? user.name : sid), token: res.token};
+    TOKEN = res.token;
+    localStorage.setItem('ai_lab_auth', JSON.stringify(user));
+    document.getElementById('stuName').textContent = user.name + '（' + user.sid + '）';
+    closeRelog();
+    loadMine();
+    if(RELogCB){ var f = RELogCB; RELogCB = null; f(); }
+  });
+}
+document.getElementById('relogPass').addEventListener('keydown', function(e){
+  if(e.key === 'Enter') doRelog();
+});
+/* 步骤自动关联：提交步骤跟随左侧当前步骤（gotoStep 更新），不再使用下拉框 */
+if(!TOKEN){ setSubMsg('检测到旧版登录状态：请退出后重新登录，才能记录检索并提交结果。', false); }
+loadMine();
+
+/* ---------- 计时 ---------- */
+var t0 = Date.now();
+setInterval(function(){
+  var s = Math.floor((Date.now()-t0)/1000);
+  var m = Math.floor(s/60), ss = s%60;
+  document.getElementById('timer').textContent =
+    (m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;
+}, 1000);
+
+gotoStep(cur);
+switchAI('deep');
+</script>
+</body>
+</html>
