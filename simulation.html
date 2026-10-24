@@ -207,7 +207,7 @@
       <div class="stp-body">
         <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap">
           <span style="font-size:12.5px;color:var(--ink,#333)" title="水的氧化还原电位随 pH 线性下移 0.059 V/pH（能斯特方程）；带边位置 vs NHE 不随 pH 变，改变的是全解水判据">溶液 pH（水氧化还原电位校正）</span>
-          <select id="phSel" onchange="STATE.ph=parseInt(this.value,10);onPhChange()" style="padding:4px 8px;border:1px solid #c3cfdd;border-radius:8px;background:#fff;font-size:13px">
+          <select id="phSel" disabled onchange="STATE.ph=parseInt(this.value,10);onPhChange()" title="完成第③步“提交计算”后开放" style="padding:4px 8px;border:1px solid #c3cfdd;border-radius:8px;background:#fff;font-size:13px">
             <option value="0" selected>0（酸性，标准氢标定）</option>
             <option value="2">2</option>
             <option value="4">4</option>
@@ -216,7 +216,7 @@
             <option value="12">12</option>
             <option value="14">14（碱性）</option>
           </select>
-          <span style="font-size:12px;color:#7a8a9c">能斯特方程：水氧化还原参考线随 pH 下移 0.059 V/pH；带边位置 vs NHE 不变，变的是全解水判据</span>
+          <span style="font-size:12px;color:#7a8a9c">能斯特方程：水氧化还原参考线随 pH 下移 0.059 V/pH；带边位置 vs NHE 不变，变的是全解水判据（完成第③步“提交计算”后开放）</span>
         </div>
         <div class="quiz" id="quizBox">
           <div class="hint">完成第③步计算后作答。</div>
@@ -302,7 +302,12 @@ function redoxLevels(){
   var ph = STATE.ph || 0;
   return {ph: ph, ox: 1.23 - 0.059 * ph, red: -0.059 * ph};
 }
+/* ④ 结果分析在“提交计算”成功完成前锁定：pH 选择器不可用，防止未计算就出现结果图 */
+function setPhase4Lock(lock){
+  document.getElementById('phSel').disabled = lock;
+}
 function onPhChange(){
+  if (!STATE.computed) return;   // 未完成第③步计算：不允许触发结果图重绘
   drawEdge();
   if (STATE.realDone) showConcl();
 }
@@ -444,6 +449,7 @@ function runCalc(){
 function runDemo(){
   var btn = document.getElementById('runBtn');
   btn.disabled = true;
+  setPhase4Lock(true);   // 演示计算进行中：④区保持锁定
   var log = document.getElementById('calcLog');
   log.textContent = '';
   var sys = SYS[STATE.sys];
@@ -513,6 +519,7 @@ function submitReal(){
   var btn = document.getElementById('runBtn');
   if (!TOKEN){ realLog('[计算] ✗ 未登录：请先登录后再提交计算。'); return; }
   btn.disabled = true;
+  setPhase4Lock(true);   // 计算进行中：④区保持锁定
   document.getElementById('calcLog').textContent = '';
   realT0 = Date.now();
   realLog('----------------------------------------------------------------------------------------------------');
@@ -662,6 +669,7 @@ function finishReal(r){
   }
   STATE.defect = (STATE.sys === 'c_vac');
   markOK('dot3'); markOK('dot4');
+  setPhase4Lock(false);   // 计算完成，开放④区 pH 选择
   var wall = wallSeconds();
   realLog('----------------------------------------------------------------------------------------------------');
   realLog('[汇总] ✓ 计算全部完成 · 总耗时 ' + fmtHMS(wall) + '（' + STATE.cores + ' 核 · ' + STATE.func +
@@ -703,6 +711,7 @@ function finishCalc(cv){
   STATE.vbm  = STATE.cbm + STATE.Eg;
   STATE.defect = !!SYS[STATE.sys].defect;
   markOK('dot3'); markOK('dot4');
+  setPhase4Lock(false);   // 计算完成，开放④区 pH 选择
   drawCharts();
   showConcl();
   buildQuiz(cv);
