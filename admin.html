@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <link rel="icon" type="image/png" href="favicon.png">
+
 <script>
 /* 云端 API 网关适配：内网部署直连本地 server；公网(静态托管)走云函数网关 */
 (function(){
@@ -115,7 +117,7 @@
 <div class="loginwrap" id="loginWrap">
   <div class="loginbox">
     <h2>教师登录</h2>
-    <div class="sub">管理员账号 · 数据存储于本机服务器（10.31.22.8）</div>
+    <div class="sub">管理员账号 · 数据存储于校内教学服务器</div>
     <form onsubmit="return doLogin(event)">
       <label>用户名</label>
       <input id="lgUser" autocomplete="username" placeholder="用户名" required>

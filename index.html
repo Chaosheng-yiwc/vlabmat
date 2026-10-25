@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <link rel="icon" type="image/png" href="favicon.png">
+
 <script>
 /* 云端 API 网关适配：内网部署直连本地 server；公网(静态托管)走云函数网关 */
 (function(){
@@ -132,6 +134,8 @@
   .auth-submit:hover{background:var(--blue-d)}
   .auth-msg{font-size:13px;color:#c0392b;margin-top:10px;min-height:18px}
   @media (max-width:640px){.hero h1{font-size:26px}.hero{padding:44px 0}}
+  /* 窄屏导航换行，避免横向拖动（熊记萍反馈第七节） */
+  @media (max-width:1280px){ nav .wrap{flex-wrap:wrap;overflow-x:visible} nav a{padding:10px 12px;font-size:14px} }
 </style>
 </head>
 <body>
@@ -148,7 +152,7 @@
     <div class="hero">
       <div class="hero-txt">
         <h1>AI赋能光催化分解水制氢<br>材料设计虚拟仿真实验</h1>
-        <div class="sub">面向未来能源方向 · 以 g-C<sub>3</sub>N<sub>4</sub> 光催化材料为载体的研究探索型计算实验<br>智能体全程协同 · 23 步交互 · 4 学时完成一次真实材料研发训练</div>
+        <div class="sub">面向未来能源方向 · 以 g-C<sub>3</sub>N<sub>4</sub> 光催化材料为载体的研究探索型计算实验<br>智能体全程协同 · 22 步交互 · 4 学时完成一次真实材料研发训练</div>
         <div class="tags">
           <span class="tag">AI for Science</span>
           <span class="tag">第一性原理计算（VASP）</span>
@@ -162,7 +166,7 @@
       </div>
       <figure class="hero-img">
         <img src="gcn4.png" alt="g-C3N4 晶体结构">
-        <figcaption>类石墨相氮化碳 g-C<sub>3</sub>N<sub>4</sub> 晶体结构（2×2 超胞）</figcaption>
+        <figcaption>类石墨相氮化碳 g-C<sub>3</sub>N<sub>4</sub> 晶体结构（R3m 相）</figcaption>
       </figure>
     </div>
   </div>
@@ -172,7 +176,7 @@
   <a href="#intro">项目简介</a>
   <a href="#arch">平台架构</a>
   <a href="#flow">实验流程</a>
-  <a href="#steps">23 步交互与赋分</a>
+  <a href="#steps">22 步交互与赋分</a>
   <a href="#gallery">计算算例展示</a>
   <a href="#contest">教学课件与视频</a>
   <a href="#teachvideos" style="color:var(--gold);font-weight:bold">▶ 实验教学视频</a>
@@ -184,10 +188,10 @@
 
 <section id="intro">
   <h2>项目简介</h2>
-  <p class="lead">围绕"双碳"战略与未来能源方向，把整门《材料计算物理》课程微缩为一个完整的研究项目。</p>
+  <p class="lead">围绕"双碳"战略与未来能源方向，把整门《材料计算物理》课程凝练为一个完整的研究项目。</p>
   <div class="stats">
     <div class="stat"><div class="num">4 学时</div><div class="lab">一次完整材料研发训练</div></div>
-    <div class="stat"><div class="num">23 步</div><div class="lab">学生交互性操作步骤</div></div>
+    <div class="stat"><div class="num">22 步</div><div class="lab">学生交互性操作步骤</div></div>
     <div class="stat"><div class="num">6 阶段</div><div class="lab">真实研发全流程组织</div></div>
     <div class="stat"><div class="num">2 人/组</div><div class="lab">任务驱动 · 全程留痕可评可测</div></div>
   </div>
@@ -233,7 +237,7 @@
       <rect x="30" y="284" width="900" height="92" rx="10" fill="#eaf7ef" stroke="#93c9a8"/>
       <text x="52" y="316" font-size="17" font-weight="bold" fill="#1e6b45">数据分析层</text>
       <g font-size="13.5" fill="#275c3d" text-anchor="middle">
-        <rect x="70"  y="332" width="160" height="30" rx="15" fill="#fff" stroke="#6fb78a"/><text x="150" y="352">能带 / 态密度分析</text>
+        <rect x="70"  y="332" width="160" height="30" rx="15" fill="#fff" stroke="#6fb78a"/><text x="150" y="352">能带 / 光学性质分析</text>
         <rect x="260" y="332" width="160" height="30" rx="15" fill="#fff" stroke="#6fb78a"/><text x="340" y="352">光吸收谱计算</text>
         <rect x="450" y="332" width="160" height="30" rx="15" fill="#fff" stroke="#6fb78a"/><text x="530" y="352">带边位置对齐</text>
         <rect x="640" y="332" width="140" height="30" rx="15" fill="#fff" stroke="#6fb78a"/><text x="710" y="352">计算报告生成</text>
@@ -253,7 +257,7 @@
         <g><rect x="14"  y="34" width="136" height="64" rx="10" fill="#1a5dab"/><text x="82"  y="60" font-size="14.5" fill="#fff" font-weight="bold">① 研究资料调研</text><text x="82"  y="82" font-size="11.5" fill="#cfe2f7">智能体检索与综述</text></g>
         <g><rect x="174" y="34" width="136" height="64" rx="10" fill="#2470b8"/><text x="242" y="60" font-size="14.5" fill="#fff" font-weight="bold">② 结构建模</text><text x="242" y="82" font-size="11.5" fill="#d8e9fa">智能体生成 g-C<tspan font-size="9" dy="2.5">3</tspan><tspan dy="-2.5">N</tspan><tspan font-size="9" dy="2.5">4</tspan><tspan dy="-2.5"> 模型</tspan></text></g>
         <g><rect x="334" y="34" width="136" height="64" rx="10" fill="#3d86c6"/><text x="402" y="60" font-size="14.5" fill="#fff" font-weight="bold">③ 提交计算</text><text x="402" y="82" font-size="11.5" fill="#e0eefb">收敛测试 · 集群计算</text></g>
-        <g><rect x="494" y="34" width="136" height="64" rx="10" fill="#5a9ad2"/><text x="562" y="60" font-size="14.5" fill="#fff" font-weight="bold">④ 结果后处理</text><text x="562" y="82" font-size="11.5" fill="#eaf4fd">能带 · 态密度 · 光谱</text></g>
+        <g><rect x="494" y="34" width="136" height="64" rx="10" fill="#5a9ad2"/><text x="562" y="60" font-size="14.5" fill="#fff" font-weight="bold">④ 结果后处理</text><text x="562" y="82" font-size="11.5" fill="#eaf4fd">能带 · 光学吸收 · 带边</text></g>
         <g><rect x="654" y="34" width="136" height="64" rx="10" fill="#7caddd"/><text x="722" y="60" font-size="14.5" fill="#fff" font-weight="bold">⑤ 报告撰写</text><text x="722" y="82" font-size="11.5" fill="#f0f7fd">AI 点评 · 计算报告</text></g>
         <g><rect x="814" y="34" width="136" height="64" rx="10" fill="#9cc0e8"/><text x="882" y="60" font-size="14.5" fill="#123c6b" font-weight="bold">⑥ 讨论反思</text><text x="882" y="82" font-size="11.5" fill="#1c4a77">答辩互评 · 能力画像</text></g>
       </g>
@@ -265,42 +269,41 @@
       <g fill="#8aa4c0"><path d="M172,62 l8,4 -8,4 z"/><path d="M332,62 l8,4 -8,4 z"/><path d="M492,62 l8,4 -8,4 z"/><path d="M652,62 l8,4 -8,4 z"/><path d="M812,62 l8,4 -8,4 z"/></g>
       <text x="480" y="140" font-size="13.5" fill="#5a6b80" text-anchor="middle">前三阶段人人过关，保证计算方法与 AI 协同能力落地；后三阶段分组自主推进调控方案、报告与答辩</text>
     </svg>
-    <figcaption>图 2  六阶段实验流程（共 23 个交互步骤）</figcaption>
+    <figcaption>图 2  实验流程总览（表格按五阶段组织，共 22 个交互步骤）</figcaption>
   </figure>
 </section>
 
 <section id="steps">
-  <h2>23 步交互操作与赋分评价</h2>
-  <p class="lead">过程评价与结果评价结合，23 步赋分全过程留痕，动态生成学生能力画像与成长档案。</p>
+  <h2>22 步交互操作与赋分评价</h2>
+  <p class="lead">过程评价与结果评价结合，22 步赋分全过程留痕，动态生成学生能力画像与成长档案。第 1–6 步与"实验流程"页一一对应，其余步骤在 3D 仿真实验台完成。</p>
   <div class="tbl-wrap">
   <table>
     <tr><th>阶段</th><th>#</th><th>步骤名称</th><th>用时</th><th>满分</th><th>成绩类型</th></tr>
-    <tr><td class="stage-td" rowspan="5">一、研究资料调研<br><small>预习成绩 8 分</small></td><td>1</td><td>预习测评与任务认领（研究资料调研）</td><td>5 分钟</td><td>3</td><td>预习成绩</td></tr>
-    <tr><td>2</td><td>智能体研究资料调研</td><td>12 分钟</td><td>5</td><td>预习成绩</td></tr>
-    <tr><td>3</td><td>智能体辅助方案设计</td><td>8 分钟</td><td>4</td><td>操作成绩</td></tr>
-    <tr><td>4</td><td>智能体生成结构模型</td><td>10 分钟</td><td>5</td><td>操作成绩</td></tr>
-    <tr><td>5</td><td>输入文件生成与核验</td><td>8 分钟</td><td>5</td><td>操作成绩</td></tr>
-    <tr><td class="stage-td" rowspan="6">二、提交计算<br><small>操作成绩 25 分</small></td><td>6</td><td>AI 参数审查答辩</td><td>5 分钟</td><td>4</td><td>教师评价报告</td></tr>
-    <tr><td>7</td><td>截断能收敛测试</td><td>10 分钟</td><td>4</td><td>操作成绩</td></tr>
+    <tr><td class="stage-td" rowspan="6">一、研究资料调研<br><small>共 31 分</small></td><td>1</td><td>预习测评（光催化材料基础）</td><td>10 分钟</td><td>10</td><td>预习成绩</td></tr>
+    <tr><td>2</td><td>任务认领（企业委托书）</td><td>5 分钟</td><td>2</td><td>预习成绩</td></tr>
+    <tr><td>3</td><td>智能体研究资料调研</td><td>12 分钟</td><td>5</td><td>预习成绩</td></tr>
+    <tr><td>4</td><td>智能体辅助方案设计</td><td>8 分钟</td><td>4</td><td>操作成绩</td></tr>
+    <tr><td>5</td><td>智能体生成结构模型</td><td>10 分钟</td><td>5</td><td>操作成绩</td></tr>
+    <tr><td>6</td><td>输入文件生成与核验</td><td>8 分钟</td><td>5</td><td>操作成绩</td></tr>
+    <tr><td class="stage-td" rowspan="5">二、提交计算<br><small>共 21 分</small></td><td>7</td><td>截断能收敛测试</td><td>10 分钟</td><td>4</td><td>操作成绩</td></tr>
     <tr><td>8</td><td>k 点收敛测试</td><td>8 分钟</td><td>4</td><td>操作成绩</td></tr>
     <tr><td>9</td><td>计算任务提交</td><td>3 分钟</td><td>3</td><td>操作成绩</td></tr>
     <tr><td>10</td><td>作业监控与 AI 报错诊断</td><td>12 分钟</td><td>5</td><td>操作成绩</td></tr>
-    <tr><td>11</td><td>态密度后处理</td><td>10 分钟</td><td>5</td><td>操作成绩</td></tr>
-    <tr><td class="stage-td" rowspan="8">三、结果后处理<br>四、报告与反思</td><td>12</td><td>能带后处理</td><td>8 分钟</td><td>5</td><td>操作成绩</td></tr>
-    <tr><td>13</td><td>带隙提取与实验值比对</td><td>5 分钟</td><td>5</td><td>实验报告</td></tr>
-    <tr><td>14</td><td>调控模型构建</td><td>10 分钟</td><td>5</td><td>操作成绩</td></tr>
-    <tr><td>15</td><td>调控体系计算</td><td>15 分钟</td><td>5</td><td>操作成绩</td></tr>
-    <tr><td>16</td><td>带边与光谱后处理</td><td>10 分钟</td><td>6</td><td>实验报告</td></tr>
-    <tr><td>17</td><td>数据汇总与可行性论证</td><td>5 分钟</td><td>5</td><td>实验报告</td></tr>
-    <tr><td>18</td><td>机器学习构效关系建模</td><td>10 分钟</td><td>5</td><td>操作成绩</td></tr>
-    <tr><td>19</td><td>计算报告生成</td><td>课后</td><td>5</td><td>实验报告</td></tr>
-    <tr><td class="stage-td" rowspan="4">五、答辩反思<br><small>教师评价 9 分</small></td><td>20</td><td>AI 报告点评与修改</td><td>课后</td><td>3</td><td>实验报告</td></tr>
-    <tr><td>21</td><td>小组答辩与同伴互评</td><td>10 分钟</td><td>4</td><td>教师评价报告</td></tr>
-    <tr><td>22</td><td>反思与改进</td><td>课后</td><td>3</td><td>实验报告</td></tr>
-    <tr><td>23</td><td>能力画像查看与拓展</td><td>5 分钟</td><td>2</td><td>教师评价报告</td></tr>
+    <tr><td>11</td><td>能带与光学性质后处理</td><td>10 分钟</td><td>5</td><td>操作成绩</td></tr>
+    <tr><td class="stage-td" rowspan="4">三、结果后处理<br><small>共 21 分</small></td><td>12</td><td>带隙提取与实验值比对</td><td>5 分钟</td><td>5</td><td>实验报告</td></tr>
+    <tr><td>13</td><td>调控模型构建</td><td>10 分钟</td><td>5</td><td>操作成绩</td></tr>
+    <tr><td>14</td><td>调控体系计算</td><td>15 分钟</td><td>5</td><td>操作成绩</td></tr>
+    <tr><td>15</td><td>带边与光谱后处理</td><td>10 分钟</td><td>6</td><td>实验报告</td></tr>
+    <tr><td class="stage-td" rowspan="4">四、报告与反思<br><small>共 18 分</small></td><td>16</td><td>数据汇总与可行性论证</td><td>5 分钟</td><td>5</td><td>实验报告</td></tr>
+    <tr><td>17</td><td>机器学习构效关系建模</td><td>10 分钟</td><td>5</td><td>操作成绩</td></tr>
+    <tr><td>18</td><td>计算报告生成</td><td>课后</td><td>5</td><td>实验报告</td></tr>
+    <tr><td>19</td><td>AI 报告点评与修改</td><td>课后</td><td>3</td><td>实验报告</td></tr>
+    <tr><td class="stage-td" rowspan="3">五、答辩与拓展<br><small>共 9 分</small></td><td>20</td><td>小组答辩与同伴互评</td><td>10 分钟</td><td>4</td><td>教师评价</td></tr>
+    <tr><td>21</td><td>反思与改进</td><td>课后</td><td>3</td><td>实验报告</td></tr>
+    <tr><td>22</td><td>能力画像查看与拓展</td><td>5 分钟</td><td>2</td><td>教师评价</td></tr>
   </table>
   </div>
-  <p class="figcap">表 1  学生交互性操作步骤（按研究项目六阶段组织，共计 100 分）</p>
+  <p class="figcap">表 1  学生交互性操作步骤（按研究项目五阶段组织，共计 100 分；按成绩类型：预习成绩 17 分 + 操作成绩 50 分 + 实验报告 27 分 + 教师评价 6 分）</p>
 </section>
 
 <section id="gallery">
@@ -362,7 +365,7 @@
   <div class="gallery" style="margin-top:14px">
     <div class="shot">
       <video src="media/guide_5min.mp4" controls preload="metadata" style="width:100%;display:block;background:#000"></video>
-      <div class="cap"><b>教学引导视频（5 分钟）</b>实验总览：企业研发委托任务、光催化三判据、六阶段 23 步全流程引导。</div>
+      <div class="cap"><b>教学引导视频</b>实验总览：企业研发委托任务、光催化三判据、22 步全流程引导。</div>
     </div>
     <div class="shot">
       <video src="media/v1_intro.mp4" controls preload="metadata" style="width:100%;display:block;background:#000"></video>
@@ -397,7 +400,7 @@
   <div class="cards">
     <div class="card"><h3>三关流程：AI 生成 — 人工核验 — 计算验证</h3><p>智能体输出必须经<span class="k">学生核验、计算验证</span>方可采信；学生须逐行说明计算参数物理含义、核验结构几何合理性方可提交，并以对照实验（AI 协同组 / 传统查阅手册组）量化 AI 的真实效用。</p></div>
     <div class="card"><h3>真数据 · 真仿真 · 真交互</h3><p>全部算例取自真实科研计算，仿真遵循客观物理规律；实验<span class="k">不设唯一标准答案</span>，学生自主设计掺杂 / 缺陷 / 应变方案，数据互不雷同、结论互为印证。</p></div>
-    <div class="card"><h3>赋分评价 · 能力画像</h3><p>23 步赋分评价模型覆盖预习、操作、报告与教师评价四类成绩，全过程留痕，<span class="k">动态生成学生能力画像与成长档案</span>，支撑过程性赋分评价。</p></div>
+    <div class="card"><h3>赋分评价 · 能力画像</h3><p>22 步赋分评价模型覆盖预习、操作、报告与教师评价四类成绩，全过程留痕，<span class="k">动态生成学生能力画像与成长档案</span>，支撑过程性赋分评价。</p></div>
   </div>
 </section>
 

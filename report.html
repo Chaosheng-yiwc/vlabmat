@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <link rel="icon" type="image/png" href="favicon.png">
+
 <script>
 /* 云端 API 网关适配：内网部署直连本地 server；公网(静态托管)走云函数网关 */
 (function(){
@@ -120,7 +122,7 @@
     <h3>② 《材料筛选评估报告》提交</h3>
     <div class="meta">对应第 19 步"计算报告生成"、第 20 步"AI 报告点评与修改" · 成绩类型：实验报告</div>
     <p class="desc">将 AI 辅助生成的报告初稿按学术规范改写定稿后在此提交。支持上传 docx / pdf 附件（≤10MB），或直接粘贴报告正文（数据表、结论等）。若已让 AI 点评，请连同修改说明一起提交。</p>
-    <input id="rptTitle" class="in" placeholder="报告标题，例如：《材料筛选评估报告——O 掺杂 g-C3N4 的光催化活性评估》">
+    <input id="rptTitle" class="in" placeholder="报告标题，例如：《材料筛选评估报告——g-C₃N₄ 体系光催化活性评估》">
     <textarea id="rptContent" class="in" rows="7" placeholder="报告摘要或正文（也可仅上传附件）：研究背景、计算方法、结果与讨论（带隙、带边位置、可见光活性）、结论与展望……"></textarea>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
       <label class="filebtn">📎 选择附件（≤10MB）<input type="file" id="rptFile" style="display:none" onchange="onPick('rptFile','rptFileInfo')"></label>

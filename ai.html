@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <link rel="icon" type="image/png" href="favicon.png">
+
 <script>
 /* 云端 API 网关适配：内网部署直连本地 server；公网(静态托管)走云函数网关 */
 (function(){
@@ -199,7 +201,10 @@ function init(){
       });
       scrollBottom();
     }
-    if (!msgs.length) showChips();
+    if (!msgs.length){
+      renderMsg('assistant', '我是小碳老师 👋 带隙、带边位置、收敛性测试、改性策略都可以问我。提问前请先完成对应的计算步骤，这样我能结合你的真实结果来解答。', false);
+      showChips();
+    }
   });
 }
 function doLogin(){

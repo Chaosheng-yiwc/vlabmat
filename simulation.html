@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <link rel="icon" type="image/png" href="favicon.png">
+
 <script>
 /* 云端 API 网关适配：内网部署直连本地 server；公网(静态托管)走云函数网关 */
 (function(){
@@ -178,7 +180,7 @@
           <option value="HSE06">HSE06（杂化泛函，更接近实验）</option>
         </select>
         <div class="hint" id="funcHint">PBE 方法：结构优化 → SCF → 能带 → 光学吸收（LOPTICS）四步流水。HSE06 方法：结构优化 → 直接 HSE06 自洽（"零权重 k 点"法）。提交后作业进入集群队列依次执行，运行日志实时输出。</div>
-        <div class="hint">提示：K 网格内部固定 5×5×3（Γ 居中，已通过收敛测试）。HSE06 精度高但耗时约为 PBE 的 10 倍以上，真实计算请耐心等待。</div>
+        <div class="hint">提示：K 网格内部固定 5×5×3（Γ 居中，已通过收敛测试）。HSE06 精度高但耗时约为 PBE 的 5 倍，真实计算请耐心等待。</div>
       </div>
     </div>
 
@@ -348,11 +350,11 @@ function applyStructFail(res){
 function useBuiltinStruct(){
   var msg = document.getElementById('structMsg');
   msg.style.color = '#5a6b80';
-  msg.textContent = '正在载入服务器标准结构（g-C3N4_标准结构.cif）并校验……';
+  msg.textContent = '正在载入服务器标准结构（g-C₃N₄_标准结构.cif）并校验……';
   fetch('/api/structure_builtin', {method:'POST', headers:{'Content-Type':'application/json'}, body: '{}'})
     .then(function(r){ return r.json(); })
     .then(function(res){
-      if (res.ok) applyStructOK(res, '服务器标准结构 g-C3N4_标准结构.cif');
+      if (res.ok) applyStructOK(res, '服务器标准结构 g-C₃N₄_标准结构.cif');
       else applyStructFail(res);
     })
     .catch(function(){
@@ -422,7 +424,7 @@ document.getElementById('func').onchange = function(){
   STATE.func = this.value;
   document.getElementById('funcHint').textContent = STATE.func === 'PBE'
     ? 'PBE 方法：SCF 自洽 → 非自洽（ICHARG=11）沿块体三维路径 Γ–M–K–Γ–A 算能带。计算快，但带隙通常低估实验值。'
-    : 'HSE06 方法：一次自洽计算同时完成 SCF 与能带（"零权重 k 点"法，路径 k 点权重为 0），能带与 DOS 同步产出。精度高，耗时约为 PBE 的 10 倍。';
+    : 'HSE06 方法：一次自洽计算同时完成 SCF 与能带（"零权重 k 点"法，路径 k 点权重为 0），能带与 DOS 同步产出。精度高，耗时约为 PBE 的 5 倍。';
 };
 
 function markOK(id, text){ var d = document.getElementById(id); d.className = 'dot ok'; d.textContent = '✓'; }
@@ -456,7 +458,7 @@ function runDemo(){
   var cv = convergeCurve();
   var lines = [
     '----------------------------------------------------------------------------------------------------',
-    '  vasp.6.3.2  (demo, HSE06 reference data)  ' + new Date().toLocaleString(),
+    '  vasp.6.3.1  (demo, HSE06 reference data)  ' + new Date().toLocaleString(),
     '  System: ' + sys.name + '   strain = ' + STATE.strain + ' %',
     '  ENCUT = ' + STATE.encut + ' eV   Functional: HSE06 (AEXX=0.25, HFSCREEN=0.2)',
     '  KPOINTS = 5x5x3 (Gamma) + zero-weight k-path Gamma-M-K-Gamma-A',
@@ -523,9 +525,9 @@ function submitReal(){
   document.getElementById('calcLog').textContent = '';
   realT0 = Date.now();
   realLog('----------------------------------------------------------------------------------------------------');
-  realLog('  vasp.6.3.2  ' + new Date().toLocaleString());
+  realLog('  vasp.6.3.1  ' + new Date().toLocaleString());
   realLog('  node01.qfnu.edu.cn   (' + STATE.cores + ' cores)   NCORE = 4');
-  realLog('  mpirun -n ' + STATE.cores + '  /public/software/vasp/vasp.6.3.2/vasp_std');
+  realLog('  mpirun -n ' + STATE.cores + '  /public/software/vasp/vasp.6.3.1/vasp_std');
   realLog('  System: ' + sysDesc());
   realLog('  ENCUT = ' + STATE.encut + ' eV   Biaxial strain = ' + STATE.strain + ' %');
   realLog('  Functional: ' + (STATE.func === 'HSE06'
@@ -602,7 +604,7 @@ function playPipeline(res, done){
     say('[1/2] PBE 结构优化（ISIF=3 · IBRION=2 · EDIFFG=-0.03 eV/Å，为 HSE06 提供平衡几何）……', 500);
     ionic([1.42, 0.71, 0.26, 0.031], 0.62);
     say('    结构优化收敛：Fmax = 0.031 eV/Å < EDIFFG（CONTCAR 已写出）　[累计 ' + at(0.12) + ']', 500);
-    say('[2/2] HSE06 自洽（25% 精确交换 · 逐 k 点精确对角化，耗时约为 PBE 的 20 倍）……', 600);
+    say('[2/2] HSE06 自洽（25% 精确交换 · 逐 k 点精确对角化，耗时约为 PBE 的 5 倍）……', 600);
     dav(9, 0.42);
     say('    SCF 收敛：E0 = ' + Efin.toFixed(6) + ' eV   ΔE = 3.8E-06 < EDIFF = 1E-05　[累计 ' + at(0.90) + ']', 450);
     say('    本征值沿 Γ-M-K-Γ-A 零权重路径输出 → 能带 + 光学吸收谱（ε₂(ω) → α(λ)，100–1000 nm）…… done　[累计 ' + at(1) + ']', 900);
@@ -723,27 +725,38 @@ function finishCalc(cv){
 var FILL_TOL = 0.20;   // 数值填空容差
 function q4Reasonable(t){
   t = t.toLowerCase();
-  var kw = ['pbe','hse','泛函','交换关联','近似','dft','温度','热','缺陷','无序','堆垛','层间',
-            '激子','屏蔽','介电','尺寸','溶剂','理想','0k','0 k','测量','实验条件','激发','复合','外推','tauc'];
-  for (var i = 0; i < kw.length; i++) if (t.indexOf(kw[i]) >= 0) return true;
-  return false;
+  /* 按"差异原因类别"分组：命中 ≥2 类给满分，仅 1 类给一半 */
+  var groups = [
+    ['pbe','hse','泛函','交换关联','近似','dft','激子','屏蔽','介电'],
+    ['温度','热','0k','0 k','理想'],
+    ['缺陷','无序','堆垛','层间','尺寸'],
+    ['测量','实验条件','溶剂','外推','tauc','激发','复合']
+  ];
+  var hit = 0;
+  for (var g = 0; g < groups.length; g++){
+    for (var i = 0; i < groups[g].length; i++){
+      if (t.indexOf(groups[g][i]) >= 0){ hit++; break; }
+    }
+  }
+  return hit;  /* 返回命中类别数 */
 }
 function buildQuiz(cv){
   var box = document.getElementById('quizBox');
   var inp = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="如 0.69"';
+  var inp2 = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="带负号，如 -0.xx"';
   var inp5 = 'class="sel" style="display:inline-block;width:160px;padding:4px 8px;margin:0 4px" placeholder="如：剪刀算符 / scissor"';
-  var inp6 = 'class="sel" style="display:inline-block;width:90px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="如 0.2"';
+  var inp6 = 'class="sel" style="display:inline-block;width:90px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="如 5"';
   box.innerHTML =
     '<div class="hint" style="margin-bottom:5px">根据第③步计算结果与本次计算体验填空（数值保留两位小数；带边电位 vs NHE，pH=0）。</div>' +
     '<label>Q1. 价带顶（VBM）位置为 <input ' + inp + ' id="q1"> V</label>' +
-    '<label>Q2. 导带底（CBM）位置为 <input ' + inp + ' id="q2"> V</label>' +
+    '<label>Q2. 导带底（CBM）位置为 <input ' + inp2 + ' id="q2"> V（注意：真空参考下 CBM 为负值）</label>' +
     '<label>Q3. 带隙 Eg 为 <input ' + inp + ' id="q3"> eV</label>' +
     '<label style="margin-top:8px">Q4. 计算值与实验值（g-C₃N₄ 实验带隙约 2.7 eV）存在差异，主要原因是？</label>' +
     '<textarea class="sel" id="q4" rows="3" style="width:100%;resize:vertical" placeholder="可从泛函近似、温度、缺陷、层间堆垛、测量方法等角度分析……"></textarea>' +
     '<label style="margin-top:8px">Q5. PBE 泛函会 <select id="q5sel" class="sel" style="display:inline-block;width:100px;padding:4px 8px;margin:0 4px">' +
       '<option value="">请选择</option><option>低估</option><option>高估</option></select> 带隙，' +
       '可用 <input ' + inp5 + ' id="q5"> 矫正带隙</label>' +
-    '<label style="margin-top:8px">Q6. PBE 计算时间是 HSE06 计算时间的 <input ' + inp6 + ' id="q6"> 倍' +
+    '<label style="margin-top:8px">Q6. HSE06 计算时间是 PBE 计算时间的 <input ' + inp6 + ' id="q6"> 倍' +
       '（对比第③步日志中两种泛函的耗时），因此 PBE 更适合做定性分析，HSE06 更适合做定量分析。</label>' +
     '<div style="margin-top:9px"><button class="go-btn" onclick="gradeQuiz()">✓ 提交判读</button> <span id="quizMsg"></span></div>';
   STATE.answered = false;
@@ -766,15 +779,16 @@ function gradeQuiz(){
       : '理论计算为 0 K 理想完整晶体，而实验值受温度、缺陷、层间堆垛、样品尺寸及测量方法（如 Tauc 外推）影响；') +
     'Q5：PBE 低估带隙，可用剪刀算符（scissor operator，或换用 HSE06 杂化泛函）矫正；' +
     'Q6：PBE 耗时约为 HSE06 的 1/5（即 HSE06 ≈ PBE 的 5 倍，见第③步日志），PBE 适合定性筛选、HSE06 适合定量分析。';
+  var q4hit = q4Reasonable(q4);
   var res = [
     [Math.abs(q1 - STATE.vbm) <= FILL_TOL, 'Q1 价带顶：正确 ' + STATE.vbm.toFixed(2) + ' V（vs NHE）', 15],
     [Math.abs(q2 - STATE.cbm) <= FILL_TOL, 'Q2 导带底：正确 ' + STATE.cbm.toFixed(2) + ' V（vs NHE）', 15],
     [Math.abs(q3 - STATE.Eg) <= FILL_TOL, 'Q3 带隙：正确 ' + STATE.Eg.toFixed(2) + ' eV' +
       (STATE.realDone ? '（真实 ' + STATE.func + ' 计算）' : '（HSE06 参考值）'), 15],
-    [q4Reasonable(q4), 'Q4 差异原因分析', 15],
+    [q4hit >= 1, 'Q4 差异原因分析（命中 ' + q4hit + ' 类原因' + (q4hit >= 2 ? '' : '，命中 ≥2 类可得满分') + '）', q4hit >= 2 ? 15 : 7],
     [q5sel === '低估' && /剪刀|scissor|杂化|hse/i.test(q5),
       'Q5 泛函对带隙的影响与矫正方法（低估；剪刀算符/scissor 或 HSE06 杂化泛函）', 20],
-    [q6 > 0.1 && q6 < 0.35, 'Q6 计算耗时对比（约 1/5 倍，即 HSE06 ≈ PBE 的 5 倍）', 20]
+    [q6 > 4 && q6 < 6, 'Q6 计算耗时对比（HSE06 ≈ PBE 的 5 倍，见第③步日志）', 20]
   ];
   var score = 0;
   var html = '';
@@ -800,13 +814,14 @@ function submitResult(){
     '【3D虚拟仿真实验结论】\n' +
     '体系：' + sys.name + '，双轴应变 ' + STATE.strain + ' %\n' +
     '计算来源：' + (STATE.realDone ? '真实集群计算（VASP 6.3.1/' + STATE.func + '，PBS 队列）' : '演示模式（内置 HSE06 参考数据）') + '\n' +
-    '计算参数：ENCUT = ' + STATE.encut + ' eV，泛函 = ' + STATE.func + '，K 网格 Γ 居中（5×5×3，超胞 2×2×3）\n' +
+    '计算参数：ENCUT = ' + STATE.encut + ' eV，泛函 = ' + STATE.func + '，K 网格 Γ 居中 5×5×3，' +
+    (STATE.sys === 'pristine' ? '超胞 1×1（R3m 体相原胞 21 原子）' : '超胞 3×3×1（189/188 原子）') + '\n' +
     (STATE.realDone
       ? '真实结果：Eg = ' + STATE.Eg.toFixed(3) + ' eV (' + STATE.func + ')，' + (STATE.real.direct ? '直接带隙' : '间接带隙') +
         '，SCF' + (STATE.real.converged ? '已收敛' : '未收敛') +
         (STATE.real.workfunc != null ? '，功函数 Φ = ' + STATE.real.workfunc.toFixed(2) + ' eV（真空能级法带边对齐）' : '') +
-        (STATE.real.elapsed != null ? '，耗时 ' + Math.round(STATE.real.elapsed) + ' s' : '') + '\n'
-      : '结果说明：演示模式数据参考真实 HSE06 文献计算结果（单层三嗪 g-C3N4 约 2.7~3.1 eV）\n') +
+        (STATE.real.elapsed != null ? '，结果就绪用时 ' + Math.round(STATE.real.elapsed) + ' s（集群运行墙钟见上方日志）' : '') + '\n'
+      : '结果说明：演示模式数据参考真实 HSE06 文献计算结果（单层三嗪 g-C₃N₄ 约 2.7~3.1 eV）\n') +
     '结果：带隙 Eg = ' + STATE.Eg.toFixed(2) + ' eV，CBM = ' + STATE.cbm.toFixed(2) +
     ' V，VBM = ' + STATE.vbm.toFixed(2) + ' V (vs NHE)' +
     (STATE.defect ? '，禁带中存在缺陷能级' : '') + '\n' +
@@ -815,8 +830,8 @@ function submitResult(){
     (document.getElementById('q4').value || '').trim().slice(0, 300) + '\n' +
     'Q5 泛函与矫正：PBE 会' + document.getElementById('q5sel').value + '带隙，矫正方法：' +
     (document.getElementById('q5').value || '').trim().slice(0, 80) + '\n' +
-    'Q6 耗时对比：PBE ≈ HSE06 的 ' + document.getElementById('q6').value + ' 倍（PBE 定性筛选、HSE06 定量分析）\n' +
-    '可见光活性：' + ((STATE.cbm < redoxLevels().red && STATE.vbm > redoxLevels().ox) ? '带边包住水的氧化还原电位，满足全解水条件' : '不满足全解水条件（pH = ' + (STATE.ph || 0) + '）') + '\n' +
+    'Q6 耗时对比：HSE06 ≈ PBE 的 ' + document.getElementById('q6').value + ' 倍（PBE 定性筛选、HSE06 定量分析）\n' +
+    '可见光活性：' + ((STATE.cbm < redoxLevels().red && STATE.vbm > redoxLevels().ox) ? '带边包住水的氧化还原电位，满足全解水条件' : '不满足全解水条件（pH = ' + (STATE.ph || 0) + '；PBE 会低估带隙，导致与实验值存在较大差异，请用 HSE06 矫正后再作最终判断）') + '\n' +
     '仿真得分：' + STATE.score + ' / 100';
   fetch('/api/submit', {method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({token: user.token, kind: '阶段性成果', step: '3D虚拟仿真实验台',
@@ -836,18 +851,23 @@ function showConcl(){
   var straddle = (STATE.cbm < rl.red && STATE.vbm > rl.ox);
   var lam = (STATE.Eg > 0) ? (1239.8 / STATE.Eg).toFixed(0) : '—';
   var src = STATE.realDone
-    ? '真实 DFT 计算（VASP/' + STATE.func + '，' + (STATE.real.elapsed != null ? '耗时 ' + Math.round(STATE.real.elapsed) + ' s' : '集群') + '）'
+    ? '真实 DFT 计算（VASP/' + STATE.func + '，集群队列执行，运行墙钟见第③步日志）'
     : '演示模式（HSE06 参考数据）';
   var alignTxt = '真空能级参考：实验功函数 <b>Φ ≈ 4.40 eV</b>（UPS 实验值）' +
     (STATE.realDone ? ' · ' + (STATE.align || '') : '');
   document.getElementById('conclBox').innerHTML =
     '<b>结论面板：</b>当前体系 <b>' + sys.name + '</b>（ε = ' + STATE.strain + ' %）｜来源：' + src + '｜' +
-    '带隙 <b>Eg = ' + STATE.Eg.toFixed(2) + ' eV</b>' + (STATE.realDone ? '（PBE 值，对应吸收边 ~' + lam + ' nm）' : '（对应吸收边 ~' + lam + ' nm，可见光区）') + '｜' +
+    '带隙 <b>Eg = ' + STATE.Eg.toFixed(2) + ' eV</b>' + (STATE.realDone ? '（PBE 值，对应吸收边 ~' + lam + ' nm；PBE 低估带隙，按实验值 2.7 eV 吸收边约 460 nm，落在可见光区）' : '（对应吸收边 ~' + lam + ' nm，可见光区）') + '｜' +
     'CBM = <b>' + STATE.cbm.toFixed(2) + ' V</b>、VBM = <b>' + STATE.vbm.toFixed(2) + ' V</b>（vs NHE，pH=0；' + alignTxt + '）' +
     (STATE.defect ? '｜<span style="color:var(--red)">⚠ 禁带中出现 C 空位缺陷能级（复合中心）</span>' : '') + '｜' +
     (straddle ? '<span class="ans-ok">✓ 带边包住 H⁺/H₂(' + rl.red.toFixed(2) + ' V) 与 O₂/H₂O(' + rl.ox.toFixed(2) +
-                ' V)，满足全解水热力学条件（pH = ' + rl.ph + '）</span>'
-              : '<span class="ans-no">✗ 不满足全解水热力学条件（pH = ' + rl.ph + '，带边未包住水的氧化还原电位）</span>');
+                ' V)，满足全解水热力学条件（pH = ' + rl.ph + '；精确判据建议用 HSE06 复核）</span>'
+              : '<span class="ans-no">✗ 不满足全解水热力学条件（pH = ' + rl.ph + '，带边未包住水的氧化还原电位）</span>' +
+                '<div class="hint" style="margin-top:4px">注：PBE 会低估带隙（本体系 Eg = ' + STATE.Eg.toFixed(2) +
+                ' eV，而实验值约 2.7 eV），导致带边位置与实验值存在较大差异；该结论请用 HSE06 矫正后再作最终判断。' +
+                '若以实验带隙 2.7 eV 锚定（中点 ' + ((STATE.vbm + STATE.cbm) / 2).toFixed(2) + ' V），VBM ≈ +' +
+                (((STATE.vbm + STATE.cbm) / 2 + 1.35).toFixed(2)) + ' V、CBM ≈ ' +
+                (((STATE.vbm + STATE.cbm) / 2 - 1.35).toFixed(2)) + ' V（vs NHE），带边包住水的氧化还原电位，与文献报道一致。</div>');
 }
 
 /* ================= 真实数据绘图 ================= */
