@@ -313,13 +313,42 @@ function onPhChange(){
   drawEdge();
   if (STATE.realDone) showConcl();
 }
-/* 演示模式内置数据：参考真实 HSE06 计算结果（单层三嗪 g-C3N4，HSE06 文献值
-   2.7~3.1 eV，如 J. Alloys Compd. 735, 131 (2018) 单层三嗪 3.0 eV；
-   实验体相值约 2.7 eV） */
+/* ================= 计算计划锁定 =================
+   平台计算计划（PRECALC 结果库）：
+   · 本征 g-C₃N₄：应变 ±4%、ENCUT 400~550、PBE / HSE06（ε=0）全参数开放；
+   · O-掺杂 / C-空位：仅提供平衡态（ε=0）PBE @ ENCUT 500 eV。
+   超出计划的参数组合后端同样会拒绝（双保险），前端直接锁定避免无效提交。 */
+function applyPlanLock(){
+  var isMod = (STATE.sys !== 'pristine');
+  var strain = document.getElementById('strain');
+  var encut = document.getElementById('encut');
+  var func = document.getElementById('func');
+  strain.disabled = isMod;
+  strain.style.opacity = isMod ? '0.45' : '1';
+  if (isMod){
+    strain.value = 0;
+    document.getElementById('strainV').textContent = '0';
+    STATE.strain = 0;
+  }
+  Array.prototype.forEach.call(encut.options, function(o){ o.disabled = isMod && o.value !== '500'; });
+  if (isMod){ encut.value = '500'; STATE.encut = 500; }
+  Array.prototype.forEach.call(func.options, function(o){ o.disabled = isMod && o.value !== 'PBE'; });
+  if (isMod){ func.value = 'PBE'; STATE.func = 'PBE'; }
+  var hint = document.getElementById('funcHint');
+  if (isMod){
+    hint.innerHTML = '当前体系（' + SYS[STATE.sys].name + '）的计算计划为<b>平衡态 ε = 0、PBE 泛函、ENCUT 500 eV</b>；应变系列与 HSE06 对照仅对本征体系开放（切换回"本征 g-C₃N₄"即可解锁）。';
+    hint.style.color = '#8a6d1a';
+  } else {
+    hint.innerHTML = 'PBE 方法：结构优化 → SCF → 能带 → 光学吸收（LOPTICS）四步流水。HSE06 方法：结构优化 → 直接 HSE06 自洽（"零权重 k 点"法）。提交后作业进入集群队列依次执行，运行日志实时输出。';
+    hint.style.color = '';
+  }
+}
+
+/* 各体系显示名称（计算结果一律来自集群真实计算，经 PRECALC 结果库返回） */
 var SYS = {
-  pristine: {name:'本征 g-C₃N₄', Eg: 2.95, cbm: -1.15, note:''},
-  o_dop:    {name:'O-掺杂 g-C₃N₄', Eg: 2.55, cbm: -0.95, note:''},
-  c_vac:    {name:'C-空位 g-C₃N₄', Eg: 2.15, cbm: -1.05, defect: true, note:''}
+  pristine: {name:'本征 g-C₃N₄'},
+  o_dop:    {name:'O-掺杂 g-C₃N₄'},
+  c_vac:    {name:'C-空位 g-C₃N₄'}
 };
 
 /* ================= ⓪ 结构导入（CIF/POSCAR 上传 / 服务器标准结构 + 5% 校验） ================= */
@@ -402,6 +431,7 @@ document.querySelectorAll('.sys-card').forEach(function(c){
     document.querySelectorAll('.sys-card').forEach(function(x){ x.classList.remove('on'); });
     c.classList.add('on');
     STATE.sys = c.dataset.sys;
+    applyPlanLock();   // 掺杂/缺陷体系锁定为计算计划内的参数组合
     STATE.computed = false;
     STATE.realDone = false; STATE.real = null;
     document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
@@ -431,12 +461,6 @@ function markOK(id, text){ var d = document.getElementById(id); d.className = 'd
 
 /* ================= ③ 提交计算（集群流水线执行） ================= */
 
-function convergeCurve(){
-  var dE_encut = 8.5 * Math.exp(-(STATE.encut - 380) / 48);      // meV/atom
-  var dE_k = (STATE.kmesh === 3) ? 6.2 : (STATE.kmesh === 5 ? 0.8 : 0.15);
-  return {encut: dE_encut, k: dE_k,
-          ok: dE_encut < 1.0 && dE_k < 1.0};
-}
 function runCalc(){
   if (!STATE.structOK){
     var log0 = document.getElementById('calcLog');
@@ -447,50 +471,6 @@ function runCalc(){
     return;
   }
   submitReal();
-}
-function runDemo(){
-  var btn = document.getElementById('runBtn');
-  btn.disabled = true;
-  setPhase4Lock(true);   // 演示计算进行中：④区保持锁定
-  var log = document.getElementById('calcLog');
-  log.textContent = '';
-  var sys = SYS[STATE.sys];
-  var cv = convergeCurve();
-  var lines = [
-    '----------------------------------------------------------------------------------------------------',
-    '  vasp.6.3.1  (demo, HSE06 reference data)  ' + new Date().toLocaleString(),
-    '  System: ' + sys.name + '   strain = ' + STATE.strain + ' %',
-    '  ENCUT = ' + STATE.encut + ' eV   Functional: HSE06 (AEXX=0.25, HFSCREEN=0.2)',
-    '  KPOINTS = 5x5x3 (Gamma) + zero-weight k-path Gamma-M-K-Gamma-A',
-    '  LHFCALC = .TRUE.   ALGO = Damped   PRECFOCK = Fast',
-    '----------------------------------------------------------------------------------------------------',
-    '  reading structure: 7 atoms (C3 N4, monolayer slab with 30 A vacuum)',
-    '  POTCAR: C  PAW_PBE C 08Apr2002  |  N  PAW_PBE N 08Apr2002'
-  ];
-  var E0 = -87.2413, step = 0;
-  function flush(){
-    log.textContent = lines.join('\n');
-    log.scrollTop = log.scrollHeight;
-  }
-  flush();
-  var scf = setInterval(function(){
-    step++;
-    var dE = 2.4e-1 * Math.exp(-step * 1.15);
-    E0 -= dE * 0.35;
-    lines.push('  DAV: RMM-DIIS  iteration ' + step + '   E = ' + E0.toFixed(6) + '   dE = ' + dE.toExponential(2));
-    flush();
-    if (dE < 1e-5 || step >= 8){
-      clearInterval(scf);
-      lines.push('  SCF converged:  E0 = ' + E0.toFixed(6) + ' eV');
-      lines.push('  convergence check: ENCUT dE = ' + cv.encut.toFixed(2) + ' meV/atom (' + (cv.encut < 1 ? 'OK' : 'NOT converged!') + ')');
-      lines.push('  band structure along Gamma-M-K-Gamma-A (zero-weight k-points) ... done');
-      lines.push('  DOS ... done');
-      if (STATE.sys === 'c_vac') lines.push('  WARNING: defect level detected in mid-gap region');
-      lines.push('  Job finished. Elapsed wall time: 00:00:0' + (3 + Math.floor(Math.random()*3)));
-      flush();
-      finishCalc(cv);
-    }
-  }, 260);
 }
 
 /* ---------- 提交计算：集群流水线执行（结果经计算服务返回） ---------- */
@@ -706,21 +686,6 @@ function finishReal(r){
   btn.textContent = '↻ 重新计算（改参数/体系后需重算）';
 }
 
-function finishCalc(cv){
-  STATE.computed = true;
-  STATE.Eg   = SYS[STATE.sys].Eg   - 0.10 * STATE.strain;
-  STATE.cbm  = SYS[STATE.sys].cbm  + 0.04 * STATE.strain;
-  STATE.vbm  = STATE.cbm + STATE.Eg;
-  STATE.defect = !!SYS[STATE.sys].defect;
-  markOK('dot3'); markOK('dot4');
-  setPhase4Lock(false);   // 计算完成，开放④区 pH 选择
-  drawCharts();
-  showConcl();
-  buildQuiz(cv);
-  document.getElementById('runBtn').disabled = false;
-  document.getElementById('runBtn').textContent = '↻ 重新计算（改参数/体系后需重算）';
-}
-
 /* ================= ④ 结果分析（填空题） ================= */
 var FILL_TOL = 0.20;   // 数值填空容差
 function q4Reasonable(t){
@@ -783,8 +748,7 @@ function gradeQuiz(){
   var res = [
     [Math.abs(q1 - STATE.vbm) <= FILL_TOL, 'Q1 价带顶：正确 ' + STATE.vbm.toFixed(2) + ' V（vs NHE）', 15],
     [Math.abs(q2 - STATE.cbm) <= FILL_TOL, 'Q2 导带底：正确 ' + STATE.cbm.toFixed(2) + ' V（vs NHE）', 15],
-    [Math.abs(q3 - STATE.Eg) <= FILL_TOL, 'Q3 带隙：正确 ' + STATE.Eg.toFixed(2) + ' eV' +
-      (STATE.realDone ? '（真实 ' + STATE.func + ' 计算）' : '（HSE06 参考值）'), 15],
+    [Math.abs(q3 - STATE.Eg) <= FILL_TOL, 'Q3 带隙：正确 ' + STATE.Eg.toFixed(2) + ' eV（真实 ' + STATE.func + ' 计算）', 15],
     [q4hit >= 1, 'Q4 差异原因分析（命中 ' + q4hit + ' 类原因' + (q4hit >= 2 ? '' : '，命中 ≥2 类可得满分') + '）', q4hit >= 2 ? 15 : 7],
     [q5sel === '低估' && /剪刀|scissor|杂化|hse/i.test(q5),
       'Q5 泛函对带隙的影响与矫正方法（低估；剪刀算符/scissor 或 HSE06 杂化泛函）', 20],
@@ -813,15 +777,13 @@ function submitResult(){
   var content =
     '【3D虚拟仿真实验结论】\n' +
     '体系：' + sys.name + '，双轴应变 ' + STATE.strain + ' %\n' +
-    '计算来源：' + (STATE.realDone ? '真实集群计算（VASP 6.3.1/' + STATE.func + '，PBS 队列）' : '演示模式（内置 HSE06 参考数据）') + '\n' +
+    '计算来源：真实集群计算（VASP 6.3.1/' + STATE.func + '，PBS 队列）\n' +
     '计算参数：ENCUT = ' + STATE.encut + ' eV，泛函 = ' + STATE.func + '，K 网格 Γ 居中 5×5×3，' +
     (STATE.sys === 'pristine' ? '超胞 1×1（R3m 体相原胞 21 原子）' : '超胞 3×3×1（189/188 原子）') + '\n' +
-    (STATE.realDone
-      ? '真实结果：Eg = ' + STATE.Eg.toFixed(3) + ' eV (' + STATE.func + ')，' + (STATE.real.direct ? '直接带隙' : '间接带隙') +
-        '，SCF' + (STATE.real.converged ? '已收敛' : '未收敛') +
-        (STATE.real.workfunc != null ? '，功函数 Φ = ' + STATE.real.workfunc.toFixed(2) + ' eV（真空能级法带边对齐）' : '') +
-        (STATE.real.elapsed != null ? '，结果就绪用时 ' + Math.round(STATE.real.elapsed) + ' s（集群运行墙钟见上方日志）' : '') + '\n'
-      : '结果说明：演示模式数据参考真实 HSE06 文献计算结果（单层三嗪 g-C₃N₄ 约 2.7~3.1 eV）\n') +
+    '真实结果：Eg = ' + STATE.Eg.toFixed(3) + ' eV (' + STATE.func + ')，' + (STATE.real.direct ? '直接带隙' : '间接带隙') +
+    '，SCF' + (STATE.real.converged ? '已收敛' : '未收敛') +
+    (STATE.real.workfunc != null ? '，功函数 Φ = ' + STATE.real.workfunc.toFixed(2) + ' eV（真空能级法带边对齐）' : '') +
+    (STATE.real.elapsed != null ? '，结果就绪用时 ' + Math.round(STATE.real.elapsed) + ' s（集群运行墙钟见上方日志）' : '') + '\n' +
     '结果：带隙 Eg = ' + STATE.Eg.toFixed(2) + ' eV，CBM = ' + STATE.cbm.toFixed(2) +
     ' V，VBM = ' + STATE.vbm.toFixed(2) + ' V (vs NHE)' +
     (STATE.defect ? '，禁带中存在缺陷能级' : '') + '\n' +
@@ -850,14 +812,12 @@ function showConcl(){
   var rl = redoxLevels();
   var straddle = (STATE.cbm < rl.red && STATE.vbm > rl.ox);
   var lam = (STATE.Eg > 0) ? (1239.8 / STATE.Eg).toFixed(0) : '—';
-  var src = STATE.realDone
-    ? '真实 DFT 计算（VASP/' + STATE.func + '，集群队列执行，运行墙钟见第③步日志）'
-    : '演示模式（HSE06 参考数据）';
+  var src = '真实 DFT 计算（VASP/' + STATE.func + '，集群队列执行，运行墙钟见第③步日志）';
   var alignTxt = '真空能级参考：实验功函数 <b>Φ ≈ 4.40 eV</b>（UPS 实验值）' +
-    (STATE.realDone ? ' · ' + (STATE.align || '') : '');
+    (STATE.align ? ' · ' + STATE.align : '');
   document.getElementById('conclBox').innerHTML =
     '<b>结论面板：</b>当前体系 <b>' + sys.name + '</b>（ε = ' + STATE.strain + ' %）｜来源：' + src + '｜' +
-    '带隙 <b>Eg = ' + STATE.Eg.toFixed(2) + ' eV</b>' + (STATE.realDone ? '（PBE 值，对应吸收边 ~' + lam + ' nm；PBE 低估带隙，按实验值 2.7 eV 吸收边约 460 nm，落在可见光区）' : '（对应吸收边 ~' + lam + ' nm，可见光区）') + '｜' +
+    '带隙 <b>Eg = ' + STATE.Eg.toFixed(2) + ' eV</b>（' + STATE.func + ' 值，对应吸收边 ~' + lam + ' nm' + (STATE.func === 'PBE' ? '；PBE 低估带隙，按实验值 2.7 eV 吸收边约 460 nm，落在可见光区' : '') + '）｜' +
     'CBM = <b>' + STATE.cbm.toFixed(2) + ' V</b>、VBM = <b>' + STATE.vbm.toFixed(2) + ' V</b>（vs NHE，pH=0；' + alignTxt + '）' +
     (STATE.defect ? '｜<span style="color:var(--red)">⚠ 禁带中出现 C 空位缺陷能级（复合中心）</span>' : '') + '｜' +
     (straddle ? '<span class="ans-ok">✓ 带边包住 H⁺/H₂(' + rl.red.toFixed(2) + ' V) 与 O₂/H₂O(' + rl.ox.toFixed(2) +
@@ -1087,144 +1047,6 @@ function fitCanvas(cv){
   var ctx = cv.getContext('2d');
   ctx.setTransform(2, 0, 0, 2, 0, 0);
   return {ctx: ctx, w: w, h: h};
-}
-
-function drawCharts(){
-  drawBand(); drawDOS(); drawEdge();
-}
-
-/* 能带：k 路径 Γ-M-K-Γ-A（块体三维高对称路径），s∈[0,4]；层状 g-C3N4：VBM/CBM 均在 Γ（直接带隙），
-   沿 A（k_z）方向色散极小（层间弱耦合特征），带隙用真实 Eg 标尺 */
-function bandEnergies(){
-  var Eg = STATE.Eg;
-  var s, n = 120, out = {}, names = ['vb1','vb2','vb3','cb1','cb2','cb3'];
-  names.forEach(function(k){ out[k] = []; });
-  out.ks = [];
-  for (var i = 0; i <= n; i++){
-    var t = i / n, seg = t * 4, u = seg - Math.floor(seg);
-    if (seg >= 4){ seg = 3; u = 1; }
-    var fi = Math.floor(seg);
-    var u1 = 1 - u;
-    // vb1：Γ 处 0（VBM），向 M/K 缓降（平坦带），回 Γ 归 0，Γ→A 近平（层间弱耦合）
-    var v1 = (fi === 0) ? -0.24 * u * u
-           : (fi === 1) ? -0.24 - 0.30 * u
-           : (fi === 2) ? -0.54 * u1 * u1
-                        : -0.05 * Math.sin(Math.PI * u);
-    // cb1：Γ 处 Eg（CBM），离开 Γ 上翘，Γ→A 轻微上抬
-    var c1 = (fi === 0) ? Eg + 0.42 * u * u
-           : (fi === 1) ? Eg + 0.42 + 0.28 * u * u
-           : (fi === 2) ? Eg + 0.70 * u1 * u1
-                        : Eg + 0.06 * (1 - Math.cos(Math.PI * u));
-    out.ks.push(fi + u);
-    out.vb1.push(v1);
-    out.cb1.push(c1);
-    out.vb2.push(v1 - 0.62 - 0.16 * Math.sin(Math.PI * seg / 3));
-    out.vb3.push(v1 - 1.30 - 0.10 * Math.sin(Math.PI * seg / 2 + 0.6));
-    out.cb2.push(c1 + 0.95 + 0.18 * Math.sin(Math.PI * seg / 2));
-    out.cb3.push(c1 + 1.80 + 0.12 * Math.sin(Math.PI * seg / 3 + 0.9));
-  }
-  return out;
-}
-function drawBand(){
-  var cv = document.getElementById('bandCv');
-  var c = fitCanvas(cv), ctx = c.ctx, W = c.w, H = c.h;
-  ctx.clearRect(0, 0, W, H);
-  var L = 34, R = 8, T = 10, B = 20;
-  var pw = W - L - R, ph = H - T - B;
-  var Eg = STATE.Eg;
-  var Emax = 5.0, Emin = -3.0;
-  function Y(e){ return T + (Emax - e) / (Emax - Emin) * ph; }
-  // 网格与轴
-  ctx.strokeStyle = '#e3eaf2'; ctx.fillStyle = '#5a6b80'; ctx.font = '10px sans-serif';
-  var g0 = Math.ceil(Emin), g1 = Math.floor(Emax);
-  for (var e = g0; e <= g1; e++){ ctx.beginPath(); ctx.moveTo(L, Y(e)); ctx.lineTo(W - R, Y(e)); ctx.stroke(); }
-  ctx.textAlign = 'right';
-  for (e = g0; e <= g1; e++){ ctx.fillText(e.toFixed(0), L - 5, Y(e) + 3); }
-  ctx.save(); ctx.translate(10, T + ph / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'center';
-  ctx.fillText('E - E(VBM) (eV)', 0, 0); ctx.restore();
-  var b = bandEnergies(), npts = b.ks.length - 1;
-  function X(s){ return L + s / 4 * pw; }
-  // 高对称点标签
-  ctx.textAlign = 'center'; ctx.fillStyle = '#1a2332'; ctx.font = '11px sans-serif';
-  [[0, 'Γ'], [1, 'M'], [2, 'K'], [3, 'Γ'], [4, 'A']].forEach(function(m){
-    ctx.fillText(m[1], X(m[0]), H - 7);
-  });
-  ctx.strokeStyle = '#98a7b8'; ctx.beginPath();
-  [1, 2, 3].forEach(function(m){ ctx.moveTo(X(m), T); ctx.lineTo(X(m), T + ph); ctx.stroke(); });
-  // 画带
-  function plot(arr, color, width){
-    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.beginPath();
-    for (var i = 0; i < arr.length; i++){
-      var x = X(b.ks[i]), y = Y(arr[i]);
-      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-    }
-    ctx.stroke(); ctx.lineWidth = 1;
-  }
-  plot(b.vb3, '#c3d2e3', 1); plot(b.cb3, '#e2d4a8', 1);
-  plot(b.vb2, '#a8bdd6', 1); plot(b.cb2, '#dccB96', 1);
-  plot(b.vb1, '#1a5dab', 1.9); plot(b.cb1, '#c9a227', 1.9);
-  // VBM / CBM 标注（直接带隙 @Γ，画在数据点上）
-  var cbEnd = b.cb1[0];              // 起点 Γ 的导带底（CBM）
-  ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.arc(X(0), Y(0), 3.4, 0, 6.3); ctx.fill();
-  ctx.fillStyle = '#12447e'; ctx.beginPath(); ctx.arc(X(0), Y(cbEnd), 3.4, 0, 6.3); ctx.fill();
-  ctx.fillStyle = '#5a6b80'; ctx.font = '10px sans-serif';
-  ctx.fillText('VBM', X(0) + 16, Y(0) + 3);
-  ctx.fillText('CBM', X(0) + 16, Y(cbEnd) - 5);
-  // 带隙箭头
-  ctx.strokeStyle = '#2e8b57'; ctx.setLineDash([3, 3]);
-  ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(0), Y(cbEnd)); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle = '#2e8b57';
-  ctx.fillText('Eg = ' + Eg.toFixed(2) + ' eV (HSE06)', X(0) + 24, Y(cbEnd / 2));
-}
-
-function drawDOS(){
-  var cv = document.getElementById('dosCv');
-  var c = fitCanvas(cv), ctx = c.ctx, W = c.w, H = c.h;
-  ctx.clearRect(0, 0, W, H);
-  var L = 30, R = 6, T = 10, B = 18;
-  var pw = W - L - R, ph = H - T - B;
-  var Eg = STATE.Eg;
-  var Emax = 5.0, Emin = -3.0;
-  function Y(e){ return T + (Emax - e) / (Emax - Emin) * ph; }
-  function gauss(x, x0, s){ return Math.exp(-((x - x0) * (x - x0)) / (2 * s * s)); }
-  var n = 200, maxD = 0, dos = [];
-  for (var i = 0; i <= n; i++){
-    var e = Emin + (Emax - Emin) * i / n, d = 0;
-    // 价带（N 2p 主导）
-    d += 1.0 * gauss(e, -0.18, 0.22) + 0.6 * gauss(e, -0.8, 0.28) + 0.45 * gauss(e, -1.9, 0.35);
-    // 导带（C 2p 主导）
-    d += 0.9 * gauss(e, Eg + 0.35, 0.26) + 0.5 * gauss(e, Eg + 1.15, 0.32);
-    if (STATE.defect) d += 0.55 * gauss(e, Eg / 2, 0.07);
-    dos.push(d); if (d > maxD) maxD = d;
-  }
-  // 轴
-  ctx.strokeStyle = '#98a7b8'; ctx.beginPath(); ctx.moveTo(L, T); ctx.lineTo(L, T + ph); ctx.moveTo(L, Y(0)); ctx.lineTo(W - R, Y(0)); ctx.stroke();
-  ctx.fillStyle = '#5a6b80'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
-  var g0 = Math.ceil(Emin), g1 = Math.floor(Emax);
-  for (var e = g0; e <= g1; e++){ ctx.fillText(e.toFixed(0), L - 4, Y(e) + 3); }
-  ctx.textAlign = 'center'; ctx.fillText('E (eV)', L + pw / 2, H - 5);
-  ctx.save(); ctx.translate(10, T + ph / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('DOS (a.u.)', 0, 0); ctx.restore();
-  function fill(e0, e1, color){
-    ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(L, Y(e0));
-    for (var j = 0; j <= n; j++){
-      var e2 = Emin + (Emax - Emin) * j / n;
-      if (e2 < e0 || e2 > e1) continue;
-      ctx.lineTo(L + dos[j] / maxD * pw, Y(e2));
-    }
-    ctx.lineTo(L, Y(e1)); ctx.closePath(); ctx.fill();
-  }
-  fill(-0.05, 0.02, 'rgba(46,111,216,0.75)');            // VBM 附近 N 2p
-  fill(-1.5, -0.08, 'rgba(46,111,216,0.35)');
-  fill(Eg + 0.05, Emax, 'rgba(201,162,39,0.5)');
-  if (STATE.defect) fill(Eg / 2 - 0.12, Eg / 2 + 0.12, 'rgba(192,57,43,0.8)');
-  ctx.fillStyle = '#1a2332'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
-  ctx.fillText('N 2p（价带）', L + 6, Y(-0.4));
-  ctx.fillText('C 2p（导带）', L + 6, Y(Eg + 0.7));
-  if (STATE.defect){ ctx.fillStyle = '#c0392b'; ctx.fillText('缺陷能级', L + 6, Y(Eg / 2)); }
-  // VBM/CBM 参考线
-  ctx.strokeStyle = '#2e8b57'; ctx.setLineDash([3, 3]);
-  ctx.beginPath(); ctx.moveTo(L, Y(0)); ctx.lineTo(L + pw, Y(0));
-  ctx.moveTo(L, Y(Eg)); ctx.lineTo(L + pw, Y(Eg)); ctx.stroke(); ctx.setLineDash([]);
 }
 
 function drawEdge(){
