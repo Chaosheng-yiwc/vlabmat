@@ -323,6 +323,24 @@
       <div class="cap"><b>g-C<sub>3</sub>N<sub>4</sub> 光催化材料结构模型</b>实验主算例体系：以 heptazine（三-s-三嗪）单元为骨架的类石墨相氮化碳，学生在此基础上开展掺杂、缺陷与应变调控设计。</div>
     </div>
   </div>
+
+  <h3 style="margin-top:34px;font-size:19px">g-C<sub>3</sub>N<sub>4</sub> 掺杂 / 缺陷调控 · 真实 DFT 计算结果</h3>
+  <p class="lead">三大体系已在本项目 HPC 集群完成 PBE 水平计算（VASP 6.5.1，ENCUT 500 eV，5×5×1 k 网格；带边由实验功函数 Φ ≈ 4.40 eV 锚定至 NHE 标度）。以下为结果汇总——仿真平台"真实计算"链路即由该数据集驱动，学生提交计算后实时返回。</p>
+  <div class="shot" style="margin-top:14px">
+    <img src="gcn4_dft_results.png" alt="g-C3N4 三体系 DFT 计算结果对比：光吸收谱、总态密度与带边对齐">
+    <div class="cap"><b>图 · 三体系电子结构与光学性质对比</b>（a）光吸收谱：C 空位使吸收边大幅红移至可见—近红外区；（b）总态密度（以各自 VBM 为零点、按原子数归一）：O 掺杂使带隙展宽，C 空位在隙间引入缺陷态；（c）带边位置 vs NHE（pH = 0）：三体系 CBM 均低于 H⁺/H₂（0 V），具备光解水产氢的还原驱动力。</div>
+  </div>
+  <div class="tbl-wrap" style="margin-top:14px">
+    <table>
+      <thead><tr><th>体系</th><th>模型</th><th>原子数</th><th>E<sub>g</sub>（PBE）</th><th>带隙性质</th><th>理论吸收边 1240/E<sub>g</sub></th><th>带边 vs NHE（pH = 0）</th></tr></thead>
+      <tbody>
+        <tr><td class="stage-td">本征 g-C<sub>3</sub>N<sub>4</sub></td><td>R3m 原胞</td><td>21</td><td>1.31 eV</td><td>直接</td><td>≈ 948 nm</td><td>VBM +0.69 V / CBM −0.61 V</td></tr>
+        <tr><td class="stage-td">O-掺杂 g-C<sub>3</sub>N<sub>4</sub></td><td>3×3×1 超胞，1 个 N → O 替位</td><td>189</td><td>1.59 eV</td><td>间接</td><td>≈ 777 nm</td><td>VBM +0.84 V / CBM −0.76 V</td></tr>
+        <tr><td class="stage-td">C-空位 g-C<sub>3</sub>N<sub>4</sub></td><td>3×3×1 超胞，1 个 C 空位</td><td>188</td><td>0.26 eV</td><td>间接</td><td>隙间缺陷态主导</td><td>VBM +0.17 V / CBM −0.09 V</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="hint" style="margin-top:8px">注：PBE 泛函系统性低估带隙（g-C<sub>3</sub>N<sub>4</sub> 实验带隙约 2.7 eV），定量结论教学上应结合 HSE06 修正讨论——这正是本实验"泛函局限性与带隙矫正"环节的设计意图。</p>
 </section>
 
 <section id="contest">
