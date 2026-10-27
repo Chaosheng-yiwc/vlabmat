@@ -188,7 +188,7 @@ var CHIPS = [
 
 function init(){
   if (!TOKEN){ document.getElementById('loginCard').style.display='block'; return; }
-  document.getElementById('stuName').textContent = user ? user.name + '（' + user.sid + '）' : '—';
+  document.getElementById('stuName').textContent = user ? (user.guest ? '访客（体验模式）' : user.name + '（' + user.sid + '）') : '—';
   document.getElementById('loginCard').style.display='none';
   document.getElementById('chatBox').style.display='flex';
   api('/api/chat_history', {token: TOKEN}, function(res){

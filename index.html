@@ -133,6 +133,9 @@
                background:var(--blue);color:#fff;font-size:16px;cursor:pointer;font-family:inherit}
   .auth-submit:hover{background:var(--blue-d)}
   .auth-msg{font-size:13px;color:#c0392b;margin-top:10px;min-height:18px}
+  .guest-row{text-align:center;margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+  .guest-row a{font-size:13.5px;color:var(--blue);text-decoration:none;font-weight:600}
+  .guest-row a:hover{text-decoration:underline}
   @media (max-width:640px){.hero h1{font-size:26px}.hero{padding:44px 0}}
   /* 窄屏导航换行，避免横向拖动（熊记萍反馈第七节） */
   @media (max-width:1280px){ nav .wrap{flex-wrap:wrap;overflow-x:visible} nav a{padding:10px 12px;font-size:14px} }
@@ -450,6 +453,7 @@
       <input id="auth-pass" type="password" autocomplete="current-password" placeholder="请输入密码" required>
       <button class="auth-submit" id="authBtn" type="submit">登 录</button>
       <div class="auth-msg" id="authMsg"></div>
+      <div class="guest-row"><a href="#" onclick="guestEnter();return false">暂不登录，以访客身份体验全部功能 →</a></div>
     </form>
   </div>
 </div>
@@ -488,7 +492,7 @@ function currentUser(){
 function renderUser(){
   var u = currentUser(), area = document.getElementById('user-area');
   if(u){
-    area.innerHTML = '<span>👤 ' + u.name + '（' + u.sid + '）</span>　' +
+    area.innerHTML = '<span>👤 ' + (u.guest ? '访客（体验模式）' : u.name + '（' + u.sid + '）') + '</span>　' +
       '<a href="#" onclick="logout();return false" style="color:#ffd97a;text-decoration:none">退出</a>';
   }else{
     area.innerHTML = '<a href="#" onclick="openAuth(\'register\');return false" style="color:#ffd97a;text-decoration:none;margin-right:14px">注册</a>' +
@@ -520,9 +524,24 @@ function logout(){
   localStorage.removeItem(AUTH_KEY);
   renderUser();
 }
+function guestEnter(){
+  var msg = document.getElementById('authMsg');
+  msg.textContent = '正在进入访客模式…';
+  fetch('/api/guest', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: '{}'
+  }).then(function(r){ return r.json(); }).then(function(res){
+    if(!res.ok){ msg.textContent = res.msg || '访客入口暂时不可用，请稍后再试。'; return; }
+    localStorage.setItem(AUTH_KEY, JSON.stringify({sid: 'guest', name: '访客', guest: true, token: res.token}));
+    renderUser();
+    closeAuth();
+    startExperiment();
+  }).catch(function(){ msg.textContent = '服务器连接失败，请稍后再试。'; });
+}
 function startExperiment(){
   if(!currentUser()){ openAuth('login');
-    document.getElementById('authMsg').textContent = '开始实验前请先登录（未注册请先注册）。';
+    document.getElementById('authMsg').textContent = '开始实验前请先登录（未注册请先注册），或点击下方以访客身份体验。';
     return;
   }
   location.href = 'lab.html';

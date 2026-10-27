@@ -273,7 +273,7 @@ var TOKEN = '';
 try{ user = JSON.parse(localStorage.getItem('ai_lab_auth') || 'null'); }catch(e){}
 if(!user){ location.href = 'index.html'; }
 TOKEN = user && user.token ? user.token : '';
-document.getElementById('stuName').textContent = user ? user.name + '（' + user.sid + '）' : '—';
+document.getElementById('stuName').textContent = user ? (user.guest ? '访客（体验模式）' : user.name + '（' + user.sid + '）') : '—';
 
 /* ---------- 研究资料调研 6 步（原阶段一，第一步拆为任务认领 + 预习测评） ---------- */
 var NSTEP = 6;

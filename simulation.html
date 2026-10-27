@@ -290,7 +290,7 @@
 /* ================= 登录与全局状态 ================= */
 var user = null;
 try{ user = JSON.parse(localStorage.getItem('ai_lab_auth') || 'null'); }catch(e){}
-document.getElementById('stuName').textContent = user ? user.name + '（' + user.sid + '）' : '游客（未登录，无法提交成绩）';
+document.getElementById('stuName').textContent = user ? (user.guest ? '访客（体验模式）' : user.name + '（' + user.sid + '）') : '游客（未登录，无法提交成绩）';
 var TOKEN = user && user.token ? user.token : '';
 
 var STATE = {
