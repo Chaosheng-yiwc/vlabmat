@@ -314,32 +314,41 @@ function onPhChange(){
   if (STATE.realDone) showConcl();
 }
 /* ================= 计算计划锁定 =================
-   平台计算计划（PRECALC 结果库）：
-   · 本征 g-C₃N₄：应变 ±4%、ENCUT 400~550、PBE / HSE06（ε=0）全参数开放；
-   · O-掺杂 / C-空位：仅提供平衡态（ε=0）PBE @ ENCUT 500 eV。
+   平台计算计划（PRECALC 结果库，随集群补算动态扩充，2026-10-30）：
+   · PBE：三体系 × 应变 ±4% 全系列开放（ENCUT 500 eV）；本征 ε=0 另有 ENCUT 400/450/550 收敛系列；
+   · HSE06：本征 ε=0、ε=−4 已入库（ENCUT 500）；掺杂体系 HSE06 补算中，入库后开放。
    超出计划的参数组合后端同样会拒绝（双保险），前端直接锁定避免无效提交。 */
+function planAvailable(sys, strain, encut, func){
+  if (func === 'PBE'){
+    if (encut === 500) return true;
+    return (sys === 'pristine' && strain === 0);
+  }
+  if (encut !== 500) return false;
+  if (sys === 'pristine') return (strain === 0 || strain === -4);
+  return false;
+}
 function applyPlanLock(){
   var isMod = (STATE.sys !== 'pristine');
   var strain = document.getElementById('strain');
   var encut = document.getElementById('encut');
   var func = document.getElementById('func');
-  strain.disabled = isMod;
-  strain.style.opacity = isMod ? '0.45' : '1';
-  if (isMod){
-    strain.value = 0;
-    document.getElementById('strainV').textContent = '0';
-    STATE.strain = 0;
-  }
-  Array.prototype.forEach.call(encut.options, function(o){ o.disabled = isMod && o.value !== '500'; });
-  if (isMod){ encut.value = '500'; STATE.encut = 500; }
-  Array.prototype.forEach.call(func.options, function(o){ o.disabled = isMod && o.value !== 'PBE'; });
-  if (isMod){ func.value = 'PBE'; STATE.func = 'PBE'; }
   var hint = document.getElementById('funcHint');
+  /* 掺杂体系 HSE06 补算中：泛函锁定 PBE */
+  Array.prototype.forEach.call(func.options, function(o){ o.disabled = isMod && o.value !== 'PBE'; });
+  if (isMod && STATE.func !== 'PBE'){ func.value = 'PBE'; STATE.func = 'PBE'; }
+  /* ENCUT 400/450/550 仅覆盖"本征 ε=0 + PBE"：其余组合自动归位 500 并禁用 */
+  var onlyEncut500 = !(STATE.sys === 'pristine' && STATE.strain === 0 && STATE.func === 'PBE');
+  Array.prototype.forEach.call(encut.options, function(o){ o.disabled = onlyEncut500 && o.value !== '500'; });
+  if (onlyEncut500 && STATE.encut !== 500){ encut.value = '500'; STATE.encut = 500; }
+  /* 应变：PBE 全系列数据已入库，不再锁定 */
+  strain.disabled = false; strain.style.opacity = '1';
+  /* 提示文案 */
+  var method = 'PBE 流水：SCF → 非自洽能带（ICHARG=11）→ 光学谱；HSE06 流水：PBE SCF 波函数初猜 + 一次杂化自洽同时完成 SCF 与能带（"零权重 k 点"法）。';
   if (isMod){
-    hint.innerHTML = '当前体系（' + SYS[STATE.sys].name + '）的计算计划为<b>平衡态 ε = 0、PBE 泛函、ENCUT 500 eV</b>；应变系列与 HSE06 对照仅对本征体系开放（切换回"本征 g-C₃N₄"即可解锁）。';
+    hint.innerHTML = method + '当前体系（' + SYS[STATE.sys].name + '）计划：<b>PBE · ENCUT 500 eV · 应变 ε = −4% ~ +4% 全系列</b>；HSE06 对照数据集群补算中，入库后开放。';
     hint.style.color = '#8a6d1a';
   } else {
-    hint.innerHTML = 'PBE 方法：结构优化 → SCF → 能带 → 光学吸收（LOPTICS）四步流水。HSE06 方法：结构优化 → 直接 HSE06 自洽（"零权重 k 点"法）。提交后作业进入集群队列依次执行，运行日志实时输出。';
+    hint.innerHTML = method + '本征体系：PBE 应变 ±4% 全系列（ENCUT 500；ε=0 另有 400/450/550 收敛系列）；HSE06 已入库 ε=0 与 ε=−4（ENCUT 500），其余应变补算中。';
     hint.style.color = '';
   }
 }
@@ -448,14 +457,23 @@ document.getElementById('strain').oninput = function(){
   STATE.realDone = false; STATE.real = null;
   document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
   updateModel();
+  applyPlanLock();   // 非零应变下 400/450/550 无数据：ENCUT 自动归位 500
 };
-document.getElementById('encut').onchange = function(){ STATE.encut = parseInt(this.value); };
+document.getElementById('encut').onchange = function(){
+  STATE.encut = parseInt(this.value);
+  STATE.computed = false;
+  STATE.realDone = false; STATE.real = null;
+  document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
+  applyPlanLock();
+};
 document.getElementById('func').onchange = function(){
   STATE.func = this.value;
-  document.getElementById('funcHint').textContent = STATE.func === 'PBE'
-    ? 'PBE 方法：SCF 自洽 → 非自洽（ICHARG=11）沿块体三维路径 Γ–M–K–Γ–A 算能带。计算快，但带隙通常低估实验值。'
-    : 'HSE06 方法：一次自洽计算同时完成 SCF 与能带（"零权重 k 点"法，路径 k 点权重为 0），能带与 DOS 同步产出。精度高，耗时约为 PBE 的 5 倍。';
+  STATE.computed = false;
+  STATE.realDone = false; STATE.real = null;
+  document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
+  applyPlanLock();
 };
+applyPlanLock();   // 初始提示与控件状态同步
 
 function markOK(id, text){ var d = document.getElementById(id); d.className = 'dot ok'; d.textContent = '✓'; }
 
@@ -500,6 +518,13 @@ function postRetry(url, body, attempt, onOk, onFail){
 function submitReal(){
   var btn = document.getElementById('runBtn');
   if (!TOKEN){ realLog('[计算] ✗ 未登录：请先登录后再提交计算。'); return; }
+  if (!planAvailable(STATE.sys, STATE.strain, STATE.encut, STATE.func)){
+    realLog('[计算] ✗ 参数组合（体系=' + SYS[STATE.sys].name + '、应变=' + STATE.strain + '%、ENCUT=' + STATE.encut + '、泛函=' + STATE.func + '）暂无计算数据——' +
+      (STATE.func === 'HSE06'
+        ? 'HSE06 已入库组合：本征 ε = 0 / ε = −4（ENCUT 500）；其余应变的 HSE06 正在集群补算，可先选用 PBE 完成实验。'
+        : '请按实验指导书调整参数后重新提交。'));
+    return;
+  }
   btn.disabled = true;
   setPhase4Lock(true);   // 计算进行中：④区保持锁定
   document.getElementById('calcLog').textContent = '';
