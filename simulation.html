@@ -314,9 +314,9 @@ function onPhChange(){
   if (STATE.realDone) showConcl();
 }
 /* ================= 计算计划锁定 =================
-   平台计算计划（PRECALC 结果库，随集群补算动态扩充，2026-10-30）：
+   平台计算计划（PRECALC 结果库，随集群补算动态扩充，2026-10-31）：
    · PBE：三体系 × 应变 ±4% 全系列开放（ENCUT 500 eV）；本征 ε=0 另有 ENCUT 400/450/550 收敛系列；
-   · HSE06：本征 ε=0、ε=−4 已入库（ENCUT 500）；掺杂体系 HSE06 补算中，入库后开放。
+   · HSE06：本征 ε=−4 ~ +4 全系列已入库（ENCUT 500）；掺杂体系 HSE06 补算中，入库后开放。
    超出计划的参数组合后端同样会拒绝（双保险），前端直接锁定避免无效提交。 */
 function planAvailable(sys, strain, encut, func){
   if (func === 'PBE'){
@@ -324,7 +324,7 @@ function planAvailable(sys, strain, encut, func){
     return (sys === 'pristine' && strain === 0);
   }
   if (encut !== 500) return false;
-  if (sys === 'pristine') return (strain === 0 || strain === -4);
+  if (sys === 'pristine') return true;   /* HSE06：本征应变 −4 ~ +4 全系列已入库 */
   return false;
 }
 function applyPlanLock(){
@@ -348,7 +348,7 @@ function applyPlanLock(){
     hint.innerHTML = method + '当前体系（' + SYS[STATE.sys].name + '）计划：<b>PBE · ENCUT 500 eV · 应变 ε = −4% ~ +4% 全系列</b>；HSE06 对照数据集群补算中，入库后开放。';
     hint.style.color = '#8a6d1a';
   } else {
-    hint.innerHTML = method + '本征体系：PBE 应变 ±4% 全系列（ENCUT 500；ε=0 另有 400/450/550 收敛系列）；HSE06 已入库 ε=0 与 ε=−4（ENCUT 500），其余应变补算中。';
+    hint.innerHTML = method + '本征体系：PBE 应变 ±4% 全系列（ENCUT 500；ε=0 另有 400/450/550 收敛系列）；HSE06 应变 ±4% 全系列已入库（ENCUT 500）。';
     hint.style.color = '';
   }
 }
