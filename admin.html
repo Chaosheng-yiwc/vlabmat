@@ -344,6 +344,7 @@ function renderGrades(){
   v.innerHTML = '<div class="card"><h3>成绩总览 · 总分 100 分</h3>' +
     '<div class="toolbar"><button class="btn" onclick="show(\'grades\')">↻ 刷新</button>' +
     '<button class="btn" onclick="toggleLlmCfg()">⚙ AI 打分设置</button>' +
+    '<button class="btn" onclick="toggleIlabCfg()">⚙ 实验空间对接</button>' +
     '<span class="hint">预习测验 10 分（10 题正确率·自动）＋ 过程调研 20 分（AI）＋ 实验数据 40 分（AI）＋ 实验报告 30 分（手动批改）</span></div>' +
     '<div id="llmBox" style="display:none;margin:8px 0;padding:10px;border:1.5px solid #d9e4ef;border-radius:8px;background:#f7fafd">' +
     '<b style="font-size:13px">AI 打分设置（DeepSeek，OpenAI 兼容接口）</b>' +
@@ -352,8 +353,17 @@ function renderGrades(){
     '<input id="llmKey" class="scorein" style="width:250px" placeholder="API Key（sk-...）">' +
     '<input id="llmModel" class="scorein" style="width:150px" placeholder="模型，默认 deepseek-chat">' +
     '<button class="btn" onclick="saveLlmCfg()">保存配置</button><span id="llmMsg" class="hint"></span></div></div>' +
+    '<div id="ilabBox" style="display:none;margin:8px 0;padding:10px;border:1.5px solid #e4d9ef;border-radius:8px;background:#faf7fd">' +
+    '<b style="font-size:13px">实验空间（ilab-x）对接配置 —— 个人中心→申报管理→接口管理 获取秘钥</b>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;align-items:center">' +
+    '<input id="ilabAppid" class="scorein" style="width:160px" placeholder="APPID">' +
+    '<input id="ilabSecret" class="scorein" style="width:320px" placeholder="SECRET（留空则不修改）">' +
+    '<input id="ilabTitle" class="scorein" style="width:300px" placeholder="回传实验名称（默认为项目全名）">' +
+    '<button class="btn" onclick="saveIlabCfg()">保存配置</button><span id="ilabMsg" class="hint"></span></div>' +
+    '<div id="ilabLogs" class="hint" style="margin-top:6px"></div></div>' +
     '<div id="gradeBox"><div class="empty">加载中…</div></div></div>';
   loadLlmCfg();
+  loadIlabCfg();
   loadGrades();
 }
 function toggleLlmCfg(){
@@ -377,6 +387,34 @@ function saveLlmCfg(){
     function(res){
       document.getElementById('llmMsg').textContent = res.msg || (res.ok ? '已保存' : '保存失败');
       if(res.ok) loadLlmCfg();
+    });
+}
+function toggleIlabCfg(){
+  var b = document.getElementById('ilabBox');
+  b.style.display = (b.style.display === 'none') ? '' : 'none';
+}
+function loadIlabCfg(){
+  api('/api/admin/ilab', {token: TOKEN}, function(res){
+    if(!res.ok) return;
+    document.getElementById('ilabAppid').value = res.appid || '';
+    document.getElementById('ilabTitle').value = res.title || '';
+    document.getElementById('ilabSecret').placeholder = res.has_secret ?
+      ('已配置（' + res.secret_mask + '），留空则不修改') : 'SECRET';
+    var logs = res.logs || [];
+    document.getElementById('ilabLogs').textContent = logs.length ?
+      ('最近回传：' + logs.slice(0, 5).map(function(l){
+        return l.at + ' ' + l.sid + ' 得分' + l.score + '（' + l.steps + ' 步' + (l.attCode === 0 ? '，含报告' : '') + '）';
+      }).join('；')) : '尚无回传记录。';
+  });
+}
+function saveIlabCfg(){
+  var appid = document.getElementById('ilabAppid').value.trim();
+  var secret = document.getElementById('ilabSecret').value.trim();
+  var title = document.getElementById('ilabTitle').value.trim();
+  api('/api/admin/ilab', {token: TOKEN, op: 'save', appid: appid, secret: secret, title: title},
+    function(res){
+      document.getElementById('ilabMsg').textContent = res.msg || (res.ok ? '已保存' : '保存失败');
+      if(res.ok) loadIlabCfg();
     });
 }
 function loadGrades(){

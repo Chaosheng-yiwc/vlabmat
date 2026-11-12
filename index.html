@@ -492,7 +492,7 @@ function currentUser(){
 function renderUser(){
   var u = currentUser(), area = document.getElementById('user-area');
   if(u){
-    area.innerHTML = '<span>👤 ' + (u.guest ? '访客（体验模式）' : u.name + '（' + u.sid + '）') + '</span>　' +
+    area.innerHTML = '<span>👤 ' + (u.guest ? '访客（体验模式）' : u.ilab ? (u.name + '（实验空间）') : u.name + '（' + u.sid + '）') + '</span>　' +
       '<a href="#" onclick="logout();return false" style="color:#ffd97a;text-decoration:none">退出</a>';
   }else{
     area.innerHTML = '<a href="#" onclick="openAuth(\'register\');return false" style="color:#ffd97a;text-decoration:none;margin-right:14px">注册</a>' +
@@ -550,6 +550,31 @@ document.getElementById('authMask').addEventListener('click', function(e){
   if(e.target === this) closeAuth();
 });
 renderUser();
+// 实验空间（ilab-x）入口：URL 带 ?ticket=xxx 时自动换取身份并直接进入实验
+(function(){
+  var m = /[?&]ticket=([^&#]+)/.exec(location.search);
+  if(!m) return;
+  var ticket;
+  try{ ticket = decodeURIComponent(m[1]); }catch(e){ ticket = m[1]; }
+  var msg = document.getElementById('authMsg');
+  if(msg) msg.textContent = '正在通过实验空间验证身份…';
+  fetch('/api/ilab/token', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ticket: ticket})
+  }).then(function(r){ return r.json(); }).then(function(res){
+    if(!res.ok){
+      if(msg) msg.textContent = res.msg || '实验空间身份验证失败，请直接登录或以访客身份体验。';
+      return;
+    }
+    localStorage.setItem(AUTH_KEY, JSON.stringify({sid: res.sid, name: res.name, token: res.token, ilab: true}));
+    renderUser();
+    closeAuth();
+    startExperiment();
+  }).catch(function(){
+    if(msg) msg.textContent = '服务器连接失败，请稍后再试。';
+  });
+})();
 // 旧版登录态兼容：无 token 的旧登录自动清除，弹出登录窗（预填学号）
 (function(){
   try{

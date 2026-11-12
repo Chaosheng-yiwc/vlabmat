@@ -220,6 +220,25 @@ function doSubmit(which){
         document.getElementById(isRpt ? 'rptFileInfo' : 'refFileInfo').textContent = '';
         setMsg(msgEl, '✓ 提交成功，教师端已收到并可在后台批阅。', true);
         loadMine();
+        /* 实验空间（ilab-x）实验报告同步：仅实验空间入口，且须已在 3D 实验台完成数据回传 */
+        if (isRpt && user && user.ilab && user.token){
+          var sendIlab = function(b64, fname){
+            api('/api/ilab/report', {token: TOKEN, file_b64: b64, file_name: fname,
+              report_title: title || '实验报告', report_remarks: '材料筛选评估报告'}, function(ir){
+              if (ir && ir.ok) setMsg(msgEl, '✓ 提交成功，教师端已收到；报告已同步至实验空间。', true);
+              else if (ir && ir.msg) setMsg(msgEl, '✓ 提交成功，教师端已收到。实验空间报告同步：' + ir.msg, false);
+            });
+          };
+          if (file){
+            sendIlab(file_b64, file.name);
+          } else if (content){
+            // 无附件时以文本报告同步（UTF-8 安全编码）
+            try{
+              var b64 = btoa(unescape(encodeURIComponent(content)));
+              sendIlab('data:text/plain;base64,' + b64, (title || '实验报告').replace(/[\\/:*?"<>|\s]+/g, '_') + '.txt');
+            }catch(e){ /* 编码失败忽略同步 */ }
+          }
+        }
       } else setMsg(msgEl, res.msg || '提交失败', false);
     });
   };
