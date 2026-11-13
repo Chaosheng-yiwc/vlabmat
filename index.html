@@ -568,6 +568,7 @@ renderUser();
       return;
     }
     localStorage.setItem(AUTH_KEY, JSON.stringify({sid: res.sid, name: res.name, token: res.token, ilab: true}));
+    try{ history.replaceState(null, '', location.pathname); }catch(e){}   // 清掉一次性 ticket，防后退/刷新重复兑换
     renderUser();
     closeAuth();
     startExperiment();
