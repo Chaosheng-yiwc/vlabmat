@@ -391,6 +391,9 @@ function redoxLevels(){
   var ph = STATE.ph || 0;
   return {ph: ph, ox: 1.23 - 0.059 * ph, red: -0.059 * ph};
 }
+/* 电位 vs NHE → 电子能量（eV，真空能级参考）：0 V vs NHE ≡ −4.44 eV（真空）。
+   电子能量坐标向上增大，换算后 CBM > VBM，与带边图"能量向上"完全自洽 */
+function nhe2ev(v){ return -4.44 - v; }
 /* ④ 结果分析在“提交计算”成功完成前锁定：pH 选择器不可用，防止未计算就出现结果图 */
 function setPhase4Lock(lock){
   document.getElementById('phSel').disabled = lock;
@@ -794,13 +797,15 @@ function finishReal(r){
           ' ｜ SCF ' + (r.converged ? '已收敛' : '未收敛') + ' ｜ 结果图已更新至下方 ④ 面板');
   var rl = redoxLevels();
   realLog('[汇总] 水的氧化还原电位（pH = ' + rl.ph + '）：O₂/H₂O = +' + rl.ox.toFixed(2) +
-          ' V、H⁺/H₂ = ' + rl.red.toFixed(2) + ' V vs NHE（能斯特方程 −0.059 V/pH，可在④区切换 pH 对比全解水判据）');
+          ' V、H⁺/H₂ = ' + rl.red.toFixed(2) + ' V vs NHE（能斯特方程 −0.059 V/pH）｜电子能量：O₂/H₂O = ' +
+          nhe2ev(rl.ox).toFixed(2) + ' eV、H⁺/H₂ = ' + nhe2ev(rl.red).toFixed(2) + ' eV（可在④区切换 pH 对比全解水判据）');
   if (r.workfunc != null){
     realLog('[计算] 带边对齐（真空能级法）：真空能级 −' + r.vbm_vac.toFixed(2) + ' eV，功函数 Φ = ' +
-            r.workfunc.toFixed(2) + ' eV → VBM = ' + r.vbm_nhe.toFixed(2) + ' V、CBM = ' + r.cbm_nhe.toFixed(2) + ' V (vs NHE)');
+            r.workfunc.toFixed(2) + ' eV → 电子能量 CBM = ' + nhe2ev(r.cbm_nhe).toFixed(2) + ' eV、VBM = ' + nhe2ev(r.vbm_nhe).toFixed(2) +
+            ' eV（对应电位 ' + r.cbm_nhe.toFixed(2) + ' / ' + r.vbm_nhe.toFixed(2) + ' V vs NHE）');
   } else if (r.vbm_nhe != null){
-    realLog('[计算] 带边位置：VBM = ' + r.vbm_nhe.toFixed(2) + ' V、CBM = ' + r.cbm_nhe.toFixed(2) +
-            ' V (vs NHE，pH=0 · 真空能级参考取实验功函数 Φ ≈ 4.40 eV，中点 = 4.44 − 4.40 = +0.04 V)');
+    realLog('[计算] 带边位置：电子能量 CBM = ' + nhe2ev(r.cbm_nhe).toFixed(2) + ' eV、VBM = ' + nhe2ev(r.vbm_nhe).toFixed(2) +
+            ' eV（对应电位 ' + r.cbm_nhe.toFixed(2) + ' / ' + r.vbm_nhe.toFixed(2) + ' V vs NHE · 真空能级参考取实验功函数 Φ ≈ 4.40 eV，中点 = 4.44 − 4.40 = +0.04 V）');
   } else {
     realLog('[计算] ⚠ 未取到带边对齐数据，已退回参考值。');
   }
@@ -833,15 +838,15 @@ function q4Reasonable(t){
 }
 function buildQuiz(cv){
   var box = document.getElementById('quizBox');
-  var inp = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="正值，如 0.69"';
-  var inp2 = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="带负号，如 -0.xx"';
-  var inp3 = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="如 1.31"';
+  var inp = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="如 -5.91"';
+  var inp2 = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="如 -3.05"';
+  var inp3 = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="如 2.87"';
   var inp5 = 'class="sel" style="display:inline-block;width:160px;padding:4px 8px;margin:0 4px" placeholder="如：剪刀算符 / scissor"';
   var inp6 = 'class="sel" style="display:inline-block;width:90px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="如 5"';
   box.innerHTML =
-    '<div class="hint" style="margin-bottom:5px">根据第③步计算结果与本次计算体验填空（数值保留两位小数；带边电位 vs NHE，pH=0）。</div>' +
-    '<label>Q1. 导带底（CBM）位置为 <input ' + inp2 + ' id="q1"> V（带边位置图中 CBM 在上方，电位为负值）</label>' +
-    '<label>Q2. 价带顶（VBM）位置为 <input ' + inp + ' id="q2"> V（带边位置图中 VBM 在下方，电位为正值）</label>' +
+    '<div class="hint" style="margin-bottom:5px">根据第③步计算结果与本次计算体验填空（数值保留两位小数；带边以电子能量表示，单位 eV，真空能级参考——能量向上，CBM 高于 VBM，两者均为负值）。</div>' +
+    '<label>Q1. 导带底（CBM）能量为 <input ' + inp2 + ' id="q1"> eV（带边图上方，导带的下边界）</label>' +
+    '<label>Q2. 价带顶（VBM）能量为 <input ' + inp + ' id="q2"> eV（带边图下方，价带的上边界）</label>' +
     '<label>Q3. 带隙 Eg 为 <input ' + inp3 + ' id="q3"> eV</label>' +
     '<label style="margin-top:8px">Q4. 计算值与实验值（g-C₃N₄ 实验带隙约 2.7 eV）存在差异，主要原因是？</label>' +
     '<textarea class="sel" id="q4" rows="3" style="width:100%;resize:vertical" placeholder="可从泛函近似、温度、缺陷、层间堆垛、测量方法等角度分析……"></textarea>' +
@@ -866,8 +871,8 @@ function gradeQuiz(){
     msg.innerHTML = '<span class="msg-no">请填完所有空再提交。</span>'; return;
   }
   STATE.answered = true;
-  var ref = '参考答案：Q1 导带底 CBM = ' + STATE.cbm.toFixed(2) + ' V（带边图上方，比 H⁺/H₂ 更负，光生电子可还原产氢）；Q2 价带顶 VBM = ' + STATE.vbm.toFixed(2) +
-    ' V（带边图下方，比 O₂/H₂O 更正，光生空穴可氧化产氧）；' +
+  var ref = '参考答案：Q1 导带底 CBM = ' + nhe2ev(STATE.cbm).toFixed(2) + ' eV（= ' + STATE.cbm.toFixed(2) + ' V vs NHE，带边图上方，能量高于 H⁺/H₂，光生电子可还原产氢）；Q2 价带顶 VBM = ' + nhe2ev(STATE.vbm).toFixed(2) +
+    ' eV（= ' + STATE.vbm.toFixed(2) + ' V vs NHE，带边图下方，能量低于 O₂/H₂O，光生空穴可氧化产氧）；' +
     (STATE.realDone && STATE.func === 'PBE'
       ? 'Q4：PBE 等半局域泛函因交换关联近似会明显低估带隙（HSE06 可显著改善）；'
       : 'Q4：理论计算为 0 K 理想完整晶体，而实验值受温度、缺陷、层间堆垛、样品尺寸及测量方法（如 Tauc 外推）影响；') +
@@ -875,8 +880,8 @@ function gradeQuiz(){
     'Q6：PBE 耗时约为 HSE06 的 1/5（即 HSE06 ≈ PBE 的 5 倍，见第③步日志），PBE 适合定性筛选、HSE06 适合定量分析。';
   var q4hit = q4Reasonable(q4);
   var res = [
-    [Math.abs(q1 - STATE.cbm) <= FILL_TOL, 'Q1 导带底：正确 ' + STATE.cbm.toFixed(2) + ' V（vs NHE，带边图上方）', 15],
-    [Math.abs(q2 - STATE.vbm) <= FILL_TOL, 'Q2 价带顶：正确 ' + STATE.vbm.toFixed(2) + ' V（vs NHE，带边图下方）', 15],
+    [Math.abs(q1 - nhe2ev(STATE.cbm)) <= FILL_TOL, 'Q1 导带底：正确 ' + nhe2ev(STATE.cbm).toFixed(2) + ' eV（电子能量；= ' + STATE.cbm.toFixed(2) + ' V vs NHE）', 15],
+    [Math.abs(q2 - nhe2ev(STATE.vbm)) <= FILL_TOL, 'Q2 价带顶：正确 ' + nhe2ev(STATE.vbm).toFixed(2) + ' eV（电子能量；= ' + STATE.vbm.toFixed(2) + ' V vs NHE）', 15],
     [Math.abs(q3 - STATE.Eg) <= FILL_TOL, 'Q3 带隙：正确 ' + STATE.Eg.toFixed(2) + ' eV（真实 ' + STATE.func + ' 计算）', 15],
     [q4hit >= 1, 'Q4 差异原因分析（命中 ' + q4hit + ' 类原因' + (q4hit >= 2 ? '' : '，命中 ≥2 类可得满分') + '）', q4hit >= 2 ? 15 : 7],
     [q5sel === '低估' && /剪刀|scissor|杂化|hse/i.test(q5),
@@ -914,10 +919,10 @@ function submitResult(){
     '，SCF' + (STATE.real.converged ? '已收敛' : '未收敛') +
     (STATE.real.workfunc != null ? '，功函数 Φ = ' + STATE.real.workfunc.toFixed(2) + ' eV（真空能级法带边对齐）' : '') +
     (STATE.real.elapsed != null ? '，结果就绪用时 ' + Math.round(STATE.real.elapsed) + ' s（集群运行墙钟见上方日志）' : '') + '\n' +
-    '结果：带隙 Eg = ' + STATE.Eg.toFixed(2) + ' eV，CBM = ' + STATE.cbm.toFixed(2) +
-    ' V，VBM = ' + STATE.vbm.toFixed(2) + ' V (vs NHE)' +
+    '结果：带隙 Eg = ' + STATE.Eg.toFixed(2) + ' eV，CBM = ' + nhe2ev(STATE.cbm).toFixed(2) +
+    ' eV，VBM = ' + nhe2ev(STATE.vbm).toFixed(2) + ' eV（电子能量，真空参考；对应电位 ' + STATE.cbm.toFixed(2) + ' / ' + STATE.vbm.toFixed(2) + ' V vs NHE）' +
     (STATE.defect ? '，禁带中存在缺陷能级' : '') + '\n' +
-    '填空判读：CBM = ' + document.getElementById('q1').value + ' V，VBM = ' + document.getElementById('q2').value +
+    '填空判读：CBM = ' + document.getElementById('q1').value + ' eV，VBM = ' + document.getElementById('q2').value +
     ' V，Eg = ' + document.getElementById('q3').value + ' eV，差异原因：' +
     (document.getElementById('q4').value || '').trim().slice(0, 300) + '\n' +
     'Q5 泛函与矫正：PBE 会' + document.getElementById('q5sel').value + '带隙，矫正方法：' +
@@ -957,16 +962,17 @@ function showConcl(){
   document.getElementById('conclBox').innerHTML =
     '<b>结论面板：</b>当前体系 <b>' + sys.name + '</b>（ε = ' + STATE.strain + ' %）｜来源：' + src + '｜' +
     '带隙 <b>Eg = ' + STATE.Eg.toFixed(2) + ' eV</b>（' + STATE.func + ' 值，对应吸收边 ~' + lam + ' nm' + (STATE.func === 'PBE' ? '；PBE 低估带隙，按实验值 2.7 eV 吸收边约 460 nm，落在可见光区' : '') + '）｜' +
-    'CBM = <b>' + STATE.cbm.toFixed(2) + ' V</b>、VBM = <b>' + STATE.vbm.toFixed(2) + ' V</b>（vs NHE，pH=0；' + alignTxt + '）' +
+    'CBM = <b>' + nhe2ev(STATE.cbm).toFixed(2) + ' eV</b>、VBM = <b>' + nhe2ev(STATE.vbm).toFixed(2) + ' eV</b>（电子能量，真空参考；对应电位 ' + STATE.cbm.toFixed(2) + ' / ' + STATE.vbm.toFixed(2) + ' V vs NHE，pH=0；' + alignTxt + '）' +
     (STATE.defect ? '｜<span style="color:var(--red)">⚠ 禁带中出现 C 空位缺陷能级（复合中心）</span>' : '') + '｜' +
-    (straddle ? '<span class="ans-ok">✓ 带边包住 H⁺/H₂(' + rl.red.toFixed(2) + ' V) 与 O₂/H₂O(' + rl.ox.toFixed(2) +
-                ' V)，满足全解水热力学条件（pH = ' + rl.ph + '；精确判据建议用 HSE06 复核）</span>'
+    (straddle ? '<span class="ans-ok">✓ CBM(' + nhe2ev(STATE.cbm).toFixed(2) + ' eV) 在 H⁺/H₂(' + nhe2ev(rl.red).toFixed(2) +
+                ' eV) 之上、VBM(' + nhe2ev(STATE.vbm).toFixed(2) + ' eV) 在 O₂/H₂O(' + nhe2ev(rl.ox).toFixed(2) +
+                ' eV) 之下，满足全解水热力学条件（pH = ' + rl.ph + '；精确判据建议用 HSE06 复核）</span>'
               : '<span class="ans-no">✗ 不满足全解水热力学条件（pH = ' + rl.ph + '，带边未包住水的氧化还原电位）</span>' +
                 '<div class="hint" style="margin-top:4px">注：PBE 会低估带隙（本体系 Eg = ' + STATE.Eg.toFixed(2) +
                 ' eV，而实验值约 2.7 eV），导致带边位置与实验值存在较大差异；该结论请用 HSE06 矫正后再作最终判断。' +
-                '若以实验带隙 2.7 eV 锚定（中点 ' + ((STATE.vbm + STATE.cbm) / 2).toFixed(2) + ' V），VBM ≈ +' +
-                (((STATE.vbm + STATE.cbm) / 2 + 1.35).toFixed(2)) + ' V、CBM ≈ ' +
-                (((STATE.vbm + STATE.cbm) / 2 - 1.35).toFixed(2)) + ' V（vs NHE），带边包住水的氧化还原电位，与文献报道一致。</div>');
+                '若以实验带隙 2.7 eV 锚定（中点 ' + nhe2ev((STATE.vbm + STATE.cbm) / 2).toFixed(2) + ' eV），CBM ≈ ' +
+                nhe2ev((STATE.vbm + STATE.cbm) / 2 + 1.35).toFixed(2) + ' eV、VBM ≈ ' +
+                nhe2ev((STATE.vbm + STATE.cbm) / 2 - 1.35).toFixed(2) + ' eV（电子能量），带边包住水的氧化还原电位，与文献报道一致。</div>');
 }
 
 /* ================= 真实数据绘图 ================= */
@@ -1196,16 +1202,20 @@ function drawEdge(){
   var c = fitCanvas(cv), ctx = c.ctx, W = c.w, H = c.h;
   ctx.clearRect(0, 0, W, H);
   var L = 40, R = 8, T = 10, B = 18;
-  var pw = W - L - 90, ph = H - T - B;
-  var Vmax = 2.2, Vmin = -2.6;   // HSE06 真实 CBM 可低至 ~-2.1 V
-  /* 光催化文献惯例：纵轴按电子能量向上（电位越负越靠上）——导带 CBM 在上、价带 VBM 在下 */
-  function Y(v){ return T + (v - Vmin) / (Vmax - Vmin) * ph; }
+  var pw = W - L - 110, ph = H - T - B;
+  /* 纵轴：电子能量（eV，真空能级参考，向上增大）。E(eV) = −4.44 − V(vs NHE)。
+     换算后 CBM(−3.05) > VBM(−5.91)，数值序与"能量向上"的图一致（老大 11-13 拍板：
+     弃用"电位负值朝上"的文献画法——不符合直觉）。
+     量程覆盖：HSE06 大应变 CBM 最高 ~−2.1 eV，VBM 最低 ~−5.9 eV */
+  var Emax = -2.0, Emin = -6.8;
+  function Y(v){ return T + (Emax - (-4.44 - v)) / (Emax - Emin) * ph; }   /* 入参仍为电位 vs NHE */
   ctx.strokeStyle = '#e3eaf2';
-  for (var v = -2.5; v <= 2; v += 0.5){ ctx.beginPath(); ctx.moveTo(L, Y(v)); ctx.lineTo(L + pw, Y(v)); ctx.stroke(); }
+  var e;
+  for (e = -6.5; e <= -2; e += 0.5){ var gv = -4.44 - e; ctx.beginPath(); ctx.moveTo(L, Y(gv)); ctx.lineTo(L + pw, Y(gv)); ctx.stroke(); }
   ctx.fillStyle = '#5a6b80'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
-  for (v = -2; v <= 2; v += 1){ ctx.fillText(v.toFixed(1), L - 4, Y(v) + 3); }
+  for (e = -2; e >= -6; e--){ var tv = -4.44 - e; ctx.fillText(e.toFixed(1), L - 4, Y(tv) + 3); }
   ctx.save(); ctx.translate(12, T + ph / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'center';
-  ctx.fillText('电位 vs NHE (V, pH=0)', 0, 0); ctx.restore();
+  ctx.fillText('电子能量 (eV，真空能级参考)', 0, 0); ctx.restore();
   // 水的氧化还原电位（随 pH 线性下移，能斯特方程 −0.059 V/pH）
   var rl = redoxLevels();
   ctx.setLineDash([5, 4]); ctx.lineWidth = 1.4;
@@ -1213,10 +1223,12 @@ function drawEdge(){
   ctx.strokeStyle = '#2e8b57'; ctx.beginPath(); ctx.moveTo(L, Y(rl.red)); ctx.lineTo(L + pw, Y(rl.red)); ctx.stroke();
   ctx.setLineDash([]); ctx.lineWidth = 1;
   ctx.textAlign = 'left'; ctx.font = '10px sans-serif';
-  ctx.fillStyle = '#d84a3a'; ctx.fillText('O₂/H₂O  +' + rl.ox.toFixed(2) + ' V', L + pw + 4, Y(rl.ox) + 3);
-  ctx.fillStyle = '#2e8b57'; ctx.fillText('H⁺/H₂  ' + rl.red.toFixed(2) + ' V', L + pw + 4, Y(rl.red) + 3);
+  ctx.fillStyle = '#d84a3a'; ctx.fillText('O₂/H₂O  ' + nhe2ev(rl.ox).toFixed(2) + ' eV', L + pw + 4, Y(rl.ox) + 3);
+  ctx.fillStyle = '#2e8b57'; ctx.fillText('H⁺/H₂  ' + nhe2ev(rl.red).toFixed(2) + ' eV', L + pw + 4, Y(rl.red) + 3);
   ctx.fillStyle = '#5a6b80'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'right';
   ctx.fillText('pH = ' + rl.ph, L + pw - 6, T + 12);
+  ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
+  ctx.fillText('(仅移动水线)', L + pw - 6, T + 24);
   ctx.font = '10px sans-serif';
   // 两个体系的能带条
   function bar(x, cbm, vbm, label, now){
@@ -1239,7 +1251,7 @@ function drawEdge(){
   bar(L + 70, STATE.cbm, STATE.vbm, '当前', !isPristine);
   // 颜色图例（注释）
   (function(){
-    var lx = L + 4, ly = H - B - 8 - 28, lh = 14, bw2 = 210, bh2 = 46;
+    var lx = L + 4, ly = H - B - 8 - 42, lh = 14, bw2 = 250, bh2 = 60;
     ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
     ctx.fillStyle = 'rgba(255,255,255,0.93)'; ctx.fillRect(lx - 6, ly - 12, bw2, bh2);
     ctx.strokeStyle = '#c9d4e0'; ctx.strokeRect(lx - 6, ly - 12, bw2, bh2);
@@ -1254,6 +1266,7 @@ function drawEdge(){
       ctx.strokeStyle = '#1a2332'; ctx.lineWidth = 0.6; ctx.strokeRect(lx, yy - 8, 13, 9); ctx.lineWidth = 1;
       ctx.fillStyle = '#33415a'; ctx.fillText(it[1], lx + 18, yy);
     });
+    ctx.fillStyle = '#7a8798'; ctx.fillText('换算：E(eV) = −4.44 − V(vs NHE)', lx + 18, ly + 3 * lh);
   })();
 }
 
