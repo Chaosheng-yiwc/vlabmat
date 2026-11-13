@@ -354,13 +354,12 @@ var ILAB = (function(){
       s.seq = i+1;
       if(i>0 && s.startTime < steps[i-1].endTime) s.startTime = steps[i-1].endTime;
       if(s.endTime < s.startTime) s.endTime = s.startTime;
-      /* 单步用时上限：expectTime×4 且 ≥30min。跨会话重做的步骤 startTime 保留首访时间，
-         会把 timeUsed 撑到几十分钟~小时级，实验空间报 code=11"timeUsed超出范围"——
-         超限时把起点后移，保证 timeUsed 与起止时间戳自洽 */
-      var cap = Math.max((s.expectTime||300) * 4, 1800);
-      var dur = Math.round((s.endTime - s.startTime)/1000);
-      if(dur > cap){ s.startTime = s.endTime - cap * 1000; dur = cap; }
-      s.timeUsed = Math.max(1, dur);
+      /* 官方 2022 版硬规则：单步 timeUsed 不得超过 expectTime 的 4 倍（code=11）。
+         跨会话重做的步骤 startTime 保留首访时间，endTime−startTime 可达几十分钟~小时级。
+         直接把上报的 timeUsed 截到 4×expectTime；起止时间戳保持单调，不回移起点
+         （此前"≥30min 兜底"会把 expectTime=120 的步骤撑到 1800s>480s，再次触发 code=11） */
+      var cap = Math.max((s.expectTime || 300) * 4, 60);
+      s.timeUsed = Math.max(1, Math.min(Math.round((s.endTime - s.startTime) / 1000), cap));
     }
     return { score: Math.max(0,Math.min(100,Math.round(score||0))), status: status||1,
              startTime: t.start, endTime: Date.now(), steps: steps };
