@@ -1191,7 +1191,8 @@ function drawEdge(){
   var L = 40, R = 8, T = 10, B = 18;
   var pw = W - L - 90, ph = H - T - B;
   var Vmax = 2.2, Vmin = -2.6;   // HSE06 真实 CBM 可低至 ~-2.1 V
-  function Y(v){ return T + (Vmax - v) / (Vmax - Vmin) * ph; }
+  /* 光催化文献惯例：纵轴按电子能量向上（电位越负越靠上）——导带 CBM 在上、价带 VBM 在下 */
+  function Y(v){ return T + (v - Vmin) / (Vmax - Vmin) * ph; }
   ctx.strokeStyle = '#e3eaf2';
   for (var v = -2.5; v <= 2; v += 0.5){ ctx.beginPath(); ctx.moveTo(L, Y(v)); ctx.lineTo(L + pw, Y(v)); ctx.stroke(); }
   ctx.fillStyle = '#5a6b80'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
@@ -1213,18 +1214,18 @@ function drawEdge(){
   // 两个体系的能带条
   function bar(x, cbm, vbm, label, now){
     var bw = 26;
-    ctx.fillStyle = 'rgba(46,111,216,0.8)';  ctx.fillRect(x, Y(2.0), bw, Y(cbm) - Y(2.0));
-    ctx.fillStyle = 'rgba(201,162,39,0.85)'; ctx.fillRect(x, Y(vbm), bw, Y(-1.5) - Y(vbm));
-    ctx.strokeStyle = '#1a2332'; ctx.strokeRect(x, Y(2.0), bw, Y(cbm) - Y(2.0));
-    ctx.strokeRect(x, Y(vbm), bw, Y(-1.5) - Y(vbm));
+    ctx.fillStyle = 'rgba(46,111,216,0.8)';  ctx.fillRect(x, Y(cbm), bw, Y(-2.0) - Y(cbm));
+    ctx.fillStyle = 'rgba(201,162,39,0.85)'; ctx.fillRect(x, Y(cbm), bw, Y(vbm) - Y(cbm));
+    ctx.strokeStyle = '#1a2332'; ctx.strokeRect(x, Y(cbm), bw, Y(-2.0) - Y(cbm));
+    ctx.strokeRect(x, Y(cbm), bw, Y(vbm) - Y(cbm));
     ctx.fillStyle = now ? '#c0392b' : '#5a6b80'; ctx.font = (now ? 'bold ' : '') + '10px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(label, x + bw / 2, H - 5);
     if (now){ ctx.fillText('◀ 当前', x + bw / 2, T - 1); }
-    // VBM / CBM 边界标注
+    /* 带边标注：CBM 在上（导带底）、VBM 在下（价带顶） */
     ctx.font = '9px sans-serif'; ctx.fillStyle = '#1a2332'; ctx.textAlign = 'left';
-    ctx.fillText('VBM', x + bw + 2, Y(vbm) + 3);
     ctx.fillText('CBM', x + bw + 2, Y(cbm) + 3);
+    ctx.fillText('VBM', x + bw + 2, Y(vbm) + 3);
   }
   var isPristine = (STATE.sys === 'pristine' && STATE.strain === 0);
   bar(L + 14, SYS.pristine.cbm, SYS.pristine.cbm + SYS.pristine.Eg, '本征', isPristine);
@@ -1236,9 +1237,9 @@ function drawEdge(){
     ctx.fillStyle = 'rgba(255,255,255,0.93)'; ctx.fillRect(lx - 6, ly - 12, bw2, bh2);
     ctx.strokeStyle = '#c9d4e0'; ctx.strokeRect(lx - 6, ly - 12, bw2, bh2);
     var items = [
-      ['rgba(46,111,216,0.8)',  '蓝色：VBM 以上（氧化能力区）'],
-      ['rgba(201,162,39,0.9)',  '深黄：带隙（上端 VBM，下端 CBM）'],
-      ['#d1b047',               '浅黄：CBM 以下（还原能力区）']
+      ['rgba(46,111,216,0.8)',  '蓝色：CBM 之上（导带 · 还原能力区）'],
+      ['rgba(201,162,39,0.9)',  '深黄：带隙（上端 CBM，下端 VBM）'],
+      ['#d1b047',               '浅黄：VBM 之下（价带 · 氧化能力区）']
     ];
     items.forEach(function(it, i){
       var yy = ly + i * lh;
