@@ -1177,8 +1177,11 @@ function clearCharts(){
   document.getElementById('conclBox').innerHTML = '<b>结论面板：</b>完成计算后此处显示带隙、带边位置与可见光活性评估。';
 }
 function fitCanvas(cv){
-  var w = cv.clientWidth, h = cv.clientHeight;
-  if (cv.width !== w * 2){ cv.width = w * 2; cv.height = h * 2; }
+  var w = Math.round(cv.clientWidth), h = Math.round(cv.clientHeight);
+  /* 每次都重设背衬尺寸：重设会清空整块位图并复位变换。
+     旧写法只在宽度变化时重设——布局仅高度变化（如结论面板把图挤矮）时，
+     旧的大尺寸位图残留画布下部，新图叠旧图造成"重影" */
+  cv.width = w * 2; cv.height = h * 2;
   var ctx = cv.getContext('2d');
   ctx.setTransform(2, 0, 0, 2, 0, 0);
   return {ctx: ctx, w: w, h: h};
