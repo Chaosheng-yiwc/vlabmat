@@ -85,9 +85,27 @@
   .mysub .fb{color:#5a6b80;margin-top:4px}
   .mysub .kind{display:inline-block;background:#eef4fb;color:#2b527e;border-radius:10px;
                padding:1px 9px;font-size:11.5px;margin-right:6px}
-  /* 智能体窗口（与 experiment.html 同款跨域裁剪方案） */
-  .ai-crop{position:relative;height:620px;overflow:hidden;border:1px solid var(--line);border-radius:8px;background:#fff}
-  .ai-crop iframe{position:absolute;top:0;left:50%;transform:translateX(-50%);width:1280px;height:100%;border:0}
+  /* AI 助教悬窗：右侧滑出抽屉 + 右上角常驻标签（与 experiment.html 同款） */
+  .ai-fab{position:fixed;right:0;top:92px;z-index:9000;display:flex;flex-direction:column;align-items:center;gap:4px;
+          padding:11px 7px 12px;border:1px solid #b9c9dc;border-right:0;border-radius:10px 0 0 10px;
+          background:linear-gradient(180deg,#12447e,#1a5aa0);color:#fff;cursor:pointer;font-family:inherit;
+          box-shadow:-3px 2px 12px rgba(18,68,126,.28);transition:padding .15s,background .15s}
+  .ai-fab:hover{padding-right:12px;background:linear-gradient(180deg,#0f3a6b,#12447e)}
+  .ai-fab .ico{font-size:18px;line-height:1}
+  .ai-fab .txt{writing-mode:vertical-rl;letter-spacing:2px;font-size:12px}
+  .ai-drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:94vw;z-index:9100;background:#fff;
+             border-left:1px solid #cfdae6;box-shadow:-8px 0 28px rgba(16,40,70,.18);
+             display:flex;flex-direction:column;transform:translateX(103%);transition:transform .24s ease}
+  .ai-drawer.open{transform:translateX(0)}
+  .ai-drawer-hd{display:flex;align-items:center;gap:10px;padding:10px 12px;background:linear-gradient(135deg,#0e3a6d,#1a5dab);color:#fff;flex-shrink:0}
+  .ai-drawer-hd .t{font-size:14px;font-weight:700;line-height:1.35}
+  .ai-drawer-hd .s{display:block;font-size:11.5px;font-weight:400;color:#c6d9ee;margin-top:2px}
+  .ai-drawer-x{margin-left:auto;background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:6px;
+               width:30px;height:30px;font-size:18px;line-height:1;cursor:pointer;flex-shrink:0}
+  .ai-drawer-x:hover{background:rgba(255,255,255,.3)}
+  .ai-drawer-bd{flex:1;min-height:0;background:#fff}
+  .ai-drawer-bd iframe{display:block;width:100%;height:100%;border:0}
+  @media (max-width:640px){.ai-drawer{width:100%;max-width:none}.ai-fab{top:auto;bottom:80px}}
 </style>
 </head>
 <body>
@@ -106,14 +124,15 @@
 
   <div class="hero">
     <h1>实验的最后两个环节：报告与反思</h1>
-    <p>完成 23 步实验流程与 3D 仿真计算后，请先在下方<b>与智能体讨论计算结果的物理含义</b>（带隙与可见光吸收、带边位置与水分解电势匹配、应变/掺杂/缺陷的调控机理等），并让 AI 辅助生成报告初稿；再按学术规范修改定稿，提交<b>《材料筛选评估报告》</b>（第 19–20 步 · 实验报告）与<b>答辩反思</b>（第 21–22 步）。
+    <p>完成 23 步实验流程与 3D 仿真计算后，请先点屏幕右上角「🤖 小碳老师」悬窗<b>与智能体讨论计算结果的物理含义</b>（带隙与可见光吸收、带边位置与水分解电势匹配、应变/掺杂/缺陷的调控机理等），并让 AI 辅助生成报告初稿；再按学术规范修改定稿，提交<b>《材料筛选评估报告》</b>（第 19–20 步 · 实验报告）与<b>答辩反思</b>（第 21–22 步）。
        报告建议结构：研究背景 → 计算方法（VASP/PBE、ENCUT、K 网格）→ 结果与讨论（带隙 / 带边 / 光催化活性）→ 结论与展望。</p>
   </div>
 
   <div class="panel" id="aiPanel">
-    <h3>🤖 实验智能体"小碳老师" · 计算结果讨论<span style="font-size:12px;color:#7a8798;font-weight:normal">· 由学校网络中心大模型平台（DeepSeek）驱动</span></h3>
-    <div class="ai-crop" id="aiCrop">
-      <iframe id="aiFrame" src="ai.html?embed=1" style="top:0;left:0;transform:none;width:100%;height:100%" allow="microphone"></iframe>
+    <h3>① 与智能体"小碳老师"讨论计算结果<span style="font-size:12px;color:#7a8798;font-weight:normal">· 由学校网络中心大模型平台（DeepSeek）驱动</span></h3>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+      <button class="go-btn" onclick="aiOpen()">💬 打开小碳老师（右侧悬窗）</button>
+      <span class="hint" style="margin:0">对话已改为独立浮窗：点右上角「🤖 小碳老师」标签或此按钮随时展开，边聊边往下写报告，不再挤占本页版面。收起后对话记录仍在。</span>
     </div>
     <div class="hint">与 AI 助教"小碳老师"（自建 DeepSeek，需登录实验账号）讨论计算结果的物理含义，建议围绕：① 计算得到的带隙值与可见光吸收范围（λg = 1240/Eg）的关系；② 带边位置（VBM/CBM）相对水的氧化还原电势（0 / −4.44 eV vs 真空）是否满足全解水；③ 双轴应变、O-掺杂、C-空位各自如何调控能带结构及其物理机理；④ ENCUT 与 K 网格收敛性测试结论。讨论完成后，请让助教按"研究背景 → 计算方法 → 结果与讨论 → 结论与展望"框架引导你梳理《材料筛选评估报告》思路，独立撰写后人工核验数据再到 ② 提交。对话记录全程留痕、教师端可查。</div>
   </div>
@@ -152,6 +171,22 @@
   </div>
 
 </div>
+
+<!-- AI 助教悬窗：默认收在右上角，点标签滑出；点 × 或按 Esc 收起 -->
+<button class="ai-fab" id="aiFab" onclick="aiToggle()" title="打开 / 收起 AI 助教「小碳老师」">
+  <span class="ico">🤖</span><span class="txt">小碳老师</span>
+</button>
+<aside class="ai-drawer" id="aiDrawer" aria-hidden="true" aria-label="AI 助教对话">
+  <div class="ai-drawer-hd">
+    <div class="t">🤖 实验智能体"小碳老师"
+      <span class="s">DeepSeek 驱动 · 计算结果讨论 · 对话全程留痕</span>
+    </div>
+    <button class="ai-drawer-x" onclick="aiClose()" title="收起（Esc）">×</button>
+  </div>
+  <div class="ai-drawer-bd">
+    <iframe id="aiFrame" data-src="ai.html?embed=1" title="AI 助教对话" allow="microphone"></iframe>
+  </div>
+</aside>
 
 <script>
 /* ---------- 登录守卫 ---------- */
@@ -272,27 +307,39 @@ function loadMine(){
 }
 loadMine();
 
-/* ---------- AI 助教"小碳老师"（自建 ai.html，同源自适应 iframe） ---------- */
-/* src 直接写在 iframe 标签上；保留 loadAI 的留痕打点 */
-function fitAI(){ return; }
-window.addEventListener('resize', fitAI);
-function loadAI(){
+/* ---------- AI 助教"小碳老师"悬窗（右上角标签 → 右侧抽屉） ---------- */
+function aiLazyLoad(){
+  var f = document.getElementById('aiFrame');
+  if(f && !f.getAttribute('src')) f.src = f.getAttribute('data-src') || 'ai.html?embed=1';
+}
+function aiOpen(){
+  var dr = document.getElementById('aiDrawer');
+  if(!dr) return;
+  aiLazyLoad();
+  dr.classList.add('open');
+  dr.setAttribute('aria-hidden', 'false');
+  var fab = document.getElementById('aiFab');
+  if(fab) fab.style.display = 'none';
   if(TOKEN){
     api('/api/log_search', {token: TOKEN, keywords: '[报告页] 打开智能体讨论计算结果物理含义', mode: 'deep_open'}, function(){});
   }
 }
-/* 页面加载后启动留痕打点（滚动进入视野时） */
-requestAnimationFrame(fitAI);
-if('IntersectionObserver' in window){
-  var _aiObs = new IntersectionObserver(function(entries){
-    entries.forEach(function(en){
-      if(en.isIntersecting){ loadAI(); _aiObs.disconnect(); }
-    });
-  }, {threshold: 0.1});
-  _aiObs.observe(document.getElementById('aiPanel'));
-}else{
-  loadAI();
+function aiClose(){
+  var dr = document.getElementById('aiDrawer');
+  if(!dr) return;
+  dr.classList.remove('open');
+  dr.setAttribute('aria-hidden', 'true');
+  var fab = document.getElementById('aiFab');
+  if(fab) fab.style.display = 'flex';
 }
+function aiToggle(){
+  var dr = document.getElementById('aiDrawer');
+  if(!dr) return;
+  if(dr.classList.contains('open')) aiClose(); else aiOpen();
+}
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape' || e.key === 'Esc') aiClose();
+});
 </script>
 </body>
 </html>

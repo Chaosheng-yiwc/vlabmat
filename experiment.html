@@ -81,19 +81,33 @@
   .panel h3{font-size:15.5px;color:var(--blue-d);margin-bottom:10px}
   .panel p,.panel li{font-size:14.5px;color:#33404f;line-height:1.8}
   .panel ul{padding-left:20px}
-  .ai-tabs{display:flex;gap:8px;margin:8px 0 12px}
-  .ai-tab{padding:8px 16px;border-radius:8px;border:1px solid var(--line);background:#f7fafd;cursor:pointer;font-size:13px;color:#33404f}
-  .ai-tab.active{background:#12447e;color:#fff;border-color:#12447e}
+  /* AI 助教悬窗：右侧滑出抽屉 + 右上角常驻标签 */
+  .ai-fab{position:fixed;right:0;top:92px;z-index:9000;display:flex;flex-direction:column;align-items:center;gap:4px;
+          padding:11px 7px 12px;border:1px solid #b9c9dc;border-right:0;border-radius:10px 0 0 10px;
+          background:linear-gradient(180deg,#12447e,#1a5aa0);color:#fff;cursor:pointer;font-family:inherit;
+          box-shadow:-3px 2px 12px rgba(18,68,126,.28);transition:padding .15s,background .15s}
+  .ai-fab:hover{padding-right:12px;background:linear-gradient(180deg,#0f3a6b,#12447e)}
+  .ai-fab .ico{font-size:18px;line-height:1}
+  .ai-fab .txt{writing-mode:vertical-rl;letter-spacing:2px;font-size:12px}
+  .ai-drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:94vw;z-index:9100;background:#fff;
+             border-left:1px solid #cfdae6;box-shadow:-8px 0 28px rgba(16,40,70,.18);
+             display:flex;flex-direction:column;transform:translateX(103%);transition:transform .24s ease}
+  .ai-drawer.open{transform:translateX(0)}
+  .ai-drawer-hd{display:flex;align-items:center;gap:10px;padding:10px 12px;background:linear-gradient(135deg,#0e3a6d,#1a5dab);color:#fff;flex-shrink:0}
+  .ai-drawer-hd .t{font-size:14px;font-weight:700;line-height:1.35}
+  .ai-drawer-hd .s{display:block;font-size:11.5px;font-weight:400;color:#c6d9ee;margin-top:2px}
+  .ai-drawer-x{margin-left:auto;background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:6px;
+               width:30px;height:30px;font-size:18px;line-height:1;cursor:pointer;flex-shrink:0}
+  .ai-drawer-x:hover{background:rgba(255,255,255,.3)}
+  .ai-drawer-bd{flex:1;min-height:0;background:#fff}
+  .ai-drawer-bd iframe{display:block;width:100%;height:100%;border:0}
+  @media (max-width:640px){.ai-drawer{width:100%;max-width:none}.ai-fab{top:auto;bottom:80px}}
   .go-btn{background:var(--gold);color:#3a2c00;border:none;padding:11px 30px;border-radius:8px;
           font-size:15.5px;font-weight:700;cursor:pointer;font-family:inherit}
   .go-btn:hover{filter:brightness(1.06)}
   .done-tip{color:var(--green);font-weight:700}
   /* chat */
   .chat{display:flex;flex-direction:column;height:340px}
-  .ai-crop{position:relative;height:620px;overflow:hidden;border:1px solid var(--line);border-radius:8px;background:#fff}
-  .ai-crop iframe{position:absolute;top:0;left:50%;transform:translateX(-50%);width:1280px;height:100%;border:0}
-  /* 智能体输入框加宽：平台输入框宽度 = min(58vw, 780px)，把跨域 iframe 视口
-     动态设为 面板宽/0.58 并居中裁剪，使 58vw 恰好铺满可视窗口（fitAI） */
   .chatlog{flex:1;overflow-y:auto;background:#f7fafd;border:1px solid var(--line);border-radius:8px;padding:12px}
   .bubble{max-width:78%;margin-bottom:10px;padding:8px 13px;border-radius:10px;font-size:13.8px;line-height:1.7}
   .ai{background:#e8f1fb;color:#1f3d5f;border-top-left-radius:2px}
@@ -213,22 +227,13 @@
 
     <div id="stepExtra"></div>
 
-    <div class="panel" id="aiPanel">
-      <h3>🤖 实验智能体"小碳老师"<span style="font-size:12px;color:#7a8798;font-weight:normal">· 由学校网络中心大模型平台（DeepSeek）驱动</span></h3>
-      <div class="ai-tabs">
-        <button class="ai-tab active" id="tabDeep" onclick="switchAI('deep',1)">深度模式 · DeepSeek</button>
-        <button class="ai-tab" id="tabFaq" onclick="switchAI('faq',1)">结果提交</button>
-      </div>
-      <div id="aiDeepWrap">
-        <div class="ai-crop" style="height:640px">
-          <iframe id="aiFrame" src="ai.html?embed=1" style="top:0;left:0;transform:none;width:100%;height:100%" allow="microphone"></iframe>
-        </div>
-        <div class="hint" style="margin-top:8px">深度对话由本平台自建 DeepSeek 助教提供（需登录实验账号，对话记录全程留痕、教师端可查）。AI 生成内容仍须逐条核验（三关流程）。检索完成后请到"结果提交"记录关键词并提交结果。</div>
-      </div>
-      <div id="aiFaqWrap" style="display:none">
+    <div class="panel" id="subPanel">
+      <h3>📤 结果提交<span style="font-size:12px;color:#7a8798;font-weight:normal">· 检索关键词记录 + 作业提交</span></h3>
+      <div class="hint" style="margin:-2px 0 12px">需要 AI 协助时，点屏幕右上角「🤖 小碳老师」标签随时展开对话悬窗；对话为独立浮层，不占本页版面，收起后对话记录仍在。</div>
+      <div id="aiFaqWrap">
         <div class="sub-block">
           <h4>① 检索关键词记录</h4>
-          <div class="hint" style="margin:0 0 8px">在"深度模式"完成资料检索后，把使用的关键词记录下来，教师端可查看你的检索轨迹。</div>
+          <div class="hint" style="margin:0 0 8px">在「小碳老师」悬窗里完成资料检索后，把使用的关键词记录下来，教师端可查看你的检索轨迹。</div>
           <div class="chatin" style="margin-top:0">
             <input id="kwInput" placeholder="输入本次检索关键词，如：g-C₃N₄ 掺杂 带隙">
             <button type="button" onclick="recordKw()">＋ 记录</button>
@@ -265,6 +270,22 @@
     </div>
   </div>
 </div>
+
+<!-- AI 助教悬窗：默认收在右上角，点标签滑出；点 × 或按 Esc 收起 -->
+<button class="ai-fab" id="aiFab" onclick="aiToggle()" title="打开 / 收起 AI 助教「小碳老师」">
+  <span class="ico">🤖</span><span class="txt">小碳老师</span>
+</button>
+<aside class="ai-drawer" id="aiDrawer" aria-hidden="true" aria-label="AI 助教对话">
+  <div class="ai-drawer-hd">
+    <div class="t">🤖 实验智能体"小碳老师"
+      <span class="s">DeepSeek 驱动 · 对话全程留痕、教师端可查</span>
+    </div>
+    <button class="ai-drawer-x" onclick="aiClose()" title="收起（Esc）">×</button>
+  </div>
+  <div class="ai-drawer-bd">
+    <iframe id="aiFrame" data-src="ai.html?embed=1" title="AI 助教对话" allow="microphone"></iframe>
+  </div>
+</aside>
 
 <script>
 /* ---------- 登录守卫 ---------- */
@@ -523,7 +544,9 @@ function gotoStep(i){
   var btn = document.getElementById('submitBtn');
   var extra = document.getElementById('stepExtra');
   if(i === NSTEP + 1){
-    document.getElementById('aiPanel').style.display = 'none';
+    document.getElementById('subPanel').style.display = 'none';
+    document.getElementById('aiFab').style.display = 'none';
+    aiClose();
     document.getElementById('crumb').textContent = '全部完成';
     document.getElementById('stTitle').textContent = '研究资料调研已全部完成';
     document.getElementById('stTime').textContent = '—';
@@ -546,9 +569,14 @@ function gotoStep(i){
   document.getElementById('stScore').textContent = st[2];
   document.getElementById('stType').textContent  = st[3];
   document.getElementById('stDesc').textContent  = st[4];
-  /* 第 1、2 步（预习测评 / 任务认领）不需要智能体窗口 */
-  document.getElementById('aiPanel').style.display = (i <= 2) ? 'none' : '';
-  if(i > 2){ requestAnimationFrame(fitAI); }
+  /* 第 1、2 步（预习测评 / 任务认领）不开放智能体：既不需要，也避免答题时借助 AI */
+  document.getElementById('subPanel').style.display = (i <= 2) ? 'none' : '';
+  if(i <= 2){
+    aiClose();
+    document.getElementById('aiFab').style.display = 'none';
+  } else {
+    document.getElementById('aiFab').style.display = 'flex';
+  }
   /* 特殊步骤：1 预习测评、2 任务认领（按钮内嵌，隐藏通用按钮） */
   if(i === 1){
     renderQuiz();
@@ -673,22 +701,40 @@ function gradeQuiz(){
   document.querySelector('.main').scrollTop = 0;
 }
 
-/* ---------- 小碳老师双模式（DeepSeek 嵌入 / 结果提交） ---------- */
-/* 自建 ai.html 聊天窗：iframe 与页面同源自适应，不再需要跨域视口裁剪 */
-function fitAI(){ return; }
-window.addEventListener('resize', fitAI);
-function switchAI(mode, manual){
-  var deep = mode === 'deep';
-  document.getElementById('aiDeepWrap').style.display = deep ? '' : 'none';
-  document.getElementById('aiFaqWrap').style.display = deep ? 'none' : '';
-  document.getElementById('tabDeep').className = deep ? 'ai-tab active' : 'ai-tab';
-  document.getElementById('tabFaq').className = deep ? 'ai-tab' : 'ai-tab active';
-  if(deep && manual && TOKEN){
-    api('/api/log_search', {token: TOKEN, keywords: '[深度模式] 打开 DeepSeek 资料检索', mode: 'deep_open'}, function(){});
-  }
-  if(!deep){ loadMine(); }
-  if(deep){ requestAnimationFrame(fitAI); }
+/* ---------- 小碳老师悬窗（右上角标签 → 右侧抽屉，不占版面） ---------- */
+/* iframe 首次展开时才加载（data-src → src），避免一进页面就拉一次对话记录 */
+function aiLazyLoad(){
+  var f = document.getElementById('aiFrame');
+  if(f && !f.getAttribute('src')) f.src = f.getAttribute('data-src') || 'ai.html?embed=1';
 }
+function aiOpen(){
+  var dr = document.getElementById('aiDrawer');
+  if(!dr) return;
+  aiLazyLoad();
+  dr.classList.add('open');
+  dr.setAttribute('aria-hidden', 'false');
+  var fab = document.getElementById('aiFab');
+  if(fab) fab.style.display = 'none';          /* 展开时隐藏标签，避免压住抽屉 */
+  if(TOKEN){
+    api('/api/log_search', {token: TOKEN, keywords: '[深度模式] 打开小碳老师对话', mode: 'deep_open'}, function(){});
+  }
+}
+function aiClose(){
+  var dr = document.getElementById('aiDrawer');
+  if(!dr) return;
+  dr.classList.remove('open');
+  dr.setAttribute('aria-hidden', 'true');
+  var fab = document.getElementById('aiFab');
+  if(fab) fab.style.display = (cur > 2 && cur <= NSTEP) ? 'flex' : 'none';
+}
+function aiToggle(){
+  var dr = document.getElementById('aiDrawer');
+  if(!dr) return;
+  if(dr.classList.contains('open')) aiClose(); else aiOpen();
+}
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape' || e.key === 'Esc') aiClose();
+});
 
 /* ---------- 结果提交（检索记录 + 作业提交 + 我的成绩） ---------- */
 function api(path, data, cb){
@@ -831,7 +877,6 @@ setInterval(function(){
 }, 1000);
 
 gotoStep(cur);
-switchAI('deep');
 </script>
 </body>
 </html>
