@@ -354,12 +354,14 @@ var ILAB = (function(){
       s.seq = i+1;
       if(i>0 && s.startTime < steps[i-1].endTime) s.startTime = steps[i-1].endTime;
       if(s.endTime < s.startTime) s.endTime = s.startTime;
-      /* 官方 2022 版硬规则：单步 timeUsed 不得超过 expectTime 的 4 倍（code=11）。
-         跨会话重做的步骤 startTime 保留首访时间，endTime−startTime 可达几十分钟~小时级。
-         直接把上报的 timeUsed 截到 4×expectTime；起止时间戳保持单调，不回移起点
-         （此前"≥30min 兜底"会把 expectTime=120 的步骤撑到 1800s>480s，再次触发 code=11） */
-      var cap = Math.max((s.expectTime || 300) * 4, 60);
-      s.timeUsed = Math.max(1, Math.min(Math.round((s.endTime - s.startTime) / 1000), cap));
+      /* 官方 2022 版硬规则：单步用时不得超过 expectTime 的 4 倍（code=11"timeUsed超出范围"）。
+         跨会话重做的步骤 span（endTime−startTime）可达几十分钟~小时级——实验空间不仅校验
+         timeUsed 字段，还按起止时间戳跨度校验，所以必须把 startTime 前移到 endTime−cap，
+         让跨度与字段一起收口（此前只截字段/带 1800s 兜底的两个版本都被打回）。
+         数学上 start 只会前移且 span>cap ⇒ end−cap>prevEnd，不破坏步骤时间轴单调 */
+      var cap = Math.max((s.expectTime || 300) * 4, 60) * 1000;
+      if (s.endTime - s.startTime > cap) s.startTime = s.endTime - cap;
+      s.timeUsed = Math.max(1, Math.round((s.endTime - s.startTime) / 1000));
     }
     return { score: Math.max(0,Math.min(100,Math.round(score||0))), status: status||1,
              startTime: t.start, endTime: Date.now(), steps: steps };
