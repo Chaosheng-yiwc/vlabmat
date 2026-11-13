@@ -431,7 +431,7 @@ function loadGrades(){
                                  : '<span class="tag done">' + val + ' / ' + max + '</span>';
         return dot + (fb ? '<div class="hint" title="' + esc(fb) + '">' + esc(fb.slice(0, 42)) + (fb.length > 42 ? '…' : '') + '</div>' : '');
       }
-      return '<tr><td><b>' + esc(g.name) + '</b><br><span class="hint">' + esc(g.sid) + '</span></td>' +
+      return '<tr><td><b>' + esc(g.name) + '</b>' + (g.ilab ? ' <span class="tag done">实验空间</span>' : '') + '<br><span class="hint">' + esc(g.sid) + '</span></td>' +
         '<td style="text-align:center">' + cell(g.quiz, null, 10) + '</td>' +
         '<td style="text-align:center">' + cell(g.research, g.research_fb, 20) +
           '<br><button class="btn" style="margin-top:3px" onclick="aiScore(\'' + esc(g.sid) + '\',\'research\',this)">🤖 AI 打分</button></td>' +
