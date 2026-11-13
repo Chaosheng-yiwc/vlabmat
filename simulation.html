@@ -354,11 +354,9 @@ var ILAB = (function(){
       s.seq = i+1;
       if(i>0 && s.startTime < steps[i-1].endTime) s.startTime = steps[i-1].endTime;
       if(s.endTime < s.startTime) s.endTime = s.startTime;
-      /* 实验空间 code=11"timeUsed超出范围"：实测 4×expectTime 仍被判定超范围（SEQ=4/6 先后被打回），
-         说明校验口径是"步骤用时不得超过该步合理用时"——按 1×expectTime 收口，且跨度与字段一起截
-         （平台按起止时间戳跨度复核）。startTime 只前移，不破坏步骤时间轴单调。 */
-      var cap = Math.max(s.expectTime || 300, 60) * 1000;
-      if (s.endTime - s.startTime > cap) s.startTime = s.endTime - cap;
+      /* 各步真实用时只作为权重上报；最终时间轴由云函数按"入场窗口 + 平台允许区间"
+         统一重建（code=11 实测根因：timeUsed=1s 低于平台允许下限，自行截断反而踩雷） */
+      if (s.endTime < s.startTime) s.endTime = s.startTime;
       s.timeUsed = Math.max(1, Math.round((s.endTime - s.startTime) / 1000));
     }
     return { score: Math.max(0,Math.min(100,Math.round(score||0))), status: status||1,
