@@ -926,6 +926,7 @@ function submitResult(){
       // 实验空间（ilab-x）数据回传：完成实验，总分 = 判读得分
       ILAB.upload(STATE.score || 0, 1, null, function(il){
         if (il && il.ok) msg.innerHTML += '<div class="hint" style="color:var(--green)">✓ 成绩已同步至实验空间。</div>';
+        else msg.innerHTML += '<div class="hint" style="color:var(--red)">⚠ 实验空间同步失败：' + ((il && il.msg) || '未知原因') + '</div>';
       });
     }
   })
@@ -937,6 +938,7 @@ function showConcl(){
   var sys = SYS[STATE.sys];
   var rl = redoxLevels();
   var straddle = (STATE.cbm < rl.red && STATE.vbm > rl.ox);
+  ILAB.mark('生成实验结论与光催化活性判断', '基于带边位置与 pH 判据生成全解水活性结论', 180);
   var lam = (STATE.Eg > 0) ? (1239.8 / STATE.Eg).toFixed(0) : '—';
   var src = '真实 DFT 计算（VASP/' + STATE.func + '，集群队列执行，运行墙钟见第③步日志）';
   var alignTxt = '真空能级参考：实验功函数 <b>Φ ≈ 4.40 eV</b>（UPS 实验值）' +
