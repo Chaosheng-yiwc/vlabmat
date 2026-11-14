@@ -511,7 +511,7 @@ function onPhChange(){
 /* ================= 计算计划锁定 =================
    平台计算计划（PRECALC 结果库，随集群补算动态扩充，2026-10-31）：
    · PBE：三体系 × 应变 ±4% 全系列开放（ENCUT 500 eV）；本征 ε=0 另有 ENCUT 400/450/550 收敛系列；
-   · HSE06：本征 ε=−4 ~ +4 全系列已入库（ENCUT 500）；O-掺杂 ε=−3/+1/+2 已入库（2026-11-12），其余掺杂组合补算中。
+   · HSE06：本征 ε=−4 ~ +4 全系列已入库（ENCUT 500）；O-掺杂 ε=−3/0/+1/+2 已入库（2026-11-14 补记 ε=0），其余掺杂组合补算中。
    超出计划的参数组合后端同样会拒绝（双保险），前端直接锁定避免无效提交。 */
 function planAvailable(sys, strain, encut, func){
   if (func === 'PBE'){
@@ -520,8 +520,8 @@ function planAvailable(sys, strain, encut, func){
   }
   if (encut !== 500) return false;
   if (sys === 'pristine') return true;   /* HSE06：本征应变 −4 ~ +4 全系列已入库 */
-  if (sys === 'o_dop' && (strain === -3 || strain === 1 || strain === 2))
-    return true;                         /* HSE06：O-掺杂 ε=−3/+1/+2 已入库（2026-11-12），其余补算中 */
+  if (sys === 'o_dop' && (strain === -3 || strain === 0 || strain === 1 || strain === 2))
+    return true;                         /* HSE06：O-掺杂 ε=−3/0/+1/+2 已入库（ε=0 补记于 2026-11-14），其余补算中 */
   return false;
 }
 function applyPlanLock(){
@@ -530,9 +530,9 @@ function applyPlanLock(){
   var encut = document.getElementById('encut');
   var func = document.getElementById('func');
   var hint = document.getElementById('funcHint');
-  /* HSE06 放开范围：本征全系列 + O-掺杂 ε=−3/+1/+2（已入库）；其余掺杂组合锁 PBE */
+  /* HSE06 放开范围：本征全系列 + O-掺杂 ε=−3/0/+1/+2（已入库）；其余掺杂组合锁 PBE */
   var hseOK = (STATE.sys === 'pristine')
-           || (STATE.sys === 'o_dop' && (STATE.strain === -3 || STATE.strain === 1 || STATE.strain === 2));
+           || (STATE.sys === 'o_dop' && (STATE.strain === -3 || STATE.strain === 0 || STATE.strain === 1 || STATE.strain === 2));
   Array.prototype.forEach.call(func.options, function(o){ o.disabled = !hseOK && o.value !== 'PBE'; });
   if (STATE.func === 'HSE06' && !hseOK){ func.value = 'PBE'; STATE.func = 'PBE'; }
   /* ENCUT 400/450/550 仅覆盖"本征 ε=0 + PBE"：其余组合自动归位 500 并禁用 */
@@ -545,7 +545,7 @@ function applyPlanLock(){
   var method = 'PBE 流水：SCF → 非自洽能带（ICHARG=11）→ 光学谱；HSE06 流水：PBE SCF 波函数初猜 + 一次杂化自洽同时完成 SCF 与能带（"零权重 k 点"法）。';
   if (isMod){
     var hseTxt = (STATE.sys === 'o_dop')
-      ? 'HSE06 已入库：ε = −3 / +1 / +2（ENCUT 500），其余应变集群补算中，入库后开放。'
+      ? 'HSE06 已入库：ε = −3 / 0 / +1 / +2（ENCUT 500），其余应变集群补算中，入库后开放。'
       : 'HSE06 对照数据集群补算中，入库后开放。';
     hint.innerHTML = method + '当前体系（' + chem(SYS[STATE.sys].name) + '）计划：<b>PBE · ENCUT 500 eV · 应变 ε = −4% ~ +4% 全系列</b>；' + hseTxt;
     hint.style.color = '#8a6d1a';
@@ -724,7 +724,7 @@ function submitReal(){
   if (!planAvailable(STATE.sys, STATE.strain, STATE.encut, STATE.func)){
     realLog('[计算] ✗ 参数组合（体系=' + SYS[STATE.sys].name + '、应变=' + STATE.strain + '%、ENCUT=' + STATE.encut + '、泛函=' + STATE.func + '）暂无计算数据——' +
       (STATE.func === 'HSE06'
-        ? 'HSE06 已入库组合：本征 ε = 0 / ε = −4（ENCUT 500）；其余应变的 HSE06 正在集群补算，可先选用 PBE 完成实验。'
+        ? 'HSE06 已入库组合：本征 ε = −4 ~ +4 全系列；O-掺杂 ε = −3 / 0 / +1 / +2（均 ENCUT 500）；其余组合正在集群补算，可先选用 PBE 完成实验。'
         : '请按实验指导书调整参数后重新提交。'));
     return;
   }
