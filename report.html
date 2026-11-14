@@ -84,6 +84,10 @@
   .go-btn:hover{filter:brightness(1.06)}
   .submsg-ok{color:var(--green);font-weight:700;font-size:13px;margin-left:10px}
   .submsg-err{color:#c0392b;font-weight:700;font-size:13px;margin-left:10px}
+  .kb-after{display:block;width:100%;font-size:13.2px;line-height:1.8;margin-top:8px;
+            background:#f4f9f4;border:1px solid #d7e8d7;border-radius:8px;padding:8px 12px;color:#33404f}
+  .kb-after a{color:var(--blue);font-weight:700;text-decoration:none}
+  .kb-after a:hover{text-decoration:underline}
   .hint{font-size:12px;color:#9aa7b6;margin-top:6px;line-height:1.7}
   .mysub{border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:8px;background:#fff;font-size:13.5px}
   .mysub .score{color:var(--gold);font-weight:700}
@@ -259,6 +263,7 @@ function doSubmit(which){
         fileEl.value = '';
         document.getElementById(isRpt ? 'rptFileInfo' : 'refFileInfo').textContent = '';
         setMsg(msgEl, '✓ 提交成功，教师端已收到并可在后台批阅。', true);
+        showKbAfter(msgEl);
         loadMine();
         /* 实验空间（ilab-x）实验报告同步：仅实验空间入口，且须已在 3D 实验台完成数据回传 */
         if (isRpt && user && user.ilab && user.token){
@@ -292,6 +297,17 @@ function doSubmit(which){
 function setMsg(el, t, okk){
   el.textContent = t;
   el.className = okk ? 'submsg-ok' : 'submsg-err';
+}
+/* 提交成功后展示「课后拓展·知识库」入口（实验后的拓展读物） */
+function showKbAfter(el){
+  var old = el.parentNode.querySelector('.kb-after');
+  if (old) old.remove();
+  var d = document.createElement('div');
+  d.className = 'kb-after';
+  d.innerHTML = '🎓 <b>课后拓展</b>：欢迎浏览 <a href="kb.html" target="_blank" rel="noopener">📚 实验知识库</a>' +
+    '——2025 年最新 g-C<sub>3</sub>N<sub>4</sub> 光催化文献（3 篇附全文 PDF）、国家氢能政策进展、' +
+    'VASP 官方手册与材料高通量设计平台（Semanta），把你的计算结论与科研前沿、国家战略对上话。';
+  el.insertAdjacentElement('afterend', d);
 }
 function loadMine(){
   if (!TOKEN) return;

@@ -71,6 +71,7 @@
   .cat-struct{background:#eafaf1;color:#1e7a46}
   .cat-data{background:#fff6e5;color:#8a6d1a}
   .cat-guide{background:#f4edfb;color:#6b3fa0}
+  .cat-pol{background:#fdeeee;color:#b03434}
   .kb-card h3{font-size:14.5px;line-height:1.55;color:var(--ink)}
   .kb-card .src{font-size:12.3px;color:var(--sub);line-height:1.6}
   .kb-card .sum{font-size:13px;line-height:1.75;color:#2c3b4e}
@@ -90,7 +91,7 @@
 </head>
 <body>
 <div class="topbar">
-  <div class="t">📚 实验知识库 · 文献 / 结构 / 数据 / 方法讲义</div>
+  <div class="t">📚 实验知识库 · 文献 / 结构 / 数据 / 讲义 / 政策</div>
   <div class="meta">
     <span>学生：<b id="stuName">游客</b></span>
     <a href="lab.html">返回首页</a>
@@ -108,9 +109,10 @@
     <span class="chip" data-cat="struct" onclick="pickCat(this)">🧊 结构与电位</span>
     <span class="chip" data-cat="data" onclick="pickCat(this)">📊 平台数据</span>
     <span class="chip" data-cat="guide" onclick="pickCat(this)">🧭 方法讲义</span>
+    <span class="chip" data-cat="pol" onclick="pickCat(this)">🏛 国家政策</span>
   </div>
   <div class="hint-bar">
-    本知识库由教师整理维护：文献条目均经核实、附真实出处（DOI 可直达原文）；小碳老师回答文献类问题时只会引用本库条目。点击卡片底部「详细内容」展开全文摘要。
+    本知识库是<b>实验完成后</b>的拓展读物，由教师整理维护：文献条目均经核实、附真实出处（部分 2025 年最新文献附全文 PDF 可直接下载），另设「国家政策」专栏收录氢能与双碳相关政策进展；小碳老师回答文献类问题时只会引用本库条目。点击卡片底部「详细内容」展开全文摘要。
   </div>
   <div id="msg"></div>
   <div class="cards" id="cards"><div class="empty">正在加载知识库……</div></div>
@@ -145,8 +147,8 @@ function fesc(s){ return fchem(esc(s)); }
 
 var user = null;
 try{ user = JSON.parse(localStorage.getItem('ai_lab_auth') || 'null'); }catch(e){}
-var CATN = { lit: '文献', struct: '结构与电位', data: '平台数据', guide: '方法讲义' };
-var CATCLS = { lit: 'cat-lit', struct: 'cat-struct', data: 'cat-data', guide: 'cat-guide' };
+var CATN = { lit: '文献', struct: '结构与电位', data: '平台数据', guide: '方法讲义', pol: '国家政策' };
+var CATCLS = { lit: 'cat-lit', struct: 'cat-struct', data: 'cat-data', guide: 'cat-guide', pol: 'cat-pol' };
 var curCat = 'all';
 
 if (user && user.name) document.getElementById('stuName').textContent = user.name;
@@ -202,6 +204,8 @@ function render(items, total){
         (it.doi ? (/^S/i.test(it.doi)
           ? '<a href="https://www.sciencedirect.com/science/article/pii/' + esc(it.doi) + '" target="_blank" rel="noopener">📄 原文（ScienceDirect）</a>'
           : '<a href="https://doi.org/' + esc(it.doi) + '" target="_blank" rel="noopener">🔗 DOI: ' + esc(it.doi) + '</a>') : '') +
+        (it.pdf ? '<a href="' + esc(it.pdf) + '" target="_blank" rel="noopener">📎 全文 PDF</a>' : '') +
+        (it.url ? '<a href="' + esc(it.url) + '" target="_blank" rel="noopener">🔗 官方链接</a>' : '') +
         (it.id === 'S1' ? '<button class="mini" onclick="copyPoscar(this)">📋 复制 POSCAR</button>' : '') +
       '</div></div>';
     return h;
