@@ -876,16 +876,34 @@ function renderMine(){
       }).join('')
     : '';
   var box = document.getElementById('mySubs');
-  if(box) box.innerHTML = myData.submissions.length ? myData.submissions.map(function(s){
-        var sc = (s.score == null) ? '<span style="color:#c9a227;font-weight:700">⏳ 待批阅</span>'
-          : '<span class="score">💯 得分：' + esc(s.score) + '</span>';
+  if(!box) return;
+  var subs = myData.submissions || [];
+  if(!subs.length){ box.innerHTML = '<span class="hint">暂无提交记录。</span>'; return; }
+  var graded = subs.filter(function(s){ return s.score != null; });
+  var pend   = subs.filter(function(s){ return s.score == null; });
+  var one = function(s){
+        var sc = '<span class="score">💯 得分：' + esc(s.score) + '</span>';
         var fb = s.feedback ? '<div class="fb">教师评语：' + esc(s.feedback) + '</div>' : '';
         var att = s.file_name ? '<span class="filetag">📎 ' + esc(s.file_name) +
           (s.file_size ? '（' + Math.round(s.file_size/1024) + ' KB）' : '') + '</span>' : '';
         return '<div class="mysub"><b>' + esc(s.title) + '</b>' + att + '　' +
           '<span class="hint" style="margin:0">' + esc(s.kind) + ' · ' + esc(s.step || '') +
           ' · ' + esc(s.created_at) + '</span>　' + sc + fb + '</div>';
-      }).join('') : '<span class="hint">暂无提交记录。</span>';
+  };
+  var html = graded.map(one).join('');
+  if(pend.length){
+    if(!html) html = '<span class="hint">教师批阅后的记录会显示在这里。</span>';
+    html += '<div id="pendToggle" data-n="' + pend.length + '" onclick="togglePend()" style="cursor:pointer;margin-top:6px;color:#7a8798;font-size:12.5px;user-select:none">▸ 还有 ' + pend.length + ' 条待批阅记录，点击展开</div>' +
+            '<div id="pendBox" style="display:none">' + pend.map(one).join('') + '</div>';
+  }
+  box.innerHTML = html;
+}
+function togglePend(){
+  var b = document.getElementById('pendBox'), t = document.getElementById('pendToggle');
+  if(!b || !t) return;
+  var open = (b.style.display === 'none');
+  b.style.display = open ? '' : 'none';
+  t.innerHTML = (open ? '▾' : '▸') + ' 还有 ' + t.getAttribute('data-n') + ' 条待批阅记录，点击' + (open ? '收起' : '展开');
 }
 function onFilePick(){
   var f = document.getElementById('subFile').files[0];
