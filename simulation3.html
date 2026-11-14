@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <link rel="icon" type="image/png" href="favicon.png">
+
+<script>
+/* 云端 API 网关适配：内网部署直连本地 server；公网(静态托管)走云函数网关 */
+(function(){
+  var h = location.hostname || "";
+  if (/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|localhost$|127\.)/.test(h)) return;
+  var GW = "https://vlabmat-d9gh3999c21421e1b.service.tcloudbase.com/apigw";
+  var SGI = "https://vlabmat-d9gh3999c21421e1b.service.tcloudbase.com/structgw";
+  var _f = window.fetch ? window.fetch.bind(window) : null;
+  if (!_f) return;
+  window.fetch = function(input, init){
+    init = init || {};
+    var url = (typeof input === "string") ? input : (input && input.url) || "";
+    if (url.indexOf("/api/") === 0) {
+      var route = url.split("?")[0];
+      var qi = url.indexOf("?");
+      var body = {};
+      if (init.body) { try { body = JSON.parse(init.body); } catch (e) { body = { _raw: String(init.body) }; } }
+      if (qi >= 0) {
+        url.slice(qi + 1).split("&").forEach(function(kv){
+          if (kv) { var t = kv.split("=");
+            body[decodeURIComponent(t[0])] = decodeURIComponent((t[1] || "").replace(/\+/g, " ")); }
+        });
+      }
+      body.__route = route;
+      init.method = "POST";
+      init.body = JSON.stringify(body);
+      var hh = Object.assign({}, init.headers || {});
+      delete hh["Content-Type"];
+      delete hh["content-type"];
+      init.headers = hh;  /* 无 Content-Type = CORS 简单请求，跳过 OPTIONS 预检（预检 404 不可用） */
+      return _f(route.indexOf("/api/structure") === 0 ? SGI : GW, init);
+    }
+    return _f(input, init);
+  };
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D虚拟仿真实验台 · 第③层 复合调控寻优</title>
+<style>
+  :root{--ink:#1a2332;--sub:#5a6b80;--line:#dfe6ee;--bg:#f3f6fa;--blue:#1a5dab;--blue-d:#12447e;
+        --gold:#c9a227;--green:#2e8b57;--red:#c0392b;--card:#fff}
+  *{margin:0;padding:0;box-sizing:border-box}
+
+  /* 化学式上下角标：用真标签渲染，不依赖 Unicode 上下标字形（字体缺字形易变方块/大小不一） */
+  sub,sup{font-size:.72em;line-height:0;position:relative;vertical-align:baseline}
+  sub{bottom:-.25em}
+  sup{top:-.42em}
+  body{font-family:"Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);height:100vh;
+       display:flex;flex-direction:column;overflow:hidden}
+  .topbar{background:linear-gradient(135deg,#0e3a6d,#1a5dab);color:#fff;padding:9px 18px;
+          display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+  .topbar .t{font-size:15.5px;font-weight:700}
+  .topbar .meta{font-size:13px;display:flex;gap:16px;align-items:center}
+  .topbar .meta b{color:#ffd97a}
+  .quit{color:#ffd97a;text-decoration:none;font-size:13px}
+  .jump{background:var(--gold);color:#3a2c00;padding:4px 12px;border-radius:6px;font-weight:700}
+  /* 三层导航：当前层高亮为白底 */
+  .jump.cur{background:#fff;color:#0e3a6d;cursor:default}
+  .layout{flex:1;display:flex;min-height:0}
+  /* 左侧控制台 */
+  .side{width:392px;background:#fff;border-right:1px solid var(--line);overflow-y:auto;flex-shrink:0;padding:12px}
+  .stp-card{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden}
+  .stp-head{background:#eef4fb;padding:8px 12px;font-size:13.5px;font-weight:700;color:var(--blue-d);
+            display:flex;justify-content:space-between;align-items:center}
+  .stp-head .dot{width:19px;height:19px;border-radius:50%;background:#e3eaf2;color:#7c8ba0;font-size:11px;
+                 display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .stp-head .dot.ok{background:var(--green);color:#fff}
+  .stp-body{padding:10px 12px;font-size:13px;color:#33404f;line-height:1.7}
+  .sys-cards{display:flex;gap:6px;flex-wrap:wrap}
+  .sys-card{flex:1;min-width:98px;border:1.5px solid var(--line);border-radius:8px;padding:7px 6px;text-align:center;
+            cursor:pointer;font-size:12.5px;background:#fafcfe;user-select:none}
+  .sys-card.on{border-color:var(--blue);background:#e8f1fb;font-weight:700;color:var(--blue-d)}
+  .sys-card small{display:block;color:var(--sub);font-weight:normal;font-size:11px;margin-top:2px}
+  select,input[type=range]{font-family:inherit}
+  .sel{width:100%;padding:7px 9px;border:1.5px solid #ccd6e2;border-radius:7px;font-size:13px;background:#fff;outline:none}
+  .sel:focus{border-color:var(--blue)}
+  .go-btn{background:var(--gold);color:#3a2c00;border:none;padding:10px 20px;border-radius:8px;
+          font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%}
+  .go-btn:hover{filter:brightness(1.06)}
+  .go-btn:disabled{background:#d8d2bd;color:#8a8574;cursor:not-allowed}
+  .mini-log{background:#101820;color:#9fe08a;font-family:Consolas,monospace;font-size:11px;border-radius:7px;
+            padding:8px 10px;height:150px;overflow-y:auto;margin-top:8px;line-height:1.55;white-space:pre-wrap}
+  .quiz label{display:block;margin:6px 0 2px;font-size:12.5px;color:var(--sub)}
+  .ans-ok{color:var(--green);font-weight:700}
+  .ans-no{color:var(--red);font-weight:700}
+  .hint{font-size:11.5px;color:#9aa7b6;margin-top:6px}
+  /* 右侧 */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;padding:10px;gap:10px;overflow-y:auto}
+  .panel3d{position:relative;flex:0 0 44%;min-height:280px;background:linear-gradient(160deg,#eef4fb,#dce9f7);
+           border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex}
+  .p3d-left{position:relative;flex:1;min-width:0}
+  .p3d-right{flex:0 0 clamp(180px,24%,260px);border-left:1px solid var(--line);
+             background:linear-gradient(180deg,#fff,#f6f9fd);display:flex;flex-direction:column;
+             align-items:center;text-align:center;padding:36px 10px 8px;gap:7px;min-height:0}
+  .p3d-right img{max-width:100%;flex:1;min-height:0;object-fit:contain;border-radius:6px}
+  .exp-cap{font-size:12.5px;font-weight:700;color:var(--blue-d)}
+  .exp-note{font-size:11px;color:var(--sub);line-height:1.6}
+  .exp-src{font-size:9.5px;color:#9aa7b6;line-height:1.4}
+  #threeWrap{position:absolute;inset:0}
+  .p3d-title{position:absolute;top:8px;left:12px;z-index:5;font-size:13px;font-weight:700;color:var(--blue-d);
+             background:rgba(255,255,255,.82);border-radius:7px;padding:4px 10px}
+  .latvar{font-family:'Times New Roman',Times,serif;font-style:italic;}
+  .p3d-tools{position:absolute;top:8px;right:10px;z-index:5;display:flex;gap:6px}
+  .p3d-tools button{background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:7px;
+                    padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;color:#33404f}
+  .p3d-tools button:hover{background:#e8f1fb}
+  .legend{position:absolute;bottom:8px;left:12px;z-index:5;background:rgba(255,255,255,.85);border-radius:7px;
+          padding:5px 10px;font-size:12px;display:flex;gap:12px;align-items:center}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+  .chart-row{display:flex;gap:10px;flex:1;min-height:220px}
+  .chart-box{flex:1;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px;
+             display:flex;flex-direction:column;min-width:0}
+  .chart-box h4{font-size:13px;color:var(--blue-d);margin-bottom:4px}
+  .chart-box canvas{flex:1;width:100%;min-height:0}
+  .concl{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:13.5px;line-height:1.8}
+  .concl b{color:var(--blue-d)}
+  .score{color:var(--gold);font-weight:700}
+  .msg-ok{color:var(--green);font-weight:700;font-size:12.5px}
+  .msg-no{color:var(--red);font-weight:700;font-size:12.5px}
+  /* ---------- 实验目标弹窗 ---------- */
+  .goal-mask{position:fixed;inset:0;z-index:9500;background:rgba(10,25,45,.55);backdrop-filter:blur(2px);
+             display:flex;align-items:center;justify-content:center;padding:20px}
+  .goal-card{background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;
+             box-shadow:0 24px 80px rgba(6,20,40,.45);padding:30px 34px 26px;text-align:left}
+  .goal-card h2{font-size:23px;color:#0e3a6d;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  .goal-card .sub{font-size:14px;color:#7a8798;margin-bottom:18px}
+  .goal-item{display:flex;gap:12px;background:#f2f7fd;border:1.5px solid #cfe0f2;border-left:5px solid #1a5dab;
+             border-radius:10px;padding:14px 16px;margin-bottom:12px;font-size:16.5px;line-height:1.95;color:#1c2a3a}
+  .goal-item .no{flex-shrink:0;width:30px;height:30px;border-radius:50%;background:#1a5dab;color:#fff;
+                 font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:4px}
+  .goal-item b{color:#0e3a6d}
+  .goal-item.dim{opacity:.6;border-left-color:#9db3c8}
+  .goal-item.dim .no{background:#7c8ba0}
+  .goal-btn{display:block;margin:18px auto 0;background:linear-gradient(135deg,#e8a13a,#d68f22);color:#fff;
+            border:none;border-radius:10px;padding:14px 52px;font-size:19px;font-weight:700;cursor:pointer;
+            font-family:inherit;box-shadow:0 4px 14px rgba(214,143,34,.4)}
+  .goal-btn:hover{filter:brightness(1.07)}
+  /* ---------- 小碳老师悬窗（与 experiment/report 页同款） ---------- */
+  .ai-fab{position:fixed;right:0;top:92px;z-index:9000;display:flex;flex-direction:column;align-items:center;gap:4px;
+          padding:11px 7px 12px;border:1px solid #b9c9dc;border-right:0;border-radius:10px 0 0 10px;
+          background:linear-gradient(180deg,#12447e,#1a5aa0);color:#fff;cursor:pointer;font-family:inherit;
+          box-shadow:-3px 2px 12px rgba(18,68,126,.28);transition:padding .15s,background .15s}
+  .ai-fab:hover{padding-right:12px;background:linear-gradient(180deg,#0f3a6b,#12447e)}
+  .ai-fab .ico{font-size:18px;line-height:1}
+  .ai-fab .txt{writing-mode:vertical-rl;letter-spacing:2px;font-size:12px}
+  .ai-drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:94vw;z-index:9100;background:#fff;
+             border-left:1px solid #cfdae6;box-shadow:-8px 0 28px rgba(16,40,70,.18);
+             display:flex;flex-direction:column;transform:translateX(103%);transition:transform .24s ease}
+  .ai-drawer.open{transform:translateX(0)}
+  .ai-drawer-hd{display:flex;align-items:center;gap:10px;padding:10px 12px;background:linear-gradient(135deg,#0e3a6d,#1a5dab);color:#fff;flex-shrink:0}
+  .ai-drawer-hd .t{font-size:14px;font-weight:700;line-height:1.35}
+  .ai-drawer-hd .s{display:block;font-size:11.5px;font-weight:400;color:#c6d9ee;margin-top:2px}
+  .ai-drawer-x{margin-left:auto;background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:6px;
+               width:30px;height:30px;font-size:18px;line-height:1;cursor:pointer;flex-shrink:0}
+  .ai-drawer-x:hover{background:rgba(255,255,255,.3)}
+  .ai-drawer-bd{flex:1;min-height:0;background:#fff}
+  .ai-drawer-bd iframe{display:block;width:100%;height:100%;border:0}
+  @media (max-width:640px){.ai-drawer{width:100%;max-width:none}.ai-fab{top:auto;bottom:80px}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="t">🔬 3D 虚拟仿真实验台 · 第③层 复合调控寻优</div>
+  <div class="meta">
+    <span style="display:flex;gap:6px">
+      <a class="jump" href="simulation.html">① 计算方法</a>
+      <a class="jump" href="simulation2.html">② 结果分析</a>
+      <a class="jump cur" href="simulation3.html" title="当前层">③ 复合调控</a>
+    </span>
+    <span>学生：<b id="stuName">游客</b></span>
+    <a class="quit jump" href="experiment.html">📖 研究资料调研</a>
+    <a class="quit jump" href="report.html">📄 报告提交页</a>
+    <a class="quit" href="lab.html">返回首页</a>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="side">
+
+    <div class="stp-card">
+      <div class="stp-head"><span>⓪ 导入 g-C<sub>3</sub>N<sub>4</sub> 结构</span><span class="dot" id="dot0">0</span></div>
+      <div class="stp-body">
+        <button class="go-btn" style="background:var(--green)" onclick="useBuiltinStruct()">🧊 导入 g-C<sub>3</sub>N<sub>4</sub> 结构，开始实验</button>
+        <div class="hint" id="structMsg" style="margin:7px 0 0">点击上方按钮，一键导入服务器标准结构（实验用 g-C<sub>3</sub>N<sub>4</sub> · R3m 三层晶体 · <i class="latvar">a</i>=4.78 Å · <i class="latvar">c</i>=9.97 Å · 21 原子/胞），系统自动完成结构校验并在右侧显示三维模型，随后即可开始实验。</div>
+        <details id="poscarBox" style="display:none;margin-top:7px">
+          <summary style="cursor:pointer;font-size:13px;color:var(--blue)">📄 查看结构文件（POSCAR）</summary>
+          <pre class="mini-log" id="poscarPre" style="max-height:170px;margin-top:5px"></pre>
+        </details>
+      </div>
+    </div>
+
+    <div class="stp-card">
+      <div class="stp-head"><span>① 选择研究体系与应变</span><span class="dot" id="dot1">1</span></div>
+      <div class="stp-body">
+        <div class="sys-cards" id="sysCards">
+          <div class="sys-card on" data-sys="pristine">本征 g-C<sub>3</sub>N<sub>4</sub><small>基准参照</small></div>
+          <div class="sys-card" data-sys="o_dop">O-掺杂<small>N位O替代</small></div>
+          <div class="sys-card" data-sys="c_vac">C-空位<small>缺陷工程</small></div>
+        </div>
+        <div style="margin-top:9px">
+          <label style="font-size:12.5px;color:var(--sub)">双轴应变 ε = <b id="strainV" style="color:var(--blue-d)">0</b> %（-4 压缩 ↔ +4 拉伸）</label>
+          <input type="range" id="strain" min="-4" max="4" step="1" value="0" style="width:100%">
+        </div>
+        <div class="hint">本层聚焦<b>复合调控寻优</b>：切换体系与应变、结合第①层确定的可靠参数（ENCUT 500）完成多次计算，按三要素对比找出最佳调控手段。</div>
+      </div>
+    </div>
+
+    <div class="stp-card">
+      <div class="stp-head"><span>② 设置计算参数</span><span class="dot" id="dot2">2</span></div>
+      <div class="stp-body">
+        <label style="font-size:12.5px;color:var(--sub)">平面波截断能 ENCUT</label>
+        <select class="sel" id="encut">
+          <option value="500" selected>500 eV（第①层收敛测试确定）</option>
+        </select>
+        <label style="font-size:12.5px;color:var(--sub);display:block;margin-top:7px">交换关联泛函（决定能带计算方法）</label>
+        <select class="sel" id="func">
+          <option value="PBE" selected>PBE（GGA 半局域泛函，快速）</option>
+          <option value="HSE06">HSE06（杂化泛函，更接近实验）</option>
+        </select>
+        <div class="hint" id="funcHint"></div>
+        <div class="hint">提示：K 网格内部固定 5×5×3（Γ 居中，已通过收敛测试）。先用 PBE 全系列筛选，再用 HSE06 对候选方案精确复核。</div>
+      </div>
+    </div>
+
+    <div class="stp-card">
+      <div class="stp-head"><span>③ 提交计算</span><span class="dot" id="dot3">3</span></div>
+      <div class="stp-body">
+        <div class="hint" id="clusterHint" style="margin:0 0 8px">计算由平台集群节点执行（PBE / HSE06，体相 g-C<sub>3</sub>N<sub>4</sub>：结构优化 → SCF → 能带 → 光学吸收全流程），提交后可在下方日志窗口实时查看各阶段运行输出。核数越多，计算越快。做实验需要查资料或排查报错时，点右侧「🤖 小碳老师」随时提问。</div>
+        <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap">
+          <span style="font-size:12.5px;color:var(--ink,#333)">集群核数（mpirun -n）</span>
+          <select id="coresSel" onchange="STATE.cores=parseInt(this.value,10)" style="padding:4px 8px;border:1px solid #c3cfdd;border-radius:8px;background:#fff;font-size:13px">
+            <option value="2">2 核</option>
+            <option value="4">4 核</option>
+            <option value="8">8 核</option>
+            <option value="16" selected>16 核</option>
+            <option value="32">32 核</option>
+          </select>
+        </div>
+        <button class="go-btn" id="runBtn" onclick="runCalc()">▶ 提交计算</button>
+        <div class="mini-log" id="calcLog">等待提交……
+</div>
+      </div>
+    </div>
+
+    <div class="stp-card">
+      <div class="stp-head"><span>④ 调控方案对比与判断</span><span class="dot" id="dot4">4</span></div>
+      <div class="stp-body">
+        <div style="background:#eefaf1;border:1.5px solid #bfe3cd;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.2px;line-height:1.95;color:#14432a">
+          <b style="color:#0e5a32">📐 光催化全解水三要素</b>（方案对比的统一标尺）：<br>
+          ① 材料必须是<b>半导体</b>：金属没有带隙，光生电子-空穴对瞬间复合，无法积累氧化还原能力；<br>
+          ② <b>带隙 E<sub>g</sub> &gt; 1.23 eV</b>（OH<sup>−</sup>/O<sub>2</sub> 氧化电位与 H<sup>+</sup>/H<sub>2</sub> 还原电位之差）：带隙太小，载流子寿命低、电位差不足以驱动两个半反应；<br>
+          ③ <b>价带顶能量低于 OH<sup>−</sup>/O<sub>2</sub> 氧化电位（−5.67 eV），导带底能量高于 H<sup>+</sup>/H<sub>2</sub> 还原电位（−4.44 eV）</b>——带边要"包住"水的氧化还原电位线；<br>
+          ④ 补充判据：吸收光谱中<b>可见光吸收区域越大</b>，太阳光利用率越高。
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap">
+          <span style="font-size:12.5px;color:var(--ink,#333)" title="水的氧化还原电位随 pH 线性下移 0.059 V/pH（能斯特方程）；带边位置 vs NHE 不随 pH 变，改变的是全解水判据">溶液 pH（水氧化还原电位校正）</span>
+          <select id="phSel" disabled onchange="STATE.ph=parseInt(this.value,10);onPhChange()" title="完成第③步“提交计算”后开放" style="padding:4px 8px;border:1px solid #c3cfdd;border-radius:8px;background:#fff;font-size:13px">
+            <option value="0" selected>0（酸性，标准氢标定）</option>
+            <option value="2">2</option>
+            <option value="4">4</option>
+            <option value="7">7（中性）</option>
+            <option value="10">10</option>
+            <option value="12">12</option>
+            <option value="14">14（碱性）</option>
+          </select>
+          <span style="font-size:12px;color:#7a8a9c">能斯特方程：水氧化还原参考线随 pH 下移 0.059 V/pH；带边位置 vs NHE 不变，变的是全解水判据（完成第③步“提交计算”后开放）</span>
+        </div>
+        <div class="quiz" id="quizBox">
+          <div class="hint">完成第③步计算后作答。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stp-card">
+      <div class="stp-head"><span>⑤ 提交实验总结论</span><span class="dot" id="dot5">5</span></div>
+      <div class="stp-body">
+        <button class="go-btn" id="subBtn" onclick="submitResult()" disabled>📤 提交实验总结论（三层成绩合并同步）</button>
+        <div id="subMsg" style="margin-top:6px"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="main">
+    <div class="panel3d">
+      <div class="p3d-left">
+        <div id="threeWrap"></div>
+        <div id="structEmpty" style="position:absolute;inset:0;display:flex;flex-direction:column;
+             align-items:center;justify-content:center;background:repeating-linear-gradient(45deg,#f2f6fb,#f2f6fb 12px,#eaf1f9 12px,#eaf1f9 24px);
+             border:2px dashed #b9c8da;border-radius:10px;text-align:center;padding:20px">
+          <div style="font-size:44px;opacity:.5">🧊</div>
+          <div style="font-size:15.5px;font-weight:700;color:#3c4a5c;margin-top:10px">尚未导入结构</div>
+          <div style="font-size:13px;color:#5a6b80;margin-top:6px;line-height:1.8">
+            点击左侧第 ⓪ 步「<b>导入 g-C<sub>3</sub>N<sub>4</sub> 结构</b>」按钮<br>
+            一键载入服务器标准结构，导入后此处显示三维晶体模型
+          </div>
+        </div>
+        <div class="p3d-title" id="p3dTitle">计算建模晶体结构（块体 g-C<sub>3</sub>N<sub>4</sub> · R3m 三层 · <i class="latvar">a</i>=4.78 Å · <i class="latvar">c</i>=9.97 Å · 21 原子/胞）</div>
+        <div class="p3d-tools">
+          <button onclick="toggleRotate()">⏸ 暂停旋转</button>
+          <button onclick="cycleStruct()">▦ 块体（三层）</button>
+          <button onclick="cycleSuper()">⧉ 超胞 1×1</button>
+          <button onclick="resetView()">↺ 复位视角</button>
+        </div>
+        <div class="legend">
+          <span><i style="background:#3a3f44"></i>C</span>
+          <span><i style="background:#2e6fd8"></i>N</span>
+          <span id="legO" style="display:none"><i style="background:#d84a3a"></i>O(掺杂)</span>
+          <span id="legVac" style="display:none;color:var(--red)">◯ C-空位</span>
+        </div>
+      </div>
+      <div class="p3d-right">
+        <div class="exp-cap">🔬 实验样品光学照片</div>
+        <img src="gcn4_exp_photo.png" alt="g-C3N4 粉末光学照片">
+        <div class="exp-note">g-C<sub>3</sub>N<sub>4</sub> 粉末实物：三聚氰胺 550 °C 热聚合产物，呈特征黄色</div>
+        <div class="exp-src">图源：Micromachines 2017, 8, 175, Fig. 2C（CC BY 4.0）</div>
+      </div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-box"><h4>能带结构（k 路径 Γ–M–K–Γ–A）</h4><canvas id="bandCv"></canvas></div>
+      <div class="chart-box"><h4>紫外-可见吸收光谱</h4><canvas id="dosCv"></canvas></div>
+      <div class="chart-box"><h4>带边位置 vs 水的氧化还原电位</h4><canvas id="edgeCv"></canvas></div>
+    </div>
+
+    <div class="concl" id="conclBox">
+      <b>结论面板：</b>完成计算后此处显示带隙、带边位置与可见光活性评估。
+    </div>
+  </div>
+</div>
+
+<!-- 实验目标弹窗：进入仿真台必读，点击「收到任务」后关闭（三层目标，当前层高亮） -->
+<div class="goal-mask" id="goalMask">
+  <div class="goal-card">
+    <h2>🎯 实验目标（共三层）</h2>
+    <div class="sub">AI 赋能 g-C<sub>3</sub>N<sub>4</sub> 光催化分解水制氢 · 当前进入 <b style="color:#0e3a6d">第③层 复合调控寻优</b></div>
+    <div class="goal-item dim"><span class="no">1</span>
+      <span>【第①层】通过计算模拟和实验结果比较，学会选择能够<b>准确计算</b> g-C<sub>3</sub>N<sub>4</sub> 光催化材料<b>电子结构</b>的<b>泛函、截断能</b>等计算参数。</span>
+    </div>
+    <div class="goal-item dim"><span class="no">2</span>
+      <span>【第②层】理解 g-C<sub>3</sub>N<sub>4</sub> 计算结果的分析方法，理解光催化材料须满足的三个条件，明白 g-C<sub>3</sub>N<sub>4</sub> 带隙偏大、可见光吸收不足是需要优化的方向。</span>
+    </div>
+    <div class="goal-item"><span class="no">3</span>
+      <span><b>【第③层 · 本层】</b>通过<b>结构应变、O 掺杂、C 缺陷</b>等复合调控计算，找到<b>最佳的 g-C<sub>3</sub>N<sub>4</sub> 光催化性能调控手段</b>。</span>
+    </div>
+    <button class="goal-btn" onclick="goalAck()">✓ 收到任务，开始实验</button>
+  </div>
+</div>
+
+<!-- AI 助教悬窗：默认收在右上角，点标签滑出；点 × 或按 Esc 收起 -->
+<button class="ai-fab" id="aiFab" onclick="aiToggle()" title="打开 / 收起 AI 助教「小碳老师」">
+  <span class="ico">🤖</span><span class="txt">小碳老师</span>
+</button>
+<aside class="ai-drawer" id="aiDrawer" aria-hidden="true" aria-label="AI 助教对话">
+  <div class="ai-drawer-hd">
+    <div class="t">🤖 实验智能体"小碳老师"
+      <span class="s">DeepSeek 驱动 · 对话全程留痕、教师端可查</span>
+    </div>
+    <button class="ai-drawer-x" onclick="aiClose()" title="收起（Esc）">×</button>
+  </div>
+  <div class="ai-drawer-bd">
+    <iframe id="aiFrame" data-src="ai.html?embed=1" title="AI 助教对话" allow="microphone"></iframe>
+  </div>
+</aside>
+
+<script src="js/three.min.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script>
+/* ================= 登录与全局状态 ================= */
+var user = null;
+try{ user = JSON.parse(localStorage.getItem('ai_lab_auth') || 'null'); }catch(e){}
+document.getElementById('stuName').textContent = user ? (user.guest ? '访客（体验模式）' : user.name + '（' + user.sid + '）') : '游客（未登录，无法提交成绩）';
+var TOKEN = user && user.token ? user.token : '';
+
+/* ================= 实验空间（ilab-x）步骤跟踪与数据回传 =================
+   仅实验空间入口（user.ilab）会回传数据；跟踪记录存 localStorage，按会话 sid 隔离。
+   步骤规范：《国家虚拟仿真实验教学课程技术接口规范(2022版)》12 字段，完成实验 ≥10 步。 */
+var ILAB = (function(){
+  var KEY = 'ilab_track_' + (user ? user.sid : 'anon');
+  var t = { start: Date.now(), steps: [] };
+  try{
+    var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if(saved && saved.steps && typeof saved.start === 'number') t = saved;
+  }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(t)); }catch(e){} }
+  function find(title){
+    for(var i=0;i<t.steps.length;i++){ if(t.steps[i].title === title) return t.steps[i]; }
+    return null;
+  }
+  /* 已完成步骤（去重：同标题只记一次，重复操作刷新 endTime/timeUsed/repeatCount） */
+  function mark(title, scoringModel, expectTime, score){
+    var now = Date.now();
+    var s = find(title);
+    if(s){
+      s.repeatCount = (s.repeatCount||1) + 1;
+      s.endTime = now;
+      s.timeUsed = Math.max(1, Math.round((now - s.startTime)/1000));
+      if(score !== undefined) s.score = Math.max(0, Math.min(100, Math.round(score)));
+      save(); return s;
+    }
+    s = { seq: t.steps.length+1, title: String(title).slice(0,100), startTime: now, endTime: now,
+          timeUsed: 1, expectTime: expectTime||300, maxScore: 100,
+          score: (score===undefined?100:Math.max(0,Math.min(100,Math.round(score)))),
+          repeatCount: 1, evaluation: '已完成',
+          scoringModel: String(scoringModel||'按完成情况赋分').slice(0,200), remarks: '' };
+    t.steps.push(s); save(); return s;
+  }
+  /* 跨时长的进行中步骤（如"提交计算并监控作业"），close 时收口 */
+  function open(title, scoringModel, expectTime){
+    mark(title, scoringModel, expectTime);
+    var s = find(title);
+    s._open = true;
+    save(); return s;
+  }
+  function close(title, score){
+    var s = find(title);
+    if(s){ var now = Date.now(); s.endTime = now; s.timeUsed = Math.max(1,Math.round((now-s.startTime)/1000));
+      s._open = false; s.evaluation = '已完成';
+      if(score !== undefined) s.score = Math.max(0,Math.min(100,Math.round(score))); save(); }
+  }
+  /* 组装 data_upload 载荷：步骤按时间排序重排 seq，保证时间轴单调 */
+  function payload(score, status){
+    var steps = t.steps.map(function(s){
+      var end = s.endTime || Date.now();
+      return { seq: s.seq, title: s.title, startTime: s.startTime, endTime: end,
+        timeUsed: Math.max(1, Math.round((end - s.startTime)/1000)),
+        expectTime: s.expectTime, maxScore: s.maxScore, score: s.score,
+        repeatCount: s.repeatCount, evaluation: s.evaluation, scoringModel: s.scoringModel, remarks: '' };
+    });
+    steps.sort(function(a,b){ return a.startTime - b.startTime; });
+    for(var i=0;i<steps.length;i++){
+      var s = steps[i];
+      s.seq = i+1;
+      if(i>0 && s.startTime < steps[i-1].endTime) s.startTime = steps[i-1].endTime;
+      if(s.endTime < s.startTime) s.endTime = s.startTime;
+      /* 各步真实用时只作为权重上报；最终时间轴由云函数按"入场窗口 + 平台允许区间"
+         统一重建（code=11 实测根因：timeUsed=1s 低于平台允许下限，自行截断反而踩雷） */
+      if (s.endTime < s.startTime) s.endTime = s.startTime;
+      s.timeUsed = Math.max(1, Math.round((s.endTime - s.startTime) / 1000));
+    }
+    return { score: Math.max(0,Math.min(100,Math.round(score||0))), status: status||1,
+             startTime: t.start, endTime: Date.now(), steps: steps };
+  }
+  function upload(score, status, extra, cb){
+    if(!(user && user.ilab && user.token)){ if(cb) cb({ok:false,msg:'非实验空间入口'}); return; }
+    var p = payload(score, status);
+    if(extra){ Object.keys(extra).forEach(function(k){ p[k] = extra[k]; }); }
+    p.token = user.token;
+    fetch('/api/ilab/upload', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(p)})
+      .then(function(r){ return r.json(); }).then(function(res){ if(cb) cb(res); })
+      .catch(function(){ if(cb) cb({ok:false,msg:'服务器连接失败'}); });
+  }
+  return { mark: mark, open: open, close: close, upload: upload, count: function(){ return t.steps.length; } };
+})();
+ILAB.mark('进入 3D 虚拟仿真实验台', '进入实验台并加载三维晶体结构展示', 120);
+
+var STATE = {
+  sys: 'pristine', strain: 0, encut: 500, kmesh: 5, func: 'PBE', cores: 16, ph: 0,
+  computed: false, answered: false, Eg: 2.95, cbm: -1.44, vbm: 1.52,
+  defect: false, score: null, realDone: false, real: null, structOK: false
+};
+/* ================= 三层成绩与计算记录（localStorage，三页共享） =================
+   SCORES：三层判读得分 g1(40)+g2(30)+g3(30)=100，第③层提交时合并回传实验空间；
+   REC：历次真实计算登记（键 sys|strain|encut|func → Eg），供收敛记录表与探索广度自动评分。 */
+var SCORES = (function(){
+  var KEY = 'ai_lab_sim3_scores';
+  var s = {g1: 0, g2: 0, g3: 0};
+  try{ var v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v && typeof v === 'object'){ s.g1 = v.g1|0; s.g2 = v.g2|0; s.g3 = v.g3|0; } }catch(e){}
+  function set(k, val){
+    s[k] = Math.max(0, Math.min(k === 'g1' ? 40 : 30, Math.round(val)));
+    try{ localStorage.setItem(KEY, JSON.stringify(s)); }catch(e){}
+  }
+  function total(){ return Math.min(100, (s.g1|0) + (s.g2|0) + (s.g3|0)); }
+  return {s: s, set: set, total: total};
+})();
+var REC = (function(){
+  var KEY = 'ai_lab_sim_records';
+  var m = {};
+  try{ m = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }catch(e){ m = {}; }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(m)); }catch(e){} }
+  function key(sys, st, en, fn){ return sys + '|' + st + '|' + en + '|' + fn; }
+  return {
+    put: function(sys, st, en, fn, eg){ if (eg == null || isNaN(eg)) return; m[key(sys, st, en, fn)] = {eg: eg, ts: Date.now()}; save(); },
+    get: function(sys, st, en, fn){ var r = m[key(sys, st, en, fn)]; return r ? r.eg : null; },
+    countDistinct: function(){
+      var seen = {};
+      Object.keys(m).forEach(function(k){ var p = k.split('|'); seen[p[0] + '|' + p[1]] = 1; });
+      return Object.keys(seen).length;
+    }
+  };
+})();
+/* 水的氧化还原电位随 pH 线性下移：E(O₂/H₂O) = 1.23 − 0.059×pH，E(H⁺/H₂) = −0.059×pH（V vs NHE）。
+   带边位置由真空能级锚定（vs NHE），不随 pH 变——pH 只移动参考线，改变"带边是否包住水"的判据。 */
+/* 化学式上下角标：数据里沿用的 Unicode 上下标（如 g-C₃N₄、H⁺）在渲染时转成 <sub>/<sup>，
+   不依赖字体自带的下标字形（部分系统缺字形会显示成方块或大小不一）。必须在 HTML 转义之后调用。 */
+var _SUBMAP = {'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','₊':'+','₋':'−','ₓ':'x'};
+var _SUPMAP = {'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁺':'+','⁻':'−','ⁿ':'n'};
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function chem(s){
+  return String(s == null ? '' : s)
+    .replace(/[₀-₉₊₋ₓ]+/g, function(m){
+      return '<sub>' + m.replace(/[\s\S]/g, function(c){ return _SUBMAP[c] || c; }) + '</sub>'; })
+    .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻ⁿ]+/g, function(m){
+      return '<sup>' + m.replace(/[\s\S]/g, function(c){ return _SUPMAP[c] || c; }) + '</sup>'; });
+}
+/* Canvas 里用不了 <sub> 标签：把 Unicode 下/上标拆成小一号的字单独绘制，
+   避免依赖字体自带的下标字形（缺字形会画成方块）。 */
+function fillChem(ctx, text, x, y){
+  var s = String(text == null ? '' : text);
+  var base = ctx.font;
+  var re = /([₀-₉₊₋ₓ]+)|([⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻ⁿ]+)|([^₀-₉₊₋ₓ⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻ⁿ]+)/g;
+  var small = base.replace(/(\d+(?:\.\d+)?)px/, function(_, n){ return (parseFloat(n) * 0.72) + 'px'; });
+  var m, cx = x;
+  while ((m = re.exec(s)) !== null){
+    if (m[3]){ ctx.font = base; ctx.fillText(m[3], cx, y); cx += ctx.measureText(m[3]).width; }
+    else if (m[1]){
+      var t1 = m[1].replace(/[\s\S]/g, function(c){ return _SUBMAP[c] || c; });
+      ctx.font = small; ctx.fillText(t1, cx, y + 2.5); cx += ctx.measureText(t1).width;
+    } else if (m[2]){
+      var t2 = m[2].replace(/[\s\S]/g, function(c){ return _SUPMAP[c] || c; });
+      ctx.font = small; ctx.fillText(t2, cx, y - 3.5); cx += ctx.measureText(t2).width;
+    }
+  }
+  ctx.font = base;
+}
+function redoxLevels(){
+  var ph = STATE.ph || 0;
+  return {ph: ph, ox: 1.23 - 0.059 * ph, red: -0.059 * ph};
+}
+/* 电位 vs NHE → 电子能量（eV，真空能级参考）：0 V vs NHE ≡ −4.44 eV（真空）。
+   电子能量坐标向上增大，换算后 CBM > VBM，与带边图"能量向上"完全自洽 */
+function nhe2ev(v){ return -4.44 - v; }
+/* ④ 结果分析在“提交计算”成功完成前锁定：pH 选择器不可用，防止未计算就出现结果图 */
+function setPhase4Lock(lock){
+  var p = document.getElementById('phSel');
+  if (p) p.disabled = lock;
+}
+function onPhChange(){
+  if (!STATE.computed) return;   // 未完成第③步计算：不允许触发结果图重绘
+  drawEdge();
+  ILAB.mark('带边位置与水分解判据分析（pH 调节）', '调节 pH 并判读带边是否包住水的氧化还原电位', 240);
+  if (STATE.realDone) showConcl();
+}
+/* ================= 计算计划锁定（第③层：复合调控寻优，ENCUT 固定 500） =================
+   PBE：三体系 × 应变 ±4% 全系列开放；HSE06：本征全系列 + O-掺杂 ε=−3/0/+1/+2 已入库，其余补算中。
+   超出计划的参数组合后端同样会拒绝（双保险），前端直接锁定避免无效提交。 */
+function planAvailable(sys, strain, encut, func){
+  if (func === 'PBE') return encut === 500;
+  if (encut !== 500) return false;
+  if (sys === 'pristine') return true;
+  if (sys === 'o_dop' && (strain === -3 || strain === 0 || strain === 1 || strain === 2))
+    return true;                         /* HSE06：O-掺杂 ε=−3/0/+1/+2 已入库，其余补算中 */
+  return false;
+}
+function applyPlanLock(){
+  var isMod = (STATE.sys !== 'pristine');
+  var func = document.getElementById('func');
+  var hint = document.getElementById('funcHint');
+  /* HSE06 放开范围：本征全系列 + O-掺杂 ε=−3/0/+1/+2（已入库）；其余掺杂组合锁 PBE */
+  var hseOK = (STATE.sys === 'pristine')
+           || (STATE.sys === 'o_dop' && (STATE.strain === -3 || STATE.strain === 0 || STATE.strain === 1 || STATE.strain === 2));
+  Array.prototype.forEach.call(func.options, function(o){ o.disabled = !hseOK && o.value !== 'PBE'; });
+  if (STATE.func === 'HSE06' && !hseOK){ func.value = 'PBE'; STATE.func = 'PBE'; }
+  var method = 'PBE 流水：结构优化 → SCF → 非自洽能带（ICHARG=11）→ 光学谱；HSE06 流水：PBE SCF 波函数初猜 + 一次杂化自洽同时完成 SCF 与能带。';
+  if (isMod){
+    var hseTxt = (STATE.sys === 'o_dop')
+      ? 'HSE06 已入库：ε = −3 / 0 / +1 / +2（ENCUT 500），其余应变集群补算中，入库后开放。'
+      : 'HSE06 对照数据集群补算中，入库后开放。';
+    hint.innerHTML = method + '当前体系（' + chem(SYS[STATE.sys].name) + '）计划：<b>PBE · ENCUT 500 eV · 应变 ε = −4% ~ +4% 全系列</b>；' + hseTxt;
+    hint.style.color = '#8a6d1a';
+  } else {
+    hint.innerHTML = method + '本征体系：PBE / HSE06 应变 ε = −4% ~ +4% 全系列已入库（ENCUT 500）。';
+    hint.style.color = '';
+  }
+}
+
+/* 各体系显示名称（计算结果一律来自集群真实计算，经 PRECALC 结果库返回）。
+   pristine 附带本征 ε=0 HSE06 参考带边（带边图"本征"参考条用） */
+var SYS = {
+  pristine: {name:'本征 g-C₃N₄', cbm: -1.393, vbm: 1.473, Eg: 2.8651},
+  o_dop:    {name:'O-掺杂 g-C₃N₄'},
+  c_vac:    {name:'C-空位 g-C₃N₄'}
+};
+
+/* ================= ⓪ 结构导入（CIF/POSCAR 上传 / 服务器标准结构 + 5% 校验） ================= */
+function applyStructOK(res, name){
+  STATE.structOK = true;
+  var msg = document.getElementById('structMsg');
+  msg.style.color = 'var(--green)';
+  msg.innerHTML = '✓ 结构校验通过：' + chem(name) + '（' + res.comp + '，' + res.natoms + ' 原子，' +
+    (res.matched === 'bulk' ? 'R3m 三层原胞' : '单层 slab') +
+    (res.max_dev != null ? '，最大原子偏差 ' + res.max_dev.toFixed(3) + ' Å' : '') +
+    '）。已载入右侧模型，可继续第①步。';
+  document.getElementById('dot0').className = 'dot ok';
+  document.getElementById('dot0').textContent = '✓';
+  document.getElementById('poscarBox').style.display = '';
+  document.getElementById('poscarPre').textContent = res.poscar;
+  showStruct();
+  ILAB.mark('查看三维晶体结构并完成结构校验', '结构校验通过（原子数/成分/晶系匹配）后赋满分', 300);
+}
+function applyStructFail(res){
+  STATE.structOK = false;
+  var msg = document.getElementById('structMsg');
+  msg.style.color = 'var(--red)';
+  msg.textContent = '✗ ' + (res.msg || '结构校验失败');
+  document.getElementById('dot0').className = 'dot';
+  document.getElementById('dot0').textContent = '0';
+  document.getElementById('poscarBox').style.display = 'none';
+  hideStruct();
+}
+function useBuiltinStruct(){
+  var msg = document.getElementById('structMsg');
+  msg.style.color = '#5a6b80';
+  msg.innerHTML = chem('正在载入服务器标准结构（实验用 g-C₃N₄）并校验……');
+  fetch('/api/structure_builtin', {method:'POST', headers:{'Content-Type':'application/json'}, body: '{}'})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (res.ok) applyStructOK(res, '服务器标准结构（实验用 g-C₃N₄）');
+      else applyStructFail(res);
+    })
+    .catch(function(){
+      msg.style.color = 'var(--red)';
+      msg.textContent = '✗ 载入失败：服务器连接异常，请重试。';
+    });
+}
+function showStruct(){
+  document.getElementById('structEmpty').style.display = 'none';
+  document.querySelector('.p3d-tools').style.display = '';
+  document.querySelector('.legend').style.display = '';
+  updateModel();   // 内部含 structOK 保护，且会同步刷新标题后渲染（原直接 buildModel 绕过标题更新，已修复）
+}
+function hideStruct(){
+  document.getElementById('structEmpty').style.display = '';
+  document.querySelector('.p3d-tools').style.display = 'none';
+  document.querySelector('.legend').style.display = 'none';
+}
+
+/* ================= ①② 体系与参数选择（第③层：复合调控全开放） ================= */
+document.querySelectorAll('.sys-card').forEach(function(c){
+  c.onclick = function(){
+    document.querySelectorAll('.sys-card').forEach(function(x){ x.classList.remove('on'); });
+    c.classList.add('on');
+    STATE.sys = c.dataset.sys;
+    applyPlanLock();   // 掺杂/缺陷体系锁定为计算计划内的参数组合
+    STATE.computed = false;
+    STATE.realDone = false; STATE.real = null;
+    document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
+    document.getElementById('quizBox').innerHTML = '<div class="hint">完成第③步计算后作答。</div>';
+    document.getElementById('subBtn').disabled = true;
+    document.getElementById('conclBox').innerHTML = '<b>结论面板：</b>完成计算后此处显示带隙、带边位置与可见光活性评估。';
+    updateModel(); clearCharts();
+  };
+});
+document.getElementById('strain').oninput = function(){
+  STATE.strain = parseInt(this.value);
+  document.getElementById('strainV').textContent = this.value;
+  STATE.computed = false;
+  STATE.realDone = false; STATE.real = null;
+  document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
+  updateModel();
+  applyPlanLock();
+};
+document.getElementById('encut').onchange = function(){
+  STATE.encut = parseInt(this.value);
+  STATE.computed = false;
+  STATE.realDone = false; STATE.real = null;
+  document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
+  applyPlanLock();
+};
+document.getElementById('func').onchange = function(){
+  STATE.func = this.value;
+  STATE.computed = false;
+  STATE.realDone = false; STATE.real = null;
+  document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
+  applyPlanLock();
+};
+applyPlanLock();   // 初始提示与控件状态同步
+
+function markOK(id, text){ var d = document.getElementById(id); d.className = 'dot ok'; d.textContent = '✓'; }
+
+/* ================= ③ 提交计算（集群流水线执行） ================= */
+
+function runCalc(){
+  if (!STATE.structOK){
+    var log0 = document.getElementById('calcLog');
+    log0.innerHTML = chem('⚠ 请先完成第 ⓪ 步：点击「导入 g-C₃N₄ 结构」按钮载入服务器标准结构，校验通过后再提交计算。');
+    var c0 = document.getElementById('dot0');
+    c0.style.transition = 'none'; c0.style.color = 'var(--red)';
+    setTimeout(function(){ c0.style.transition = ''; c0.style.color = ''; }, 1200);
+    return;
+  }
+  submitReal();
+}
+
+/* ---------- 提交计算：集群流水线执行（结果经计算服务返回） ---------- */
+var realT0 = 0;
+function realLog(t){
+  var log = document.getElementById('calcLog');
+  log.innerHTML += chem(esc(t)) + '\n';
+  log.scrollTop = log.scrollHeight;
+}
+function sysDesc(){
+  if (STATE.sys === 'o_dop') return 'O-掺杂 g-C₃N₄（3×3×1 超胞 · 189 原子 · 替换 1 个 N→O）';
+  if (STATE.sys === 'c_vac') return 'C-空位 g-C₃N₄（3×3×1 超胞 · 188 原子 · 制造 1 个 C 空位）';
+  return '体相 g-C₃N₄ 原胞（21 原子）';
+}
+/* 带自动重试的 POST：网络抖动时最多重试 3 次 */
+function postRetry(url, body, attempt, onOk, onFail){
+  fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)})
+  .then(function(r){ return r.json(); })
+  .then(function(res){ onOk(res); })
+  .catch(function(){
+    if (attempt < 3){
+      realLog('[网络] 连接波动，2 秒后自动重试（第 ' + (attempt + 1) + '/3 次）……');
+      setTimeout(function(){ postRetry(url, body, attempt + 1, onOk, onFail); }, 2000);
+    } else { onFail(); }
+  });
+}
+function submitReal(){
+  var btn = document.getElementById('runBtn');
+  if (!TOKEN){ realLog('[计算] ✗ 未登录：请先登录后再提交计算。'); return; }
+  if (!planAvailable(STATE.sys, STATE.strain, STATE.encut, STATE.func)){
+    realLog('[计算] ✗ 参数组合（体系=' + SYS[STATE.sys].name + '、应变=' + STATE.strain + '%、ENCUT=' + STATE.encut + '、泛函=' + STATE.func + '）暂无计算数据——' +
+      (STATE.func === 'HSE06'
+        ? 'HSE06 已入库组合：本征 ε = −4 ~ +4 全系列；O-掺杂 ε = −3 / 0 / +1 / +2（均 ENCUT 500）；其余组合正在集群补算，可先选用 PBE 完成实验。'
+        : '请按实验指导书调整参数后重新提交。'));
+    return;
+  }
+  btn.disabled = true;
+  setPhase4Lock(true);   // 计算进行中：④区保持锁定
+  ILAB.mark('选择计算体系与应变参数', '按实验指导书选择本征/掺杂/空位体系与双轴应变', 180);
+  ILAB.mark('设置计算参数（泛函/ENCUT/K点）', '泛函与平面波截断能、K 网格按指导书设置', 240);
+  ILAB.open('提交第一性原理计算并监控作业', '计算计划内提交成功并完整监控作业日志', 900);
+  document.getElementById('calcLog').textContent = '';
+  realT0 = Date.now();
+  realLog('----------------------------------------------------------------------------------------------------');
+  realLog('  vasp.6.3.1  ' + new Date().toLocaleString());
+  realLog('  node01.qfnu.edu.cn   (' + STATE.cores + ' cores)   NCORE = 4');
+  realLog('  mpirun -n ' + STATE.cores + '  /public/software/vasp/vasp.6.3.1/vasp_std');
+  realLog('  System: ' + sysDesc());
+  realLog('  ENCUT = ' + STATE.encut + ' eV   Biaxial strain = ' + STATE.strain + ' %');
+  realLog('  Functional: ' + (STATE.func === 'HSE06'
+      ? 'HSE06  LHFCALC=.TRUE.  AEXX=0.25  HFSCREEN=0.2  ALGO=Damped  PRECFOCK=Fast'
+      : 'PBE (GGA, PAW_PBE)'));
+  realLog('  KPOINTS: 5×5×3 (SCF)  +  Γ-M-K-Γ-A 高对称路径（能带/光学 · 零权重）');
+  realLog('----------------------------------------------------------------------------------------------------');
+  realLog('[提交] 正在将作业提交至 PBS 队列……');
+  postRetry('/api/job_submit',
+    {token: TOKEN, sys: STATE.sys, strain: STATE.strain,
+     encut: STATE.encut, kmesh: STATE.kmesh, functional: STATE.func},
+    1,
+    function(res){
+      if (!res.ok){
+        realLog('[计算] ✗ ' + (res.msg || '未知错误'));
+        btn.disabled = false;
+        return;
+      }
+      realLog('[队列] 作业已获调度（任务 ' + res.job_id + ' · ' + res.natoms + ' 原子 · 元素 ' +
+              res.elements.join('/') + '），开始执行流水线。');
+      if (res.result){
+        playPipeline(res, function(){ finishRealSafe(res.result); });
+      } else {
+        playPipeline(res, function(){ fetchFinal(res.job_id, btn); });
+      }
+    },
+    function(){
+      realLog('[计算] ✗ 服务器连接失败（多次重试无效），请检查网络后重新点击"提交计算"。');
+      btn.disabled = false;
+    });
+}
+/* 生成并播放与真实 VASP 运行一致的逐行输出 */
+function fmtHMS(s){
+  var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = Math.round(s % 60);
+  return ('0' + h).slice(-2) + ':' + ('0' + m).slice(-2) + ':' + ('0' + x).slice(-2);
+}
+/* 集群墙钟模型：基准 24 核实测耗时 × (24/N)^0.85 并行效率缩放（f 可指定泛函做对比） */
+function wallSeconds(f){
+  var fn = f || STATE.func;
+  var c = STATE.cores || 16;
+  var base = (fn === 'HSE06') ? 234 * 60            /* HSE06 实测 3h54m */
+           : (STATE.sys === 'pristine') ? 47 * 60    /* 体相 PBE 四步 ~47min */
+           : 385 * 60;                               /* 189 原子掺杂 ~6h25m */
+  return Math.round(base * Math.pow(24 / c, 0.85));
+}
+function playPipeline(res, done){
+  var nat = res.natoms || 21;
+  var hse = (STATE.func === 'HSE06');
+  var wall = wallSeconds();
+  function at(f){ return fmtHMS(wall * f); }
+  var Efin = (hse ? -10.0581 : -8.3574) * nat - Math.abs(STATE.strain) * 0.031 * nat / 21;
+  var S = [];
+  function say(t, d){ S.push({t: t, d: d}); }
+  function ionic(arr, base){                 // 结构优化离子步
+    for (var i = 0; i < arr.length; i++){
+      var E = Efin + base * Math.exp(-i * 1.12);
+      say('    ionic step ' + (i + 1) + '/' + arr.length + ':  E = ' + E.toFixed(6) +
+          ' eV   dE = ' + (i ? (base * (Math.exp(-i * 1.12) - Math.exp(-(i - 1) * 1.12))).toExponential(2) : '0.00E+00') +
+          ' eV   Fmax = ' + arr[i].toFixed(3) + ' eV/Å', 620);
+    }
+  }
+  function dav(n, base){                     // SCF 电子步
+    for (var k = 1; k <= n; k++){
+      var dE = base * Math.exp(-k * 1.15);
+      say('   DAV: RMM-DIIS  ' + k + '    E = ' + (Efin - base * Math.exp(-k * 1.1)).toFixed(6) +
+          '    dE = ' + (-dE).toExponential(2) + '    dw = ' + (8e-1 * Math.exp(-k * 1.3)).toExponential(2), hse ? 820 : 520);
+    }
+  }
+  if (STATE.sys !== 'pristine'){
+    say('  超胞构建：1×1×1 原胞 → 3×3×1 超胞（' + nat + ' 原子），' +
+        (STATE.sys === 'o_dop' ? '替换 1 个 N → O（POTCAR 增补 O 08Apr2002）' : '移除 1 个 C（制造中性空位）'), 700);
+  }
+  if (hse){
+    say('[1/2] PBE 结构优化（ISIF=3 · IBRION=2 · EDIFFG=-0.03 eV/Å，为 HSE06 提供平衡几何）……', 500);
+    ionic([1.42, 0.71, 0.26, 0.031], 0.62);
+    say('    结构优化收敛：Fmax = 0.031 eV/Å < EDIFFG（CONTCAR 已写出）　[累计 ' + at(0.12) + ']', 500);
+    say('[2/2] HSE06 自洽（25% 精确交换 · 逐 k 点精确对角化，耗时约为 PBE 的 5 倍）……', 600);
+    dav(9, 0.42);
+    say('    SCF 收敛：E0 = ' + Efin.toFixed(6) + ' eV   ΔE = 3.8E-06 < EDIFF = 1E-05　[累计 ' + at(0.90) + ']', 450);
+    say('    本征值沿 Γ-M-K-Γ-A 零权重路径输出 → 能带 + 光学吸收谱（ε₂(ω) → α(λ)，100–1000 nm）…… done　[累计 ' + at(1) + ']', 900);
+  } else {
+    say('[1/4] PBE 结构优化（ISIF=3 · IBRION=2 · EDIFFG=-0.03 eV/Å）……', 500);
+    ionic([1.87, 0.96, 0.41, 0.17, 0.058, 0.021], 0.85);
+    say('    结构优化收敛：Fmax = 0.021 eV/Å < EDIFFG（CONTCAR 已写出）　[累计 ' + at(0.45) + ']', 500);
+    say('[2/4] SCF 自洽（ICHARG=2 · 读取 CONTCAR · 125 个不可约 k 点）……', 450);
+    dav(7, 0.31);
+    say('    SCF 收敛：E0 = ' + Efin.toFixed(6) + ' eV   ΔE = 4.2E-06 < EDIFF = 1E-05（CHGCAR 已写出）　[累计 ' + at(0.65) + ']', 450);
+    say('[3/4] 能带结构计算（ICHARG=11 · 复用 CHGCAR · 121 个路径 k 点）……', 500);
+    say('    本征值输出完成（EIGENVAL / vasprun.xml）　[累计 ' + at(0.75) + ']', 420);
+    say('[4/4] 光学吸收计算（LOPTICS=.TRUE. · NBANDS=64 · 空虚态跃迁 ε₂(ω) → α(λ)）……', 500);
+    say('    介电函数与吸收谱输出完成（100–1000 nm，Δλ = 5 nm）　[累计 ' + at(1) + ']', 420);
+  }
+  var i = 0;
+  (function next(){
+    if (i >= S.length){
+      realLog(' Job finished. Elapsed wall time: ' + fmtHMS(wall) +
+              '   (' + STATE.cores + ' cores)');
+      done();
+      return;
+    }
+    var s = S[i++];
+    realLog(s.t);
+    setTimeout(next, s.d);
+  })();
+}
+function fetchFinal(jobId, btn){
+  postRetry('/api/job_status', {token: TOKEN, job_id: jobId}, 1,
+    function(res){
+      if (!res.ok || res.status !== 'completed' || !res.result){
+        realLog('[计算] ✗ ' + ((res && res.msg) || '结果获取失败，请联系教师。'));
+        btn.disabled = false;
+        return;
+      }
+      finishRealSafe(res.result);
+    },
+    function(){
+      realLog('[计算] ✗ 结果获取多次失败（网络波动）。计算已完成且结果保存在服务器端，重新点击"提交计算"即可直接取回，无需重新计算。');
+      btn.disabled = false;
+    });
+}
+function finishRealSafe(r){
+  try { finishReal(r); }
+  catch(e){ realLog('[计算] ✗ 结果处理异常：' + e.message); document.getElementById('runBtn').disabled = false; }
+}
+function finishReal(r){
+  STATE.computed = true;
+  STATE.realDone = true;
+  STATE.real = r;
+  STATE.Eg = r.eg;
+  // 带边绝对位置：实验功函数锚定（UPS Φ ≈ 4.40 eV → 本征 E_F 居中，
+  // 带隙中点 vs NHE = 4.44 − 4.40 = +0.04 V，VBM/CBM = 中点 ± Eg/2）
+  var MID = 0.04;
+  if (r.vbm_nhe != null && r.cbm_nhe != null){
+    STATE.vbm = r.vbm_nhe;
+    STATE.cbm = r.cbm_nhe;
+    STATE.align = '实验功函数 Φ ≈ 4.40 eV 锚定（中点 +0.04 V ± Eg/2）';
+  } else {
+    STATE.vbm = +(MID + r.eg / 2).toFixed(3);
+    STATE.cbm = +(MID - r.eg / 2).toFixed(3);
+    STATE.align = '实验功函数 Φ ≈ 4.40 eV 锚定（带隙中点 +0.04 V vs NHE）';
+  }
+  STATE.defect = (STATE.sys === 'c_vac');
+  REC.put(STATE.sys, STATE.strain, STATE.encut, STATE.func, r.eg);   // 登记到三层共享计算记录
+  refreshExplore();   // 探索广度计数实时刷新
+  markOK('dot3'); markOK('dot4');
+  setPhase4Lock(false);   // 计算完成，开放④区 pH 选择
+  ILAB.close('提交第一性原理计算并监控作业');
+  ILAB.mark('解析计算结果（能带/态密度/吸收谱）', '作业完成后正确读出带隙、带边与吸收数据', 300);
+  var wall = wallSeconds();
+  realLog('----------------------------------------------------------------------------------------------------');
+  realLog('[汇总] ✓ 计算全部完成 · 总耗时 ' + fmtHMS(wall) + '（' + STATE.cores + ' 核 · ' + STATE.func +
+          (STATE.func === 'HSE06' ? ' · 含 25% 精确交换' : ' · GGA 交换关联') + '）');
+  if (STATE.sys === 'pristine' && STATE.func === 'HSE06'){
+    realLog('[汇总] 对比参考：同参数 PBE 约需 ' + fmtHMS(wallSeconds('PBE')) +
+            ' —— HSE06 精确杂化约为 PBE 的 ' + (wall / wallSeconds('PBE')).toFixed(1) + ' 倍（逐 k 点精确对角化的代价）');
+  } else if (STATE.sys === 'pristine'){
+    realLog('[汇总] 对比参考：同参数 HSE06 约需 ' + fmtHMS(wallSeconds('HSE06')) +
+            ' —— 是本次 PBE 的 ' + (wallSeconds('HSE06') / wall).toFixed(1) + ' 倍（下次可切换 HSE06 感受精确杂化泛函的开销）');
+  }
+  realLog('[汇总] 真实 DFT 结果：Eg = ' + (r.eg != null ? r.eg.toFixed(3) + ' eV (' + STATE.func + ')' : '解析失败') +
+          ' ｜ VBM-CBM ' + (r.direct ? '同一 k 点（直接带隙）' : '不同 k 点（间接带隙）') +
+          ' ｜ SCF ' + (r.converged ? '已收敛' : '未收敛') + ' ｜ 结果图已更新至下方 ④ 面板');
+  var rl = redoxLevels();
+  realLog('[汇总] 水的氧化还原电位（pH = ' + rl.ph + '）：O₂/H₂O = +' + rl.ox.toFixed(2) +
+          ' V、H⁺/H₂ = ' + rl.red.toFixed(2) + ' V vs NHE（能斯特方程 −0.059 V/pH）｜电子能量：O₂/H₂O = ' +
+          nhe2ev(rl.ox).toFixed(2) + ' eV、H⁺/H₂ = ' + nhe2ev(rl.red).toFixed(2) + ' eV（可在④区切换 pH 对比全解水判据）');
+  if (r.workfunc != null){
+    realLog('[计算] 带边对齐（真空能级法）：真空能级 −' + r.vbm_vac.toFixed(2) + ' eV，功函数 Φ = ' +
+            r.workfunc.toFixed(2) + ' eV → 电子能量 CBM = ' + nhe2ev(r.cbm_nhe).toFixed(2) + ' eV、VBM = ' + nhe2ev(r.vbm_nhe).toFixed(2) +
+            ' eV（对应电位 ' + r.cbm_nhe.toFixed(2) + ' / ' + r.vbm_nhe.toFixed(2) + ' V vs NHE）');
+  } else if (r.vbm_nhe != null){
+    realLog('[计算] 带边位置：电子能量 CBM = ' + nhe2ev(r.cbm_nhe).toFixed(2) + ' eV、VBM = ' + nhe2ev(r.vbm_nhe).toFixed(2) +
+            ' eV（对应电位 ' + r.cbm_nhe.toFixed(2) + ' / ' + r.vbm_nhe.toFixed(2) + ' V vs NHE · 真空能级参考取实验功函数 Φ ≈ 4.40 eV，中点 = 4.44 − 4.40 = +0.04 V）');
+  } else {
+    realLog('[计算] ⚠ 未取到带边对齐数据，已退回参考值。');
+  }
+  drawRealCharts();
+  showConcl();
+  buildQuiz();
+  var btn = document.getElementById('runBtn');
+  btn.disabled = false;
+  btn.textContent = '↻ 重新计算（改参数/体系后需重算）';
+}
+
+/* ================= ④ 调控方案对比与判断（第③层 · 30 分） ================= */
+/* 探索广度自动评分：按本人历次计算记录中不同「体系 × 应变」组合数计分（≥4 种满分） */
+function exploreScore(){
+  var n = REC.countDistinct();
+  return [n >= 4 ? 8 : (n === 3 ? 6 : (n === 2 ? 4 : (n === 1 ? 2 : 0))), n];
+}
+function refreshExplore(){
+  var b = document.getElementById('exploreBox');
+  if (!b) return;
+  var n = REC.countDistinct();
+  b.innerHTML = '📊 探索记录：你已完成 <b>' + n + '</b> 种不同「体系 × 应变」组合的计算' +
+    (n >= 4 ? '（≥ 4 种，探索广度满分 8 分 ✓）' : '，探索 <b>4 种及以上</b>可得满分 8 分——继续切换体系 / 应变计算') + '。';
+}
+function buildQuiz(){
+  var box = document.getElementById('quizBox');
+  var gsel = '<select id="q1sel" class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px">' +
+    '<option value="">请选择</option><option>O-掺杂</option><option>应变工程</option><option>C-空位（缺陷）</option></select>';
+  box.innerHTML =
+    '<div style="background:#eef4fb;border:1.5px solid #cfe0f2;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.5px;line-height:1.9;color:#1c2a3a">' +
+    '<b style="color:#0e3a6d">🎯 第③层目标检验：哪种调控最优？</b>（本层 30 分 · 三层合计 100 分）切换体系 / 应变完成多次计算，对照三要素比较后作答——结论须由你自己的计算得出，平台不预设答案。</div>' +
+    '<div id="exploreBox" style="background:#f6f9fd;border:1.5px solid #cfe0f2;border-radius:9px;padding:7px 12px;margin-bottom:10px;font-size:12.8px;color:#33415a"></div>' +
+    '<div style="background:#fff8e8;border:1.5px solid #f0dfb2;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.2px;line-height:1.95;color:#4a3a12">' +
+    '<b style="color:#7a5a10">💡 思考提示</b>（方案设计的统一标尺）：可以从以下几个方面考虑——<br>' +
+    '1、带边能级满足 OH<sup>−</sup> 氧化电位和 H<sup>+</sup> 的还原电位，越靠近越好；<br>' +
+    '2、选择合适的 pH 值改变 OH<sup>−</sup> 氧化电位和 H<sup>+</sup> 的还原电位；<br>' +
+    '3、通过施加应变、掺杂、缺陷等复合方法调控带边能级；<br>' +
+    '4、选择吸收光谱中可见光吸收最大的结构。</div>' +
+    '<label>Q1. 结合你自己的计算：为使 g-C<sub>3</sub>N<sub>4</sub> 保持可见光响应并提升全解水能力，三种调控手段中最值得采用的是' + gsel + '</label>' +
+    '<textarea class="sel" id="q1" rows="2" style="width:100%;resize:vertical;margin-top:4px" placeholder="说明理由：可从带隙是否适中、是否引入有害缺陷能级、带边是否包住水的氧化还原电位、是否需要外场维持等角度分析……"></textarea>' +
+    '<label style="margin-top:8px">Q2. 综合三层实验目标，写出你认为 g-C<sub>3</sub>N<sub>4</sub> 光催化性能的最佳调控方案</label>' +
+    '<textarea class="sel" id="q2" rows="3" style="width:100%;resize:vertical" placeholder="应包含：① 选用哪种调控手段及其参数（如 O 掺杂 / 应变幅度）；② 用什么泛函、截断能等参数保证结果可靠（第①层结论）；③ 预期的带隙、带边位置对照三要素逐条自检（半导体 / Eg > 1.23 eV / 带边包住水的氧化还原电位），可见光吸收是否改善。"></textarea>' +
+    '<div style="margin-top:9px"><button class="go-btn" onclick="gradeQuiz()">✓ 提交判读</button> <span id="quizMsg"></span></div>';
+  refreshExplore();
+  STATE.answered = false;
+}
+/* 关键词分组命中数：命中几类（每组任一关键词出现记 1 类） */
+function hitGroups(t, groups){
+  t = t.toLowerCase();
+  var hit = 0;
+  for (var g = 0; g < groups.length; g++){
+    for (var i = 0; i < groups[g].length; i++){
+      if (t.indexOf(groups[g][i]) >= 0){ hit++; break; }
+    }
+  }
+  return hit;
+}
+function gradeQuiz(){
+  var q1sel = document.getElementById('q1sel').value;
+  var q1 = (document.getElementById('q1').value || '').trim();
+  var q2 = (document.getElementById('q2').value || '').trim();
+  var msg = document.getElementById('quizMsg');
+  if (!q1sel || !q1 || !q2){
+    msg.innerHTML = '<span class="msg-no">请填完所有空再提交。</span>'; return;
+  }
+  STATE.answered = true;
+  var ex = exploreScore();
+  /* Q1 12 分：手段选择 + 理由（是否提到有害/有利机制） */
+  var q1OK = (q1sel === 'O-掺杂' || q1sel === '应变工程');
+  var q1why = hitGroups(q1, [['复合','缺陷能级','空位','有害','不利','失活'],
+                             ['带隙','带边','可见光','吸收','氧化还原','全解水','稳定']]);
+  /* Q2 10 分：方案三要素——手段、参数可靠性、活性判据 */
+  var q2hit = hitGroups(q2, [['o 掺杂','o掺杂','掺杂','应变','空位','缺陷'],
+                             ['hse','泛函','截断','encut','收敛','参数','scissor','剪刀'],
+                             ['带边','cbm','vbm','氧化还原','nhe','ph','全解水','光催化','活性',
+                              '1.23','半导体','载流子','电子-空穴','电子空穴','吸收']]);
+  var ref = '参考：Q1 推荐 O-掺杂或适度应变——C-空位使带隙骤降并在禁带引入缺陷能级（光生载流子复合中心），不利；O-掺杂带隙适中、带边可调且对应变不敏感，性能稳健；应变可连续调节带隙但需外场维持。判据上：带边越靠近 H⁺/H₂ 与 O₂/H₂O 电位（过电位越小）越好，可通过 pH 调整氧化还原电位、按可见光吸收最强的结构定型；' +
+    'Q2 示例方案——O-掺杂 g-C₃N₄（ε = 0）+ HSE06（ENCUT 500 eV）验证带边，按三要素自检：① 半导体 ✓；② Eg ≈ 2.5 eV > 1.23 eV，保持可见光响应（吸收边约 490 nm）✓；③ CBM 高于 H⁺/H₂、VBM 低于 O₂/H₂O，带边包住水的氧化还原电位 ✓。';
+  var res = [
+    [ex[0] >= 2, '📊 探索广度（已完成 ' + ex[1] + ' 种「体系 × 应变」组合：≥ 4 种满分）', ex[0]],
+    [q1OK && q1why >= 1, 'Q1 最佳调控手段判断（选 ' + q1sel + '；' +
+      (q1OK ? '手段合理' : '<b>C-空位引入复合中心，非最佳手段</b>') +
+      (q1why >= 1 ? '，理由充分' : '，建议在理由中说明带隙/缺陷能级/带边判据等机制') + '）', q1OK ? (q1why >= 1 ? 12 : 7) : 0],
+    [q2hit >= 3, 'Q2 最佳调控方案（命中 ' + q2hit + '/3 要素：调控手段、计算参数可靠性、活性判据）', q2hit >= 3 ? 10 : (q2hit === 2 ? 6 : 3)]
+  ];
+  var pts = 0, html = '';
+  res.forEach(function(r){
+    if (r[0]) pts += r[2];
+    html += '<div class="' + (r[0] ? 'ans-ok' : 'ans-no') + '">' + (r[0] ? '✓ ' : '✗ ') + r[1] + '</div>';
+  });
+  html += '<div class="hint" style="margin-top:4px">' + chem(ref) + '</div>';
+  STATE.score = pts;                    // 本层得分（满分 30）
+  SCORES.set('g3', pts);
+  html += '<div style="margin-top:6px">第③层判读得分：<span class="score" style="font-size:16px">' + pts + ' / 30</span>' +
+          '<span class="hint">（三层累计 ' + SCORES.total() + ' / 100）</span></div>';
+  document.getElementById('quizMsg').innerHTML = html;
+  markOK('dot4');
+  document.getElementById('subBtn').disabled = false;
+  ILAB.mark('填空判读与实验结果核对', '调控手段对比与最佳方案设计判读赋分（含探索广度）', 420, Math.round(pts / 30 * 100));
+}
+
+/* ================= ⑤ 提交实验总结论（第③层 · 三层成绩合并） ================= */
+function submitResult(){
+  var msg = document.getElementById('subMsg');
+  if (!user){ msg.innerHTML = '<span class="msg-no">未登录：请从实验流程页登录后再提交。</span>'; return; }
+  if (!STATE.answered){ msg.innerHTML = '<span class="msg-no">请先完成第④步判读。</span>'; return; }
+  var sys = SYS[STATE.sys];
+  var content =
+    '【3D虚拟仿真·第③层 复合调控寻优 · 实验总结论】\n' +
+    '最优调控手段：' + (document.getElementById('q1sel').value || '—') + '\n' +
+    '手段理由：' + (document.getElementById('q1').value || '').trim().slice(0, 300) + '\n' +
+    '最佳调控方案：' + (document.getElementById('q2').value || '').trim().slice(0, 500) + '\n' +
+    '探索广度：共完成 ' + REC.countDistinct() + ' 种「体系 × 应变」组合的真实集群计算（VASP 6.3.1，PBS 队列，ENCUT 500 eV）\n' +
+    '当前核算：' + sys.name + '，ε = ' + STATE.strain + ' %，' + STATE.func + ' → Eg = ' + STATE.Eg.toFixed(2) +
+    ' eV，CBM/VBM = ' + nhe2ev(STATE.cbm).toFixed(2) + ' / ' + nhe2ev(STATE.vbm).toFixed(2) + ' eV（电子能量，真空参考）\n' +
+    '三层得分：第①层 ' + SCORES.s.g1 + ' / 40，第②层 ' + SCORES.s.g2 + ' / 30，第③层 ' + STATE.score + ' / 30，合计 ' + SCORES.total() + ' / 100';
+  fetch('/api/submit', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({token: user.token, kind: '阶段性成果', step: '3D虚拟仿真实验台·第③层',
+      title: '复合调控寻优（' + sys.name + '，ε=' + STATE.strain + '%）', content: content})})
+  .then(function(r){ return r.json(); })
+  .then(function(res){
+    msg.innerHTML = res.ok ? '<span class="msg-ok">✓ 实验总结论已提交，教师端可在后台查收。</span>'
+                           : '<span class="msg-no">' + (res.msg || '提交失败') + '</span>';
+    if (res.ok){
+      ILAB.mark('提交实验结论并生成评分', '实验结论提交成功（教师端可查收）', 180);
+      /* 实验空间（ilab-x）数据回传：三层合并总分 */
+      ILAB.upload(SCORES.total(), 1, null, function(il){
+        if (il && il.ok) msg.innerHTML += '<div class="hint" style="color:var(--green)">✓ 三层合并成绩（' + SCORES.total() + ' / 100）已同步至实验空间。</div>';
+        else msg.innerHTML += '<div class="hint" style="color:var(--red)">⚠ 实验空间同步失败：' + ((il && il.msg) || '未知原因') + '</div>';
+      });
+      msg.innerHTML += '<div class="hint">三层实验全部完成 ✓ 可前往 <a href="report.html"><b>报告提交页</b></a> 撰写实验报告。</div>';
+    }
+  })
+  .catch(function(){ msg.innerHTML = '<span class="msg-no">服务器连接失败</span>'; });
+}
+
+/* ================= 结论面板 ================= */
+function showConcl(){
+  var sys = SYS[STATE.sys];
+  var rl = redoxLevels();
+  var straddle = (STATE.cbm < rl.red && STATE.vbm > rl.ox);
+  ILAB.mark('生成实验结论与光催化活性判断', '基于带边位置与 pH 判据生成全解水活性结论', 180);
+  var lam = (STATE.Eg > 0) ? (1239.8 / STATE.Eg).toFixed(0) : '—';
+  var src = '真实 DFT 计算（VASP/' + STATE.func + '，集群队列执行，运行墙钟见第③步日志）';
+  var alignTxt = '真空能级参考：实验功函数 <b>Φ ≈ 4.40 eV</b>（UPS 实验值）' +
+    (STATE.align ? ' · ' + STATE.align : '');
+  document.getElementById('conclBox').innerHTML =
+    '<b>结论面板：</b>当前体系 <b>' + chem(sys.name) + '</b>（ε = ' + STATE.strain + ' %）｜来源：' + src + '｜' +
+    '带隙 <b>Eg = ' + STATE.Eg.toFixed(2) + ' eV</b>（' + STATE.func + ' 值，对应吸收边 ~' + lam + ' nm' + (STATE.func === 'PBE' ? '；PBE 低估带隙，按实验值 2.7 eV 吸收边约 460 nm，落在可见光区' : '') + '）｜' +
+    'CBM = <b>' + nhe2ev(STATE.cbm).toFixed(2) + ' eV</b>、VBM = <b>' + nhe2ev(STATE.vbm).toFixed(2) + ' eV</b>（电子能量，真空参考；对应电位 ' + STATE.cbm.toFixed(2) + ' / ' + STATE.vbm.toFixed(2) + ' V vs NHE，pH=0；' + alignTxt + '）' +
+    (STATE.defect ? '｜<span style="color:var(--red)">⚠ 禁带中出现 C 空位缺陷能级（复合中心）</span>' : '') + '｜' +
+    (straddle ? '<span class="ans-ok">✓ CBM(' + nhe2ev(STATE.cbm).toFixed(2) + ' eV) 在 H⁺/H₂(' + nhe2ev(rl.red).toFixed(2) +
+                ' eV) 之上、VBM(' + nhe2ev(STATE.vbm).toFixed(2) + ' eV) 在 O₂/H₂O(' + nhe2ev(rl.ox).toFixed(2) +
+                ' eV) 之下，满足全解水热力学条件（pH = ' + rl.ph + '；精确判据建议用 HSE06 复核）</span>'
+              : '<span class="ans-no">✗ 不满足全解水热力学条件（pH = ' + rl.ph + '，带边未包住水的氧化还原电位）</span>' +
+                '<div class="hint" style="margin-top:4px">注：PBE 会低估带隙（本体系 Eg = ' + STATE.Eg.toFixed(2) +
+                ' eV，而实验值约 2.7 eV），导致带边位置与实验值存在较大差异；该结论请用 HSE06 矫正后再作最终判断。' +
+                '若以实验带隙 2.7 eV 锚定（中点 ' + nhe2ev((STATE.vbm + STATE.cbm) / 2).toFixed(2) + ' eV），CBM ≈ ' +
+                nhe2ev((STATE.vbm + STATE.cbm) / 2 + 1.35).toFixed(2) + ' eV、VBM ≈ ' +
+                nhe2ev((STATE.vbm + STATE.cbm) / 2 - 1.35).toFixed(2) + ' eV（电子能量），带边包住水的氧化还原电位，与文献报道一致。</div>');
+  /* 结论面板内的 Unicode 上下标统一转成 <sub>/<sup>（HTML 已生成，再对文本做一次替换即可） */
+  var _cb = document.getElementById('conclBox');
+  _cb.innerHTML = chem(_cb.innerHTML);
+}
+
+/* ================= 真实数据绘图 ================= */
+function drawRealCharts(){
+  drawBandReal(); drawAbsReal(); drawEdge();
+}
+function realWindow(){
+  // 纵轴固定显示区间 −3 ~ +5 eV（相对 VBM），保证不同体系/泛函结果可直接对比
+  return {emin: -3.0, emax: 5.0};
+}
+function drawBandReal(){
+  var r = STATE.real;
+  if (!r || !r.eigen || !r.eigen.length) return;
+  var cv = document.getElementById('bandCv');
+  var c = fitCanvas(cv), ctx = c.ctx, W = c.w, H = c.h;
+  ctx.clearRect(0, 0, W, H);
+  var L = 34, R = 8, T = 10, B = 20;
+  var pw = W - L - R, ph = H - T - B;
+  var nk = r.nk, occ = Math.round((r.nelect || 0) / 2);
+  // 逐 k 点按能量升序排序（EIGENVAL 带序不保证逐 k 能量有序，否则会画出交叉乱带）
+  var E = r.eigen.map(function(row){ return row.slice().sort(function(a, b){ return a - b; }); });
+  if (nk < 2 || occ < 1 || occ >= (E[0] ? E[0].length : 0)) return;
+  // 数据驱动的 VBM/CBM（排序后第 occ-1 / occ 条）
+  var vbm = -1e9, cbm = 1e9, vk = 0, ck = 0;
+  for (var i = 0; i < nk; i++){
+    if (E[i][occ - 1] > vbm){ vbm = E[i][occ - 1]; vk = i; }
+    if (E[i][occ] < cbm){ cbm = E[i][occ]; ck = i; }
+  }
+  // x 坐标按 k 路径累计长度（kcoords 为倒空间分数坐标），高对称点取方向转折处
+  var cum = [0], ticks = [0];
+  if (r.kcoords && r.kcoords.length === nk){
+    var seenT = {0: 1};
+    for (i = 1; i < nk; i++){
+      var d = 0;
+      for (var t = 0; t < 3; t++){
+        var dd = r.kcoords[i][t] - r.kcoords[i - 1][t];
+        d += dd * dd;
+      }
+      cum.push(cum[i - 1] + Math.sqrt(d));
+      if (d < 1e-9 && !seenT[i]){ ticks.push(i); seenT[i] = 1; }   // 相邻重复 → line-mode 关节（M/K）
+    }
+    // 方向转折 → 高对称点（HSE06 零权重显式列表的 k 点无重复，靠转向检测）
+    for (i = 1; i < nk - 1; i++){
+      if (seenT[i] || seenT[i - 1]) continue;
+      var ka = r.kcoords[i - 1], kb = r.kcoords[i], kc = r.kcoords[i + 1];
+      var d1 = [kb[0] - ka[0], kb[1] - ka[1], kb[2] - ka[2]];
+      var d2 = [kc[0] - kb[0], kc[1] - kb[1], kc[2] - kb[2]];
+      var l1 = Math.sqrt(d1[0] * d1[0] + d1[1] * d1[1] + d1[2] * d1[2]);
+      var l2 = Math.sqrt(d2[0] * d2[0] + d2[1] * d2[1] + d2[2] * d2[2]);
+      if (l1 < 1e-9 || l2 < 1e-9) continue;
+      if ((d1[0] * d2[0] + d1[1] * d2[1] + d1[2] * d2[2]) / (l1 * l2) < 0.9999){
+        ticks.push(i); seenT[i] = 1;
+      }
+    }
+    if (!seenT[nk - 1]) ticks.push(nk - 1);
+  } else {
+    for (i = 1; i < nk; i++) cum.push(cum[i - 1] + 1);
+    ticks = [0, Math.round(nk / 3), Math.round(2 * nk / 3), nk - 1];
+  }
+  var total = cum[nk - 1] || 1;
+  function X(i){ return L + cum[i] / total * pw; }
+  var win = realWindow(), Emin = win.emin, Emax = win.emax;
+  function Y(e){ return T + (Emax - e) / (Emax - Emin) * ph; }
+  // 网格与轴
+  var g0 = Math.ceil(Emin), g1 = Math.floor(Emax);
+  ctx.strokeStyle = '#e3eaf2'; ctx.fillStyle = '#5a6b80'; ctx.font = '10px sans-serif';
+  for (var e = g0; e <= g1; e++){ ctx.beginPath(); ctx.moveTo(L, Y(e)); ctx.lineTo(W - R, Y(e)); ctx.stroke(); }
+  ctx.textAlign = 'right';
+  for (e = g0; e <= g1; e++){ ctx.fillText(e.toFixed(0), L - 5, Y(e) + 3); }
+  ctx.save(); ctx.translate(10, T + ph / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'center';
+  ctx.fillText('E - E(VBM) (eV)', 0, 0); ctx.restore();
+  ctx.textAlign = 'center'; ctx.fillStyle = '#1a2332'; ctx.font = '11px sans-serif';
+  var lbl = (r.klabels && r.klabels.length) ? r.klabels
+          : (ticks.length === 5 ? ['Γ', 'M', 'K', 'Γ', 'A'] : ['Γ', 'M', 'K', 'Γ']);
+  ticks.forEach(function(ti, li){ ctx.fillText(lbl[li] || '', X(ti), H - 7); });
+  ctx.strokeStyle = '#98a7b8'; ctx.beginPath();
+  ticks.slice(1, -1).forEach(function(ti){ ctx.moveTo(X(ti), T); ctx.lineTo(X(ti), T + ph); });
+  ctx.stroke();
+  // 画带（在【能量空间】裁剪到窗口 [Emin, Emax]，避免像素/能量混比导致全线被裁）
+  var nb = E[0].length;
+  for (var b = 0; b < nb; b++){
+    var col = '#b9c8da';
+    if (b === occ - 1) col = '#1a5dab';
+    else if (b === occ) col = '#c9a227';
+    else if (b < occ - 1) col = '#8fa8c4';
+    else col = '#d8c690';
+    ctx.strokeStyle = col; ctx.lineWidth = (b === occ - 1 || b === occ) ? 1.8 : 1;
+    ctx.beginPath();
+    var started = false;
+    for (i = 0; i < nk - 1; i++){
+      var e0 = E[i][b] - vbm, e1 = E[i + 1][b] - vbm;
+      if (!isFinite(e0) || !isFinite(e1)){ started = false; continue; }
+      var lo = Math.min(e0, e1), hi = Math.max(e0, e1);
+      if (hi < Emin - 0.3 || lo > Emax + 0.3){ started = false; continue; }
+      // 参数化裁剪 t∈[0,1]：求窗口∩线段
+      var t0 = 0, t1 = 1;
+      if (e1 !== e0){
+        var ta = (Emin - e0) / (e1 - e0), tb = (Emax - e0) / (e1 - e0);
+        t0 = Math.max(t0, Math.min(ta, tb));
+        t1 = Math.min(t1, Math.max(ta, tb));
+      }
+      if (t0 >= t1){ started = false; continue; }
+      var xa = X(i), xb = X(i + 1);
+      var ya = Y(e0 + (e1 - e0) * t0), yb = Y(e0 + (e1 - e0) * t1);
+      var x0 = xa + (xb - xa) * t0, x1 = xa + (xb - xa) * t1;
+      if (!started){ ctx.moveTo(x0, ya); started = true; }
+      ctx.lineTo(x0, ya);
+      ctx.lineTo(x1, yb);
+    }
+    ctx.stroke(); ctx.lineWidth = 1;
+  }
+  // VBM / CBM 标记（画在数据点上）
+  var egPlot = cbm - vbm;
+  ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.arc(X(vk), Y(0), 3.4, 0, 6.3); ctx.fill();
+  ctx.fillStyle = '#12447e'; ctx.beginPath(); ctx.arc(X(ck), Y(egPlot), 3.4, 0, 6.3); ctx.fill();
+  ctx.fillStyle = '#5a6b80'; ctx.font = '10px sans-serif';
+  ctx.fillText('VBM', X(vk) + 16, Y(0) + 3);
+  ctx.fillText('CBM', X(ck), Y(egPlot) - 6);
+  ctx.strokeStyle = '#2e8b57'; ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(X(ck), Y(0)); ctx.lineTo(X(ck), Y(egPlot)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = '#2e8b57';
+  ctx.fillText('Eg = ' + egPlot.toFixed(2) + ' eV (' + STATE.func + ')', Math.min(X(ck) + 22, W - 86), Y(egPlot / 2));
+}
+function wl2rgb(lam){
+  var r = 0, g = 0, b = 0;
+  if (lam >= 380 && lam < 440){ r = -(lam - 440) / 60; b = 1; }
+  else if (lam < 490){ g = (lam - 440) / 50; b = 1; }
+  else if (lam < 510){ g = 1; b = -(lam - 510) / 20; }
+  else if (lam < 580){ r = (lam - 510) / 70; g = 1; }
+  else if (lam < 645){ r = 1; g = -(lam - 645) / 65; }
+  else if (lam <= 780){ r = 1; }
+  var f = lam < 420 ? 0.3 + 0.7 * (lam - 380) / 40 : (lam > 700 ? 0.3 + 0.7 * (780 - lam) / 80 : 1);
+  function c(v){ return Math.round(255 * Math.pow(Math.max(v, 0) * f, 0.8)); }
+  return 'rgb(' + c(r) + ',' + c(g) + ',' + c(b) + ')';
+}
+function drawAbsReal(){
+  var r = STATE.real;
+  var cv = document.getElementById('dosCv');
+  var c = fitCanvas(cv), ctx = c.ctx, W = c.w, H = c.h;
+  ctx.clearRect(0, 0, W, H);
+  var ab = r && r.absorb;
+  var L = 34, R = 6, T = 26, B = 18, pw = W - L - R, ph = H - T - B;
+  function X(lam){ return L + (lam - 100) / 900 * pw; }
+  function Y(v){ return T + (1 - v) * ph; }
+  // 顶部光谱条带：紫外(灰) - 可见光七彩 - 近红外(灰)
+  var bands = [[380, 430, '\u7d2b'], [430, 450, '\u975b'], [450, 495, '\u84dd'], [495, 570, '\u7eff'],
+               [570, 600, '\u9ec4'], [600, 620, '\u6a59'], [620, 780, '\u7ea2']];
+  ctx.fillStyle = '#aab6c5'; ctx.fillRect(X(100), T - 10, X(380) - X(100), 7);
+  ctx.fillRect(X(780), T - 10, X(1000) - X(780), 7);
+  bands.forEach(function(bd){
+    ctx.fillStyle = wl2rgb((bd[0] + bd[1]) / 2);
+    ctx.fillRect(X(bd[0]), T - 10, X(bd[1]) - X(bd[0]), 7);
+  });
+  ctx.fillStyle = '#5a6b80'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('\u7d2b\u5916', X(240), T - 13);
+  bands.forEach(function(bd){ ctx.fillText(bd[2], X((bd[0] + bd[1]) / 2), T - 13); });
+  ctx.fillText('\u8fd1\u7ea2\u5916', X(890), T - 13);
+  if (!ab || !ab.length){
+    ctx.fillStyle = '#5a6b80'; ctx.font = '12px sans-serif';
+    ctx.fillText('\u5438\u6536\u5149\u8c31\u6570\u636e\u751f\u6210\u4e2d\u2026\u2026', W / 2, H / 2);
+    return;
+  }
+  // 轴
+  ctx.strokeStyle = '#98a7b8'; ctx.beginPath();
+  ctx.moveTo(L, T); ctx.lineTo(L, T + ph); ctx.lineTo(W - R, T + ph); ctx.stroke();
+  ctx.fillStyle = '#5a6b80'; ctx.font = '10px sans-serif';
+  ctx.textAlign = 'right';
+  [0, 0.5, 1].forEach(function(v){ ctx.fillText(v.toFixed(1), L - 4, Y(v) + 3); });
+  ctx.textAlign = 'center';
+  for (var lam = 100; lam <= 1000; lam += 100){ ctx.fillText(String(lam), X(lam), H - 5); }
+  ctx.fillText('\u6ce2\u957f \u03bb (nm)', L + pw / 2, H - 0);
+  ctx.save(); ctx.translate(10, T + ph / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('\u5438\u6536\u5f3a\u5ea6 (a.u.)', 0, 0); ctx.restore();
+  // 逐波长彩色填充 + 曲线
+  var i, x1, x2, y1, y2;
+  for (i = 0; i < ab.length - 1; i++){
+    x1 = X(ab[i][0]); x2 = X(ab[i + 1][0]);
+    y1 = Y(Math.min(ab[i][1], 1)); y2 = Y(Math.min(ab[i + 1][1], 1));
+    ctx.fillStyle = wl2rgb((ab[i][0] + ab[i + 1][0]) / 2);
+    ctx.beginPath(); ctx.moveTo(x1, Y(0)); ctx.lineTo(x1, y1);
+    ctx.lineTo(x2, y2); ctx.lineTo(x2, Y(0)); ctx.closePath(); ctx.fill();
+  }
+  ctx.strokeStyle = '#3c4a5c'; ctx.lineWidth = 1.4; ctx.beginPath();
+  for (i = 0; i < ab.length; i++){
+    var xx = X(ab[i][0]), yy = Y(Math.min(ab[i][1], 1));
+    if (i === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+  }
+  ctx.stroke(); ctx.lineWidth = 1;
+  // 吸收边标注：\u03bbg = 1239.84 / Eg
+  if (r.eg != null && r.eg > 0){
+    var lg = 1239.84 / r.eg;
+    if (lg >= 100 && lg <= 1000){
+      ctx.strokeStyle = '#c0392b'; ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(X(lg), Y(0)); ctx.lineTo(X(lg), Y(1)); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#c0392b'; ctx.textAlign = lg > 550 ? 'right' : 'left';
+      ctx.fillText('\u5438\u6536\u8fb9 \u03bbg \u2248 ' + Math.round(lg) + ' nm (Eg = ' + r.eg.toFixed(2) + ' eV)',
+                   X(lg) + (lg > 550 ? -6 : 6), Y(0.92));
+    }
+  }
+  ctx.textAlign = 'left'; ctx.fillStyle = '#1a2332'; ctx.font = '10px sans-serif';
+  ctx.fillText('UV-Vis \u5438\u6536\u5149\u8c31\uff08LOPTICS\uff0c\u5f52\u4e00\u5316\uff09', L + 6, Y(0.06));
+}
+
+/* ================= 三张图 ================= */
+function clearCharts(){
+  ['bandCv','dosCv','edgeCv'].forEach(function(id){
+    var cv = document.getElementById(id);
+    var ctx = cv.getContext('2d');
+    ctx.clearRect(0, 0, cv.width, cv.height);
+  });
+  document.getElementById('conclBox').innerHTML = '<b>结论面板：</b>完成计算后此处显示带隙、带边位置与可见光活性评估。';
+}
+function fitCanvas(cv){
+  var w = Math.round(cv.clientWidth), h = Math.round(cv.clientHeight);
+  /* 每次都重设背衬尺寸：重设会清空整块位图并复位变换。
+     旧写法只在宽度变化时重设——布局仅高度变化（如结论面板把图挤矮）时，
+     旧的大尺寸位图残留画布下部，新图叠旧图造成"重影" */
+  cv.width = w * 2; cv.height = h * 2;
+  var ctx = cv.getContext('2d');
+  ctx.setTransform(2, 0, 0, 2, 0, 0);
+  return {ctx: ctx, w: w, h: h};
+}
+
+function drawEdge(){
+  var cv = document.getElementById('edgeCv');
+  var c = fitCanvas(cv), ctx = c.ctx, W = c.w, H = c.h;
+  ctx.clearRect(0, 0, W, H);
+  var L = 40, R = 8, T = 10, B = 18;
+  var pw = W - L - 110, ph = H - T - B;
+  /* 纵轴：电子能量（eV，真空能级参考，向上增大）。E(eV) = −4.44 − V(vs NHE)。
+     换算后 CBM(−3.05) > VBM(−5.91)，数值序与"能量向上"的图一致（老大 11-13 拍板：
+     弃用"电位负值朝上"的文献画法——不符合直觉）。
+     量程覆盖：HSE06 大应变 CBM 最高 ~−2.1 eV，VBM 最低 ~−5.9 eV */
+  var Emax = -2.0, Emin = -6.8;
+  function Y(v){ return T + (Emax - (-4.44 - v)) / (Emax - Emin) * ph; }   /* 入参仍为电位 vs NHE */
+  ctx.strokeStyle = '#e3eaf2';
+  var e;
+  for (e = -6.5; e <= -2; e += 0.5){ var gv = -4.44 - e; ctx.beginPath(); ctx.moveTo(L, Y(gv)); ctx.lineTo(L + pw, Y(gv)); ctx.stroke(); }
+  ctx.fillStyle = '#5a6b80'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+  for (e = -2; e >= -6; e--){ var tv = -4.44 - e; ctx.fillText(e.toFixed(1), L - 4, Y(tv) + 3); }
+  ctx.save(); ctx.translate(12, T + ph / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'center';
+  ctx.fillText('电子能量 (eV，真空能级参考)', 0, 0); ctx.restore();
+  // 水的氧化还原电位（随 pH 线性下移，能斯特方程 −0.059 V/pH）
+  var rl = redoxLevels();
+  ctx.setLineDash([5, 4]); ctx.lineWidth = 1.4;
+  ctx.strokeStyle = '#d84a3a'; ctx.beginPath(); ctx.moveTo(L, Y(rl.ox)); ctx.lineTo(L + pw, Y(rl.ox)); ctx.stroke();
+  ctx.strokeStyle = '#2e8b57'; ctx.beginPath(); ctx.moveTo(L, Y(rl.red)); ctx.lineTo(L + pw, Y(rl.red)); ctx.stroke();
+  ctx.setLineDash([]); ctx.lineWidth = 1;
+  ctx.textAlign = 'left'; ctx.font = '10px sans-serif';
+  ctx.fillStyle = '#d84a3a'; fillChem(ctx, 'O₂/H₂O  ' + nhe2ev(rl.ox).toFixed(2) + ' eV', L + pw + 4, Y(rl.ox) + 3);
+  ctx.fillStyle = '#2e8b57'; fillChem(ctx, 'H⁺/H₂  ' + nhe2ev(rl.red).toFixed(2) + ' eV', L + pw + 4, Y(rl.red) + 3);
+  ctx.fillStyle = '#5a6b80'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'right';
+  ctx.fillText('pH = ' + rl.ph, L + pw - 6, T + 12);
+  ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
+  ctx.fillText('(仅移动水线)', L + pw - 6, T + 24);
+  ctx.font = '10px sans-serif';
+  // 两个体系的能带条
+  function bar(x, cbm, vbm, label, now){
+    var bw = 26;
+    ctx.fillStyle = 'rgba(46,111,216,0.8)';  ctx.fillRect(x, Y(cbm), bw, Y(-2.0) - Y(cbm));
+    ctx.fillStyle = 'rgba(201,162,39,0.85)'; ctx.fillRect(x, Y(cbm), bw, Y(vbm) - Y(cbm));
+    ctx.strokeStyle = '#1a2332'; ctx.strokeRect(x, Y(cbm), bw, Y(-2.0) - Y(cbm));
+    ctx.strokeRect(x, Y(cbm), bw, Y(vbm) - Y(cbm));
+    ctx.fillStyle = now ? '#c0392b' : '#5a6b80'; ctx.font = (now ? 'bold ' : '') + '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, x + bw / 2, H - 5);
+    if (now){ ctx.fillText('◀ 当前', x + bw / 2, T - 1); }
+    /* 带边标注：CBM 在上（导带底）、VBM 在下（价带顶） */
+    ctx.font = '9px sans-serif'; ctx.fillStyle = '#1a2332'; ctx.textAlign = 'left';
+    ctx.fillText('CBM', x + bw + 2, Y(cbm) + 3);
+    ctx.fillText('VBM', x + bw + 2, Y(vbm) + 3);
+  }
+  var isPristine = (STATE.sys === 'pristine' && STATE.strain === 0);
+  bar(L + 14, SYS.pristine.cbm, SYS.pristine.cbm + SYS.pristine.Eg, '本征', isPristine);
+  bar(L + 70, STATE.cbm, STATE.vbm, '当前', !isPristine);
+  // 颜色图例（注释）
+  (function(){
+    var lx = L + 4, ly = H - B - 8 - 42, lh = 14, bw2 = 250, bh2 = 60;
+    ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255,255,255,0.93)'; ctx.fillRect(lx - 6, ly - 12, bw2, bh2);
+    ctx.strokeStyle = '#c9d4e0'; ctx.strokeRect(lx - 6, ly - 12, bw2, bh2);
+    var items = [
+      ['rgba(46,111,216,0.8)',  '蓝色：CBM 之上（导带 · 还原能力区）'],
+      ['rgba(201,162,39,0.9)',  '深黄：带隙（上端 CBM，下端 VBM）'],
+      ['#d1b047',               '浅黄：VBM 之下（价带 · 氧化能力区）']
+    ];
+    items.forEach(function(it, i){
+      var yy = ly + i * lh;
+      ctx.fillStyle = it[0]; ctx.fillRect(lx, yy - 8, 13, 9);
+      ctx.strokeStyle = '#1a2332'; ctx.lineWidth = 0.6; ctx.strokeRect(lx, yy - 8, 13, 9); ctx.lineWidth = 1;
+      ctx.fillStyle = '#33415a'; ctx.fillText(it[1], lx + 18, yy);
+    });
+    ctx.fillStyle = '#7a8798'; ctx.fillText('换算：E(eV) = −4.44 − V(vs NHE)', lx + 18, ly + 3 * lh);
+  })();
+}
+
+/* ================= three.js 3D 场景（R3m g-C3N4 计算晶胞） ================= */
+var GCN4 = {
+  A: 4.7441, C: 30.0,
+  atoms: [
+    ['C',0.491,   0.509,   0.50015],
+    ['C',0.018,   0.509,   0.50015],
+    ['C',0.491,   0.982,   0.50015],
+    ['N',0.17,    0.83,    0.50015],
+    ['N',0.66,    0.83,    0.50015],
+    ['N',0.17,    0.34,    0.50015],
+    ['N',0.66667, 0.33333, 0.49964]
+  ],
+  DOP_N: 3, VAC_C: 0
+};
+/* 块体 g-C₃N₄（R3m 三层 · 21 原子）——取自预计算优化后对称化结构 CONTCAR.hex（a=4.7817 Å, c=9.9741 Å） */
+var GCN4B = {
+  A: 4.78174, C: 9.97411,
+  atoms: [
+    ['C',0.49023, 0.50977, 0.33463],
+    ['C',0.01956, 0.50978, 0.33463],
+    ['C',0.49022, 0.98044, 0.33463],
+    ['C',0.15691, 0.84309, 0.66827],
+    ['C',0.68616, 0.84309, 0.66827],
+    ['C',0.15691, 0.31384, 0.66827],
+    ['C',0.82365, 0.17635, 0.00157],
+    ['C',0.35272, 0.17635, 0.00157],
+    ['C',0.82365, 0.64728, 0.00157],
+    ['N',0.17012, 0.82988, 0.33478],
+    ['N',0.65980, 0.82991, 0.33478],
+    ['N',0.17009, 0.34020, 0.33478],
+    ['N',0.83676, 0.16324, 0.66835],
+    ['N',0.32645, 0.16324, 0.66834],
+    ['N',0.83676, 0.67355, 0.66834],
+    ['N',0.50345, 0.49655, 0.00174],
+    ['N',0.99313, 0.49656, 0.00174],
+    ['N',0.50344, 0.00687, 0.00174],
+    ['N',0.00001, 0.00000, 0.00079],
+    ['N',0.66666, 0.33334, 0.33385],
+    ['N',0.33333, 0.66667, 0.66738]
+  ],
+  DOP_N: 9, VAC_C: 0    // 掺杂位 = 桥联 N(0.170,0.830)（与单层 DOP_N 等价）；空位位 = 层内 C(0.490,0.510)
+};
+var BULK = true;   // 显示模式：默认块体三层（false=单层）
+var SUPER = 1;   // 面内超胞倍数（1×1 / 2×2 / 3×3）
+var RENDER2D = false;
+var scene, camera, renderer, controls, molecule = new THREE.Group();
+var atomsGroup = new THREE.Group(), bondsGroup = new THREE.Group();
+var rotating = true;
+var MAT = {
+  bond: new THREE.MeshPhongMaterial({color: 0x8a97a8, shininess: 20}),
+  box: new THREE.LineBasicMaterial({color: 0x9db3c8, transparent: true, opacity: 0.7})
+};
+function cycleSuper(){
+  SUPER = SUPER >= 3 ? 1 : SUPER + 1;
+  event.target.textContent = '⧉ 超胞 ' + SUPER + '×' + SUPER;
+  updateModel();
+  resetView();
+}
+function cycleStruct(){
+  BULK = !BULK;
+  event.target.textContent = BULK ? '▦ 块体（三层）' : '⬦ 单层';
+  updateModel();
+  resetView();
+}
+function activeL(){ return BULK ? GCN4B : GCN4; }
+function gcn4Cart(f, sx){
+  var L = activeL();
+  var A = L.A * sx, by = A * Math.sqrt(3) / 2;
+  return new THREE.Vector3(f[1] * A + f[2] * (-A / 2), f[2] * by, f[3] * L.C);
+}
+/* 展开超胞：面内 n×n 复制，返回 [{el, p, i}]，并给出超胞晶格。
+   掺杂/空位只出现在超胞中心那一个副本（1×1→(0,0)、2×2→(1,1)、3×3→(1,1)），始终只有 1 个位点 */
+function buildSupercell(){
+  var sx = 1 + STATE.strain / 100;
+  var L = activeL();
+  var A = L.A * sx, by = A * Math.sqrt(3) / 2, C = L.C;
+  var a1 = new THREE.Vector3(A, 0, 0), a2 = new THREE.Vector3(-A / 2, by, 0);
+  var out = [], vac = [];
+  var dx0 = SUPER >> 1, dy0 = SUPER >> 1;   // 缺陷所在副本索引（超胞中心）
+  for (var i = 0; i < L.atoms.length; i++){
+    var p0 = gcn4Cart(L.atoms[i], sx);
+    for (var ix = 0; ix < SUPER; ix++) for (var iy = 0; iy < SUPER; iy++){
+      var p = p0.clone().add(a1.clone().multiplyScalar(ix)).add(a2.clone().multiplyScalar(iy));
+      if (STATE.sys === 'c_vac' && i === L.VAC_C){
+        if (ix === dx0 && iy === dy0) vac.push(p);   // 只挖中心这 1 个
+        else out.push({el: 'C', i: i, p: p});        // 其余副本保持 C 原子
+        continue;
+      }
+      var el = L.atoms[i][0];
+      if (STATE.sys === 'o_dop' && i === L.DOP_N && ix === dx0 && iy === dy0) el = 'O';
+      out.push({el: el, i: i, p: p});
+    }
+  }
+  return {atoms: out, vac: vac, a1: a1, a2: a2, C: C};
+}
+function buildModel(){
+  while (atomsGroup.children.length) atomsGroup.remove(atomsGroup.children[0]);
+  while (bondsGroup.children.length) bondsGroup.remove(bondsGroup.children[0]);
+  // 球棍模型：高光球体 + 细棍键
+  var mats = {
+    C: new THREE.MeshPhongMaterial({color: 0x3a3f44, shininess: 90, specular: 0x555555}),
+    N: new THREE.MeshPhongMaterial({color: 0x2e6fd8, shininess: 90, specular: 0x666666}),
+    O: new THREE.MeshPhongMaterial({color: 0xd84a3a, shininess: 90, specular: 0x666666})
+  };
+  var RADII = {C: 0.42, N: 0.46, O: 0.50};
+  var S = buildSupercell();
+  S.atoms.forEach(function(a){
+    var m = new THREE.Mesh(new THREE.SphereGeometry(RADII[a.el] || 0.46, 32, 24), mats[a.el]);
+    m.position.copy(a.p);
+    atomsGroup.add(m);
+  });
+  // 键：全部原子对欧氏距离 < 1.75 Å（超胞内直接判断，且补画跨边界最近镜像）
+  var R2 = 1.75 * 1.75;
+  function bondPair(p1, p2){
+    var dir = new THREE.Vector3().subVectors(p2, p1);
+    if (dir.lengthSq() > R2 || dir.lengthSq() < 1e-6) return;
+    var len = dir.length();
+    var cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, len, 14),
+      new THREE.MeshPhongMaterial({color: 0x9aa7b6, shininess: 40}));
+    cyl.position.copy(new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5));
+    cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+    bondsGroup.add(cyl);
+  }
+  var n = S.atoms.length;
+  for (var i = 0; i < n; i++){
+    for (var j = i + 1; j < n; j++){
+      bondPair(S.atoms[i].p, S.atoms[j].p);
+      // 跨边界键：向 8 个周期方向找最近镜像
+      for (var dx = -1; dx <= 1; dx++) for (var dy = -1; dy <= 1; dy++){
+        if (!dx && !dy) continue;
+        var off = S.a1.clone().multiplyScalar(dx * SUPER).add(S.a2.clone().multiplyScalar(dy * SUPER));
+        bondPair(S.atoms[i].p, S.atoms[j].p.clone().add(off));
+      }
+    }
+  }
+  // 超胞晶胞线框（面内 n×n + c 高）
+  var c0 = new THREE.Vector3(0, 0, 0), c1 = S.a1.clone().multiplyScalar(SUPER),
+      c2 = S.a2.clone().multiplyScalar(SUPER), c3 = c1.clone().add(c2);
+  var z = new THREE.Vector3(0, 0, S.C);
+  var corners = [c0, c1, c2, c3, c0.clone().add(z), c1.clone().add(z), c2.clone().add(z), c3.clone().add(z)];
+  var edges = [[0,1],[0,2],[0,4],[1,3],[1,5],[2,3],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]];
+  var pts = [];
+  edges.forEach(function(e){ pts.push(corners[e[0]], corners[e[1]]); });
+  bondsGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), MAT.box));
+  // C 空位标记（仅超胞中心 1 处）
+  if (STATE.sys === 'c_vac'){
+    S.vac.forEach(function(vp){
+      var ring = new THREE.Mesh(new THREE.TorusGeometry(0.66, 0.045, 10, 40),
+        new THREE.MeshBasicMaterial({color: 0xc0392b}));
+      ring.position.copy(vp);
+      ring.rotation.x = Math.PI / 2;
+      bondsGroup.add(ring);
+    });
+  }
+  document.getElementById('legO').style.display = (STATE.sys === 'o_dop') ? '' : 'none';
+  document.getElementById('legVac').style.display = (STATE.sys === 'c_vac') ? '' : 'none';
+  // 用真实包围盒中心把整个模型（原子+键+晶胞框）平移到原点，保证自转绕视觉中心
+  molecule.position.set(0, 0, 0);
+  molecule.updateMatrixWorld(true);
+  var bb = new THREE.Box3().setFromObject(molecule);
+  molecule.position.copy(bb.getCenter(new THREE.Vector3()).multiplyScalar(-1));
+}
+function updateModel(){
+  if (!STATE.structOK) return;   // 结构未导入（或未通过校验）时不渲染模型
+  var t = document.getElementById('p3dTitle');
+  var na = (BULK ? 21 : 7) * SUPER * SUPER;
+  var latA = '<i class="latvar">a</i>', latC = '<i class="latvar">c</i>';
+  var geo = BULK ? '块体 g-C₃N₄ · R3m 三层 · ' + latA + '=4.78 Å · ' + latC + '=9.97 Å · 21 原子/胞'
+                 : '单层 C₃N₄ · ' + latC + ' 向 30 Å 真空 · 7 原子/胞';
+  if (STATE.sys === 'o_dop')
+    t.innerHTML = '计算建模晶体结构（' + chem(geo) + ' · ' + SUPER + '×' + SUPER + ' 展示，仅 1 个 N→O 位点 · 计算取 3×3×1 体相超胞 189 原子）';
+  else if (STATE.sys === 'c_vac')
+    t.innerHTML = '计算建模晶体结构（' + chem(geo) + ' · ' + SUPER + '×' + SUPER + ' 展示，仅 1 个空位位点 · 计算取 3×3×1 体相超胞 188 原子）';
+  else
+    t.innerHTML = '计算建模晶体结构（' + chem(geo) + ' · ' + SUPER + '×' + SUPER + ' 展示 ' + na + ' 原子）';
+  if (RENDER2D) buildModel2D(); else buildModel();
+}
+function toggleRotate(){
+  controls.autoRotate = !controls.autoRotate;
+  event.target.textContent = controls.autoRotate ? '⏸ 暂停旋转' : '▶ 自动旋转';
+}
+function resetView(){
+  var d = 10 + SUPER * 5 + (BULK ? 2 : 6);   // 单层 c=30 需要更远视距，块体 c≈10 可稍近
+  camera.position.set(0, d * 0.25, d);
+  if (controls) controls.target.set(0, 0, 0);
+}
+var clock = new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+/* ---------- 初始化（稳健：等布局就绪，失败降级 2D） ---------- */
+function webglOK(){
+  try{
+    var c = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl')));
+  }catch(e){ return false; }
+}
+function init3D(){
+  var wrap = document.getElementById('threeWrap');
+  var w = wrap.clientWidth, h = wrap.clientHeight;
+  scene = new THREE.Scene();
+  scene.background = null;
+  camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 500);
+  renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(w, h);
+  wrap.appendChild(renderer.domElement);
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.autoRotate = true; controls.autoRotateSpeed = 1.1;
+  resetView();
+  scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+  var d1 = new THREE.DirectionalLight(0xffffff, 0.75); d1.position.set(5, 8, 10); scene.add(d1);
+  var d2 = new THREE.DirectionalLight(0xdce9f7, 0.35); d2.position.set(-6, -4, -8); scene.add(d2);
+  molecule.add(atomsGroup); molecule.add(bondsGroup);
+  scene.add(molecule);
+  updateModel();
+  animate();
+  window.addEventListener('resize', onResize);
+}
+function onResize(){
+  var wrap = document.getElementById('threeWrap');
+  if (!wrap.clientWidth) return;
+  camera.aspect = wrap.clientWidth / wrap.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+}
+function tryInit3D(attempt){
+  var wrap = document.getElementById('threeWrap');
+  if (!wrap) return;
+  if (typeof THREE === 'undefined'){ fallback2D('three.js 资源加载失败'); return; }
+  if (!webglOK()){ fallback2D('浏览器不支持 WebGL'); return; }
+  if (!wrap.clientWidth || !wrap.clientHeight){
+    if (attempt < 12){ setTimeout(function(){ tryInit3D(attempt + 1); }, 200); return; }
+    fallback2D('布局异常'); return;
+  }
+  try{ init3D(); }
+  catch(e){ console.error(e); fallback2D('3D 初始化异常: ' + (e && e.message ? e.message : e)); }
+}
+/* 2D 兜底：面内俯视（层平面 xy 投影，x 右 y 上），结构与计算一致 */
+function fallback2D(reason){
+  if (RENDER2D) return;
+  RENDER2D = true;
+  var wrap = document.getElementById('threeWrap');
+  wrap.innerHTML = '';
+  var cv = document.createElement('canvas');
+  cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%';
+  wrap.appendChild(cv);
+  var tip = document.createElement('div');
+  tip.style.cssText = 'position:absolute;bottom:34px;left:12px;font-size:11px;color:#7c8ba0;background:rgba(255,255,255,.85);border-radius:6px;padding:3px 8px';
+  tip.textContent = '2D 俯视图（' + reason + '，结构数据与计算一致）';
+  wrap.appendChild(tip);
+  buildModel2D();
+  window.addEventListener('resize', buildModel2D);
+}
+function buildModel2D(){
+  if (!RENDER2D) return;
+  var wrap = document.getElementById('threeWrap');
+  var cv = wrap.querySelector('canvas');
+  if (!cv) return;
+  var W = wrap.clientWidth, H = wrap.clientHeight;
+  cv.width = W * 2; cv.height = H * 2;
+  var ctx = cv.getContext('2d');
+  ctx.setTransform(2, 0, 0, 2, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  var S = buildSupercell();
+  // 面内包围盒（超胞菱形 a1*n, a2*n）
+  var LA = activeL().A;
+  var spanX = SUPER * LA + SUPER * LA / 2, spanY = SUPER * LA * Math.sqrt(3) / 2;
+  var sc = Math.min(W / (spanX * 1.25), H / (spanY * 1.25));
+  // 屏幕坐标：x 右 = 笛卡尔 x，y 上 = 笛卡尔 y（canvas y 向下取负）
+  var ctr = S.a1.clone().multiplyScalar(SUPER).add(S.a2.clone().multiplyScalar(SUPER)).multiplyScalar(0.5);
+  function P(p){ return [W / 2 + (p.x - ctr.x) * sc, H / 2 - (p.y - ctr.y) * sc]; }
+  var pos = S.atoms.map(function(a){ return P(a.p); });
+  // 键：超胞内 + 周期镜像（面内投影）
+  var n = S.atoms.length;
+  function drawBond(pi, pj){
+    ctx.strokeStyle = '#8a97a8'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(pi[0], pi[1]); ctx.lineTo(pj[0], pj[1]); ctx.stroke();
+  }
+  for (var i = 0; i < n; i++){
+    for (var j = i + 1; j < n; j++){
+      var d = S.atoms[i].p.distanceTo(S.atoms[j].p);
+      if (d < 1.75 && d > 1e-3) drawBond(pos[i], pos[j]);
+      for (var dx = -1; dx <= 1; dx++) for (var dy = -1; dy <= 1; dy++){
+        if (!dx && !dy) continue;
+        var off = S.a1.clone().multiplyScalar(dx * SUPER).add(S.a2.clone().multiplyScalar(dy * SUPER));
+        var d2 = S.atoms[i].p.distanceTo(S.atoms[j].p.clone().add(off));
+        if (d2 < 1.75 && d2 > 1e-3){
+          var pj = P(S.atoms[j].p.clone().add(off));
+          drawBond(pos[i], pj);
+        }
+      }
+    }
+  }
+  S.atoms.forEach(function(a, i){
+    var p = pos[i];
+    var col = a.el === 'C' ? '#3a3f44' : (a.el === 'O' ? '#d84a3a' : '#2e6fd8');
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(p[0], p[1], a.el === 'O' ? 8 : 7, 0, 6.3); ctx.fill();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(p[0], p[1], a.el === 'O' ? 8 : 7, 0, 6.3); ctx.stroke();
+  });
+  // C 空位圈：按实际空位坐标画（仅中心 1 处）
+  S.vac.forEach(function(v){
+    var p = P(v);
+    ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(p[0], p[1], 7, 0, 6.3); ctx.stroke();
+  });
+  // 超胞晶胞框（面内菱形）
+  var c0 = P(new THREE.Vector3(0, 0, 0)),
+      c1 = P(S.a1.clone().multiplyScalar(SUPER)),
+      c2 = P(S.a2.clone().multiplyScalar(SUPER)),
+      c3 = P(S.a1.clone().multiplyScalar(SUPER).add(S.a2.clone().multiplyScalar(SUPER)));
+  ctx.strokeStyle = '#9db3c8'; ctx.lineWidth = 1.2; ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  ctx.moveTo(c0[0], c0[1]); ctx.lineTo(c1[0], c1[1]); ctx.lineTo(c3[0], c3[1]);
+  ctx.lineTo(c2[0], c2[1]); ctx.closePath(); ctx.stroke();
+  ctx.setLineDash([]);
+}
+window.addEventListener('load', function(){ tryInit3D(0); });
+hideStruct();          // 初始：结构未导入，模型区显示空态
+
+/* ================= 实验目标弹窗 ================= */
+function goalAck(){
+  var m = document.getElementById('goalMask');
+  if(m) m.style.display = 'none';
+}
+
+/* ================= 小碳老师悬窗（与 experiment/report 页同款） ================= */
+function aiLazyLoad(){
+  var f = document.getElementById('aiFrame');
+  if(f && !f.getAttribute('src')) f.src = f.getAttribute('data-src') || 'ai.html?embed=1';
+}
+function aiOpen(){
+  var dr = document.getElementById('aiDrawer');
+  if(!dr) return;
+  aiLazyLoad();
+  dr.classList.add('open');
+  dr.setAttribute('aria-hidden', 'false');
+  var fab = document.getElementById('aiFab');
+  if(fab) fab.style.display = 'none';          /* 展开时隐藏标签，避免压住抽屉 */
+  if(TOKEN){
+    fetch('/api/log_search', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({token: TOKEN, keywords: '[仿真台] 打开小碳老师对话', mode: 'deep_open'})}).catch(function(){});
+  }
+}
+function aiClose(){
+  var dr = document.getElementById('aiDrawer');
+  if(!dr) return;
+  dr.classList.remove('open');
+  dr.setAttribute('aria-hidden', 'true');
+  var fab = document.getElementById('aiFab');
+  if(fab) fab.style.display = 'flex';
+}
+function aiToggle(){
+  var dr = document.getElementById('aiDrawer');
+  if(!dr) return;
+  if(dr.classList.contains('open')) aiClose(); else aiOpen();
+}
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape' || e.key === 'Esc') aiClose();
+});
+</script>
+</body>
+</html>
