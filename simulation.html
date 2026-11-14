@@ -46,6 +46,11 @@
   :root{--ink:#1a2332;--sub:#5a6b80;--line:#dfe6ee;--bg:#f3f6fa;--blue:#1a5dab;--blue-d:#12447e;
         --gold:#c9a227;--green:#2e8b57;--red:#c0392b;--card:#fff}
   *{margin:0;padding:0;box-sizing:border-box}
+
+  /* 化学式上下角标：用真标签渲染，不依赖 Unicode 上下标字形（字体缺字形易变方块/大小不一） */
+  sub,sup{font-size:.72em;line-height:0;position:relative;vertical-align:baseline}
+  sub{bottom:-.25em}
+  sup{top:-.42em}
   body{font-family:"Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);height:100vh;
        display:flex;flex-direction:column;overflow:hidden}
   .topbar{background:linear-gradient(135deg,#0e3a6d,#1a5dab);color:#fff;padding:9px 18px;
@@ -134,14 +139,14 @@
   <div class="side">
 
     <div class="stp-card">
-      <div class="stp-head"><span>⓪ 导入 g-C₃N₄ 结构</span><span class="dot" id="dot0">0</span></div>
+      <div class="stp-head"><span>⓪ 导入 g-C<sub>3</sub>N<sub>4</sub> 结构</span><span class="dot" id="dot0">0</span></div>
       <div class="stp-body">
         <input type="file" id="structFile" accept=".cif,.vasp,.poscar" style="display:none">
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="go-btn" style="background:var(--green);flex:1;min-width:180px" onclick="document.getElementById('structFile').click()">📎 上传 CIF / POSCAR 结构文件</button>
           <button class="go-btn" style="flex:1;min-width:150px" onclick="useBuiltinStruct()">🏛 直接使用服务器标准结构</button>
         </div>
-        <div class="hint" id="structMsg" style="margin:7px 0 0">支持 g-C₃N₄ 的 CIF 文件（自动转换为 POSCAR）或 POSCAR 文件；也可一键使用服务器内置标准结构。系统自动校验晶格常数与原子坐标（偏差 &lt; 5% 方可通过）。校验通过前，右侧结构模型区为空。</div>
+        <div class="hint" id="structMsg" style="margin:7px 0 0">支持 g-C<sub>3</sub>N<sub>4</sub> 的 CIF 文件（自动转换为 POSCAR）或 POSCAR 文件；也可一键使用服务器内置标准结构。系统自动校验晶格常数与原子坐标（偏差 &lt; 5% 方可通过）。校验通过前，右侧结构模型区为空。</div>
         <details id="poscarBox" style="display:none;margin-top:7px">
           <summary style="cursor:pointer;font-size:13px;color:var(--blue)">📄 查看转换后的 POSCAR</summary>
           <pre class="mini-log" id="poscarPre" style="max-height:170px;margin-top:5px"></pre>
@@ -153,7 +158,7 @@
       <div class="stp-head"><span>① 选择研究体系</span><span class="dot" id="dot1">1</span></div>
       <div class="stp-body">
         <div class="sys-cards" id="sysCards">
-          <div class="sys-card on" data-sys="pristine">本征 g-C₃N₄<small>基准参照</small></div>
+          <div class="sys-card on" data-sys="pristine">本征 g-C<sub>3</sub>N<sub>4</sub><small>基准参照</small></div>
           <div class="sys-card" data-sys="o_dop">O-掺杂<small>N位O替代</small></div>
           <div class="sys-card" data-sys="c_vac">C-空位<small>缺陷工程</small></div>
         </div>
@@ -187,7 +192,7 @@
     <div class="stp-card">
       <div class="stp-head"><span>③ 提交计算</span><span class="dot" id="dot3">3</span></div>
       <div class="stp-body">
-        <div class="hint" id="clusterHint" style="margin:0 0 8px">计算由平台集群节点执行（PBE / HSE06，体相 g-C₃N₄：结构优化 → SCF → 能带 → 光学吸收全流程），提交后可在下方日志窗口实时查看各阶段运行输出。核数越多，计算越快。</div>
+        <div class="hint" id="clusterHint" style="margin:0 0 8px">计算由平台集群节点执行（PBE / HSE06，体相 g-C<sub>3</sub>N<sub>4</sub>：结构优化 → SCF → 能带 → 光学吸收全流程），提交后可在下方日志窗口实时查看各阶段运行输出。核数越多，计算越快。</div>
         <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap">
           <span style="font-size:12.5px;color:var(--ink,#333)">集群核数（mpirun -n）</span>
           <select id="coresSel" onchange="STATE.cores=parseInt(this.value,10)" style="padding:4px 8px;border:1px solid #c3cfdd;border-radius:8px;background:#fff;font-size:13px">
@@ -246,11 +251,11 @@
           <div style="font-size:44px;opacity:.5">🧊</div>
           <div style="font-size:15.5px;font-weight:700;color:#3c4a5c;margin-top:10px">尚未导入结构</div>
           <div style="font-size:13px;color:#5a6b80;margin-top:6px;line-height:1.8">
-            请先在第 ⓪ 步上传 g-C₃N₄ 的 <b>CIF</b>（自动转 POSCAR）或 <b>POSCAR</b> 文件<br>
+            请先在第 ⓪ 步上传 g-C<sub>3</sub>N<sub>4</sub> 的 <b>CIF</b>（自动转 POSCAR）或 <b>POSCAR</b> 文件<br>
             或一键载入服务器标准结构；校验（偏差 &lt; 5%）通过后，此处才会显示结构模型
           </div>
         </div>
-        <div class="p3d-title" id="p3dTitle">计算建模晶体结构（块体 g-C₃N₄ · R3m 三层 · <i class="latvar">a</i>=4.78 Å · <i class="latvar">c</i>=9.97 Å · 21 原子/胞）</div>
+        <div class="p3d-title" id="p3dTitle">计算建模晶体结构（块体 g-C<sub>3</sub>N<sub>4</sub> · R3m 三层 · <i class="latvar">a</i>=4.78 Å · <i class="latvar">c</i>=9.97 Å · 21 原子/胞）</div>
         <div class="p3d-tools">
           <button onclick="toggleRotate()">⏸ 暂停旋转</button>
           <button onclick="cycleStruct()">▦ 块体（三层）</button>
@@ -267,7 +272,7 @@
       <div class="p3d-right">
         <div class="exp-cap">🔬 实验样品光学照片</div>
         <img src="gcn4_exp_photo.png" alt="g-C3N4 粉末光学照片">
-        <div class="exp-note">g-C₃N₄ 粉末实物：三聚氰胺 550 °C 热聚合产物，呈特征黄色</div>
+        <div class="exp-note">g-C<sub>3</sub>N<sub>4</sub> 粉末实物：三聚氰胺 550 °C 热聚合产物，呈特征黄色</div>
         <div class="exp-src">图源：Micromachines 2017, 8, 175, Fig. 2C（CC BY 4.0）</div>
       </div>
     </div>
@@ -383,6 +388,37 @@ var STATE = {
 };
 /* 水的氧化还原电位随 pH 线性下移：E(O₂/H₂O) = 1.23 − 0.059×pH，E(H⁺/H₂) = −0.059×pH（V vs NHE）。
    带边位置由真空能级锚定（vs NHE），不随 pH 变——pH 只移动参考线，改变"带边是否包住水"的判据。 */
+/* 化学式上下角标：数据里沿用的 Unicode 上下标（如 g-C₃N₄、H⁺）在渲染时转成 <sub>/<sup>，
+   不依赖字体自带的下标字形（部分系统缺字形会显示成方块或大小不一）。必须在 HTML 转义之后调用。 */
+var _SUBMAP = {'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','₊':'+','₋':'−','ₓ':'x'};
+var _SUPMAP = {'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁺':'+','⁻':'−','ⁿ':'n'};
+function chem(s){
+  return String(s == null ? '' : s)
+    .replace(/[₀-₉₊₋ₓ]+/g, function(m){
+      return '<sub>' + m.replace(/[\s\S]/g, function(c){ return _SUBMAP[c] || c; }) + '</sub>'; })
+    .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻ⁿ]+/g, function(m){
+      return '<sup>' + m.replace(/[\s\S]/g, function(c){ return _SUPMAP[c] || c; }) + '</sup>'; });
+}
+/* Canvas 里用不了 <sub> 标签：把 Unicode 下/上标拆成小一号的字单独绘制，
+   避免依赖字体自带的下标字形（缺字形会画成方块）。 */
+function fillChem(ctx, text, x, y){
+  var s = String(text == null ? '' : text);
+  var base = ctx.font;
+  var re = /([₀-₉₊₋ₓ]+)|([⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻ⁿ]+)|([^₀-₉₊₋ₓ⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻ⁿ]+)/g;
+  var small = base.replace(/(\d+(?:\.\d+)?)px/, function(_, n){ return (parseFloat(n) * 0.72) + 'px'; });
+  var m, cx = x;
+  while ((m = re.exec(s)) !== null){
+    if (m[3]){ ctx.font = base; ctx.fillText(m[3], cx, y); cx += ctx.measureText(m[3]).width; }
+    else if (m[1]){
+      var t1 = m[1].replace(/[\s\S]/g, function(c){ return _SUBMAP[c] || c; });
+      ctx.font = small; ctx.fillText(t1, cx, y + 2.5); cx += ctx.measureText(t1).width;
+    } else if (m[2]){
+      var t2 = m[2].replace(/[\s\S]/g, function(c){ return _SUPMAP[c] || c; });
+      ctx.font = small; ctx.fillText(t2, cx, y - 3.5); cx += ctx.measureText(t2).width;
+    }
+  }
+  ctx.font = base;
+}
 function redoxLevels(){
   var ph = STATE.ph || 0;
   return {ph: ph, ox: 1.23 - 0.059 * ph, red: -0.059 * ph};
@@ -439,7 +475,7 @@ function applyPlanLock(){
     var hseTxt = (STATE.sys === 'o_dop')
       ? 'HSE06 已入库：ε = −3 / +1 / +2（ENCUT 500），其余应变集群补算中，入库后开放。'
       : 'HSE06 对照数据集群补算中，入库后开放。';
-    hint.innerHTML = method + '当前体系（' + SYS[STATE.sys].name + '）计划：<b>PBE · ENCUT 500 eV · 应变 ε = −4% ~ +4% 全系列</b>；' + hseTxt;
+    hint.innerHTML = method + '当前体系（' + chem(SYS[STATE.sys].name) + '）计划：<b>PBE · ENCUT 500 eV · 应变 ε = −4% ~ +4% 全系列</b>；' + hseTxt;
     hint.style.color = '#8a6d1a';
   } else {
     hint.innerHTML = method + '本征体系：PBE 应变 ±4% 全系列（ENCUT 500；ε=0 另有 400/450/550 收敛系列）；HSE06 应变 ±4% 全系列已入库（ENCUT 500）。';
@@ -459,7 +495,7 @@ function applyStructOK(res, name){
   STATE.structOK = true;
   var msg = document.getElementById('structMsg');
   msg.style.color = 'var(--green)';
-  msg.innerHTML = '✓ 结构校验通过：' + name + '（' + res.comp + '，' + res.natoms + ' 原子，' +
+  msg.innerHTML = '✓ 结构校验通过：' + chem(name) + '（' + res.comp + '，' + res.natoms + ' 原子，' +
     (res.matched === 'bulk' ? 'R3m 三层原胞' : '单层 slab') +
     (res.max_dev != null ? '，最大原子偏差 ' + res.max_dev.toFixed(3) + ' Å' : '') +
     '）。已载入右侧模型，可继续第①步。';
@@ -483,7 +519,7 @@ function applyStructFail(res){
 function useBuiltinStruct(){
   var msg = document.getElementById('structMsg');
   msg.style.color = '#5a6b80';
-  msg.textContent = '正在载入服务器标准结构（g-C₃N₄_标准结构.cif）并校验……';
+  msg.innerHTML = chem('正在载入服务器标准结构（g-C₃N₄_标准结构.cif）并校验……');
   fetch('/api/structure_builtin', {method:'POST', headers:{'Content-Type':'application/json'}, body: '{}'})
     .then(function(r){ return r.json(); })
     .then(function(res){
@@ -577,7 +613,7 @@ function markOK(id, text){ var d = document.getElementById(id); d.className = 'd
 function runCalc(){
   if (!STATE.structOK){
     var log0 = document.getElementById('calcLog');
-    log0.textContent = '⚠ 请先完成第 ⓪ 步：上传 g-C₃N₄ 的 CIF 或 POSCAR 结构文件，校验通过后再提交计算。';
+    log0.innerHTML = chem('⚠ 请先完成第 ⓪ 步：上传 g-C₃N₄ 的 CIF 或 POSCAR 结构文件，校验通过后再提交计算。');
     var c0 = document.getElementById('dot0');
     c0.style.transition = 'none'; c0.style.color = 'var(--red)';
     setTimeout(function(){ c0.style.transition = ''; c0.style.color = ''; }, 1200);
@@ -590,7 +626,7 @@ function runCalc(){
 var realT0 = 0;
 function realLog(t){
   var log = document.getElementById('calcLog');
-  log.textContent += t + '\n';
+  log.innerHTML += chem(esc(t)) + '\n';
   log.scrollTop = log.scrollHeight;
 }
 function sysDesc(){
@@ -844,7 +880,7 @@ function buildQuiz(cv){
     '<label>Q1. 导带底（CBM）能量为 <input ' + inp2 + ' id="q1"> eV（带边图上方，导带的下边界）</label>' +
     '<label>Q2. 价带顶（VBM）能量为 <input ' + inp + ' id="q2"> eV（带边图下方，价带的上边界）</label>' +
     '<label>Q3. 带隙 Eg 为 <input ' + inp3 + ' id="q3"> eV</label>' +
-    '<label style="margin-top:8px">Q4. 计算值与实验值（g-C₃N₄ 实验带隙约 2.7 eV）存在差异，主要原因是？</label>' +
+    '<label style="margin-top:8px">Q4. 计算值与实验值（g-C<sub>3</sub>N<sub>4</sub> 实验带隙约 2.7 eV）存在差异，主要原因是？</label>' +
     '<textarea class="sel" id="q4" rows="3" style="width:100%;resize:vertical" placeholder="可从泛函近似、温度、缺陷、层间堆垛、测量方法等角度分析……"></textarea>' +
     '<label style="margin-top:8px">Q5. PBE 泛函会 <select id="q5sel" class="sel" style="display:inline-block;width:100px;padding:4px 8px;margin:0 4px">' +
       '<option value="">请选择</option><option>低估</option><option>高估</option></select> 带隙，' +
@@ -890,7 +926,7 @@ function gradeQuiz(){
     if (r[0]) score += r[2];
     html += '<div class="' + (r[0] ? 'ans-ok' : 'ans-no') + '">' + (r[0] ? '✓ ' : '✗ ') + r[1] + '</div>';
   });
-  html += '<div class="hint" style="margin-top:4px">' + ref + '</div>';
+  html += '<div class="hint" style="margin-top:4px">' + chem(ref) + '</div>';
   STATE.score = Math.min(score, 100);
   html += '<div style="margin-top:6px">本次仿真得分：<span class="score" style="font-size:16px">' + STATE.score + ' / 100</span></div>';
   document.getElementById('quizMsg').innerHTML = html;
@@ -956,7 +992,7 @@ function showConcl(){
   var alignTxt = '真空能级参考：实验功函数 <b>Φ ≈ 4.40 eV</b>（UPS 实验值）' +
     (STATE.align ? ' · ' + STATE.align : '');
   document.getElementById('conclBox').innerHTML =
-    '<b>结论面板：</b>当前体系 <b>' + sys.name + '</b>（ε = ' + STATE.strain + ' %）｜来源：' + src + '｜' +
+    '<b>结论面板：</b>当前体系 <b>' + chem(sys.name) + '</b>（ε = ' + STATE.strain + ' %）｜来源：' + src + '｜' +
     '带隙 <b>Eg = ' + STATE.Eg.toFixed(2) + ' eV</b>（' + STATE.func + ' 值，对应吸收边 ~' + lam + ' nm' + (STATE.func === 'PBE' ? '；PBE 低估带隙，按实验值 2.7 eV 吸收边约 460 nm，落在可见光区' : '') + '）｜' +
     'CBM = <b>' + nhe2ev(STATE.cbm).toFixed(2) + ' eV</b>、VBM = <b>' + nhe2ev(STATE.vbm).toFixed(2) + ' eV</b>（电子能量，真空参考；对应电位 ' + STATE.cbm.toFixed(2) + ' / ' + STATE.vbm.toFixed(2) + ' V vs NHE，pH=0；' + alignTxt + '）' +
     (STATE.defect ? '｜<span style="color:var(--red)">⚠ 禁带中出现 C 空位缺陷能级（复合中心）</span>' : '') + '｜' +
@@ -969,6 +1005,9 @@ function showConcl(){
                 '若以实验带隙 2.7 eV 锚定（中点 ' + nhe2ev((STATE.vbm + STATE.cbm) / 2).toFixed(2) + ' eV），CBM ≈ ' +
                 nhe2ev((STATE.vbm + STATE.cbm) / 2 + 1.35).toFixed(2) + ' eV、VBM ≈ ' +
                 nhe2ev((STATE.vbm + STATE.cbm) / 2 - 1.35).toFixed(2) + ' eV（电子能量），带边包住水的氧化还原电位，与文献报道一致。</div>');
+  /* 结论面板内的 Unicode 上下标统一转成 <sub>/<sup>（HTML 已生成，再对文本做一次替换即可） */
+  var _cb = document.getElementById('conclBox');
+  _cb.innerHTML = chem(_cb.innerHTML);
 }
 
 /* ================= 真实数据绘图 ================= */
@@ -1219,8 +1258,8 @@ function drawEdge(){
   ctx.strokeStyle = '#2e8b57'; ctx.beginPath(); ctx.moveTo(L, Y(rl.red)); ctx.lineTo(L + pw, Y(rl.red)); ctx.stroke();
   ctx.setLineDash([]); ctx.lineWidth = 1;
   ctx.textAlign = 'left'; ctx.font = '10px sans-serif';
-  ctx.fillStyle = '#d84a3a'; ctx.fillText('O₂/H₂O  ' + nhe2ev(rl.ox).toFixed(2) + ' eV', L + pw + 4, Y(rl.ox) + 3);
-  ctx.fillStyle = '#2e8b57'; ctx.fillText('H⁺/H₂  ' + nhe2ev(rl.red).toFixed(2) + ' eV', L + pw + 4, Y(rl.red) + 3);
+  ctx.fillStyle = '#d84a3a'; fillChem(ctx, 'O₂/H₂O  ' + nhe2ev(rl.ox).toFixed(2) + ' eV', L + pw + 4, Y(rl.ox) + 3);
+  ctx.fillStyle = '#2e8b57'; fillChem(ctx, 'H⁺/H₂  ' + nhe2ev(rl.red).toFixed(2) + ' eV', L + pw + 4, Y(rl.red) + 3);
   ctx.fillStyle = '#5a6b80'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'right';
   ctx.fillText('pH = ' + rl.ph, L + pw - 6, T + 12);
   ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
@@ -1436,11 +1475,11 @@ function updateModel(){
   var geo = BULK ? '块体 g-C₃N₄ · R3m 三层 · ' + latA + '=4.78 Å · ' + latC + '=9.97 Å · 21 原子/胞'
                  : '单层 C₃N₄ · ' + latC + ' 向 30 Å 真空 · 7 原子/胞';
   if (STATE.sys === 'o_dop')
-    t.innerHTML = '计算建模晶体结构（' + geo + ' · ' + SUPER + '×' + SUPER + ' 展示，仅 1 个 N→O 位点 · 计算取 3×3×1 体相超胞 189 原子）';
+    t.innerHTML = '计算建模晶体结构（' + chem(geo) + ' · ' + SUPER + '×' + SUPER + ' 展示，仅 1 个 N→O 位点 · 计算取 3×3×1 体相超胞 189 原子）';
   else if (STATE.sys === 'c_vac')
-    t.innerHTML = '计算建模晶体结构（' + geo + ' · ' + SUPER + '×' + SUPER + ' 展示，仅 1 个空位位点 · 计算取 3×3×1 体相超胞 188 原子）';
+    t.innerHTML = '计算建模晶体结构（' + chem(geo) + ' · ' + SUPER + '×' + SUPER + ' 展示，仅 1 个空位位点 · 计算取 3×3×1 体相超胞 188 原子）';
   else
-    t.innerHTML = '计算建模晶体结构（' + geo + ' · ' + SUPER + '×' + SUPER + ' 展示 ' + na + ' 原子）';
+    t.innerHTML = '计算建模晶体结构（' + chem(geo) + ' · ' + SUPER + '×' + SUPER + ' 展示 ' + na + ' 原子）';
   if (RENDER2D) buildModel2D(); else buildModel();
 }
 function toggleRotate(){

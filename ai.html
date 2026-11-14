@@ -41,11 +41,16 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 助教 · g-C₃N₄ 光催化虚拟仿真实验</title>
+<title>AI 助教 · g-C3N4 光催化虚拟仿真实验</title>
 <style>
   :root{--ink:#1a2332;--sub:#5a6b80;--line:#dfe6ee;--bg:#f3f6fa;--blue:#1a5dab;--blue-d:#12447e;
         --gold:#c9a227;--green:#2e8b57;--card:#fff}
   *{margin:0;padding:0;box-sizing:border-box}
+
+  /* 化学式上下角标：用真标签渲染，不依赖 Unicode 上下标字形（字体缺字形易变方块/大小不一） */
+  sub,sup{font-size:.72em;line-height:0;position:relative;vertical-align:baseline}
+  sub{bottom:-.25em}
+  sup{top:-.42em}
   html,body{height:100%}
   /* 定高不滚动：整体按视口高度切分，只有 .msgs 内部滚动，输入框常驻底部 */
   body{font-family:"Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);
@@ -132,7 +137,7 @@
 <div class="wrap">
   <div class="hero">
     <h1>AI 助教"小碳老师" · 材料计算答疑</h1>
-    <p>由本平台自建 DeepSeek 大模型接口驱动，对话全程留痕。可围绕 g-C₃N₄ 结构与改性（O 掺杂 / C 空位 / 应变）、DFT 计算方法（ENCUT、K 点、泛函）、能带与态密度读图、光催化分解水原理、带边对齐（vs NHE）等话题提问。实验报告与测评仍须独立完成，助教只引导、不代写。</p>
+    <p>由本平台自建 DeepSeek 大模型接口驱动，对话全程留痕。可围绕 g-C<sub>3</sub>N<sub>4</sub> 结构与改性（O 掺杂 / C 空位 / 应变）、DFT 计算方法（ENCUT、K 点、泛函）、能带与态密度读图、光催化分解水原理、带边对齐（vs NHE）等话题提问。实验报告与测评仍须独立完成，助教只引导、不代写。</p>
   </div>
 
   <!-- 登录卡 -->
@@ -177,6 +182,17 @@ function esc(s){
   return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+/* 化学式上下角标：数据里沿用的 Unicode 上下标（如 g-C₃N₄、H⁺）在渲染时转成 <sub>/<sup>，
+   不依赖字体自带的下标字形（部分系统缺字形会显示成方块或大小不一）。必须在 HTML 转义之后调用。 */
+var _SUBMAP = {'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','₊':'+','₋':'−','ₓ':'x'};
+var _SUPMAP = {'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁺':'+','⁻':'−','ⁿ':'n'};
+function chem(s){
+  return String(s == null ? '' : s)
+    .replace(/[₀-₉₊₋ₓ]+/g, function(m){
+      return '<sub>' + m.replace(/[\s\S]/g, function(c){ return _SUBMAP[c] || c; }) + '</sub>'; })
+    .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻ⁿ]+/g, function(m){
+      return '<sup>' + m.replace(/[\s\S]/g, function(c){ return _SUPMAP[c] || c; }) + '</sup>'; });
+}
 function md(s){
   var t = esc(s);
   t = t.replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>');
@@ -185,7 +201,7 @@ function md(s){
 }
 
 var CHIPS = [
-  '为什么 O 掺杂会改变 g-C₃N₄ 的带隙和带边位置？',
+  '为什么 O 掺杂会改变 g-C3N4 的带隙和带边位置？',
   '怎么看能带结构和态密度判断光催化分解水的能力？',
   'ENCUT 和 K 点网格应该如何做收敛性测试？',
   '功函数如何用于把能带对齐到 vs NHE 坐标？'
@@ -242,7 +258,7 @@ function renderMsg(role, content, animate){
   div.className = 'row' + (me ? ' me' : '');
   div.innerHTML = '<div class="ava">' + (me ? '🧑‍🎓' : '🤖') + '</div>' +
     '<div><div class="who">' + (me ? '我' : '小碳老师') + '</div>' +
-    '<div class="bub">' + (animate ? '<span class="typing">▍正在思考…</span>' : md(content)) + '</div></div>';
+    '<div class="bub">' + (animate ? '<span class="typing">▍正在思考…</span>' : chem(md(content))) + '</div></div>';
   box.appendChild(div);
   scrollBottom();
 }
