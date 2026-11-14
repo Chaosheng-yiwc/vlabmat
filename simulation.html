@@ -925,9 +925,8 @@ function finishReal(r){
 var FILL_TOL = 0.20;   // 数值填空容差
 function q4Reasonable(t){
   t = t.toLowerCase();
-  /* 按"差异原因类别"分组：命中 ≥2 类给满分，仅 1 类给一半 */
+  /* Q4 考察"泛函之外"的差异原因，按类别分组：命中 ≥2 类给满分，仅 1 类给一半 */
   var groups = [
-    ['pbe','hse','泛函','交换关联','近似','dft','激子','屏蔽','介电'],
     ['温度','热','0k','0 k','理想'],
     ['缺陷','无序','堆垛','层间','尺寸'],
     ['测量','实验条件','溶剂','外推','tauc','激发','复合']
@@ -942,11 +941,11 @@ function q4Reasonable(t){
 }
 function buildQuiz(cv){
   var box = document.getElementById('quizBox');
-  var inp = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="如 -5.91"';
-  var inp2 = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="如 -3.05"';
-  var inp3 = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="如 2.87"';
-  var inp5 = 'class="sel" style="display:inline-block;width:160px;padding:4px 8px;margin:0 4px" placeholder="如：剪刀算符 / scissor"';
-  var inp6 = 'class="sel" style="display:inline-block;width:90px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="如 5"';
+  var inp = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="填数值"';
+  var inp2 = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="填数值"';
+  var inp3 = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="填数值"';
+  var inp5 = 'class="sel" style="display:inline-block;width:160px;padding:4px 8px;margin:0 4px" placeholder="填矫正方法"';
+  var inp6 = 'class="sel" style="display:inline-block;width:90px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="填数值"';
   var gsel = '<select id="q7sel" class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px">' +
     '<option value="">请选择</option><option>O-掺杂</option><option>应变工程</option><option>C-空位（缺陷）</option></select>';
   box.innerHTML =
@@ -958,8 +957,8 @@ function buildQuiz(cv){
     '<label>Q1. 导带底（CBM）能量为 <input ' + inp2 + ' id="q1"> eV（带边图上方，导带的下边界）</label>' +
     '<label>Q2. 价带顶（VBM）能量为 <input ' + inp + ' id="q2"> eV（带边图下方，价带的上边界）</label>' +
     '<label>Q3. 带隙 Eg 为 <input ' + inp3 + ' id="q3"> eV</label>' +
-    '<label style="margin-top:8px">Q4. 计算值与实验值（g-C<sub>3</sub>N<sub>4</sub> 实验带隙约 2.7 eV）存在差异，主要原因是？</label>' +
-    '<textarea class="sel" id="q4" rows="3" style="width:100%;resize:vertical" placeholder="可从泛函近似、温度、缺陷、层间堆垛、测量方法等角度分析……"></textarea>' +
+    '<label style="margin-top:8px">Q4. 计算值与实验值（g-C<sub>3</sub>N<sub>4</sub> 实验带隙约 2.7 eV）存在差异，除泛函近似的影响外（Q5 已单独考察），还有哪些原因？</label>' +
+    '<textarea class="sel" id="q4" rows="3" style="width:100%;resize:vertical" placeholder="可从温度（0 K 理想晶体）、缺陷、层间堆垛、测量方法等角度分析……"></textarea>' +
     '<label style="margin-top:8px">Q5. PBE 泛函会 <select id="q5sel" class="sel" style="display:inline-block;width:100px;padding:4px 8px;margin:0 4px">' +
       '<option value="">请选择</option><option>低估</option><option>高估</option></select> 带隙，' +
       '可用 <input ' + inp5 + ' id="q5"> 矫正带隙</label>' +
@@ -967,21 +966,13 @@ function buildQuiz(cv){
       '（对比第③步日志中两种泛函的耗时），因此 PBE 更适合做定性分析，HSE06 更适合做定量分析。</label>' +
 
     '<div style="font-size:15px;font-weight:700;color:#0e3a6d;margin:16px 0 6px">🔬 目标二检验 · 哪种调控最优？（应变 / 掺杂 / 缺陷对比，Q7–Q8）</div>' +
-    '<div class="hint" style="margin:0 0 6px">平台计算计划已入库结果（ε = 0，ENCUT 500 eV，供对比判读；也可切换体系/应变自行计算验证）：</div>' +
-    '<table style="border-collapse:collapse;width:100%;font-size:12.8px;margin-bottom:10px">' +
-    '<tr style="background:#eef4fb"><th style="border:1px solid #c9d8ea;padding:5px 8px">调控体系</th>' +
-    '<th style="border:1px solid #c9d8ea;padding:5px 8px">PBE Eg（eV）</th><th style="border:1px solid #c9d8ea;padding:5px 8px">HSE06 Eg（eV）</th>' +
-    '<th style="border:1px solid #c9d8ea;padding:5px 8px">判读要点</th></tr>' +
-    '<tr><td style="border:1px solid #dbe5f0;padding:5px 8px">本征（ε = 0）</td><td style="border:1px solid #dbe5f0;padding:5px 8px;text-align:center">1.31</td>' +
-    '<td style="border:1px solid #dbe5f0;padding:5px 8px;text-align:center">2.72 ~ 2.97（ε = −4% → +4% 单调增大）</td>' +
-    '<td style="border:1px solid #dbe5f0;padding:5px 8px">应变可连续调节带隙，但需外场维持</td></tr>' +
-    '<tr><td style="border:1px solid #dbe5f0;padding:5px 8px">O-掺杂（ε = 0）</td><td style="border:1px solid #dbe5f0;padding:5px 8px;text-align:center">1.59</td>' +
-    '<td style="border:1px solid #dbe5f0;padding:5px 8px;text-align:center">2.52（ε = −3 / +1 / +2 时 2.51 ~ 2.53）</td>' +
-    '<td style="border:1px solid #dbe5f0;padding:5px 8px">带隙适中、对应变不敏感，性能稳健</td></tr>' +
-    '<tr><td style="border:1px solid #dbe5f0;padding:5px 8px">C-空位（ε = 0）</td><td style="border:1px solid #dbe5f0;padding:5px 8px;text-align:center">0.26</td>' +
-    '<td style="border:1px solid #dbe5f0;padding:5px 8px;text-align:center">补算中</td>' +
-    '<td style="border:1px solid #dbe5f0;padding:5px 8px">带隙骤降，禁带出现缺陷能级（复合中心）</td></tr></table>' +
-    '<label>Q7. 结合上表与你自己的计算：为使 g-C<sub>3</sub>N<sub>4</sub> 保持可见光响应并提升全解水能力，三种调控手段中最值得采用的是' + gsel + '</label>' +
+    '<div style="background:#fff8e8;border:1.5px solid #f0dfb2;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.2px;line-height:1.95;color:#4a3a12">' +
+    '<b style="color:#7a5a10">💡 思考提示</b>（结论须由你自己切换体系/参数计算得出，平台不预设答案）：可以从以下几个方面考虑——<br>' +
+    '1、带边能级满足 OH<sup>−</sup> 氧化电位和 H<sup>+</sup> 的还原电位，越靠近越好；<br>' +
+    '2、选择合适的 pH 值改变 OH<sup>−</sup> 氧化电位和 H<sup>+</sup> 的还原电位；<br>' +
+    '3、通过施加应变、掺杂、缺陷等复合方法调控带边能级；<br>' +
+    '4、选择吸收光谱中可见光吸收最大的结构。</div>' +
+    '<label>Q7. 结合你自己的计算：为使 g-C<sub>3</sub>N<sub>4</sub> 保持可见光响应并提升全解水能力，三种调控手段中最值得采用的是' + gsel + '</label>' +
     '<textarea class="sel" id="q7" rows="2" style="width:100%;resize:vertical;margin-top:4px" placeholder="说明理由：可从带隙是否适中、是否引入有害缺陷能级、带边是否包住水的氧化还原电位、是否需要外场维持等角度分析……"></textarea>' +
     '<label style="margin-top:8px">Q8. 综合两个实验目标，写出你认为 g-C<sub>3</sub>N<sub>4</sub> 光催化性能的最佳调控方案</label>' +
     '<textarea class="sel" id="q8" rows="3" style="width:100%;resize:vertical" placeholder="应包含：① 选用哪种调控手段及其参数（如 O 掺杂 / 应变幅度）；② 用什么泛函、截断能等参数保证结果可靠；③ 预期的带隙、带边位置与全解水判据是否满足。"></textarea>' +
@@ -1025,12 +1016,10 @@ function gradeQuiz(){
                              ['带边','cbm','vbm','氧化还原','nhe','ph','全解水','光催化','活性']]);
   var ref = '参考答案：Q1 导带底 CBM = ' + nhe2ev(STATE.cbm).toFixed(2) + ' eV（= ' + STATE.cbm.toFixed(2) + ' V vs NHE，带边图上方，能量高于 H⁺/H₂，光生电子可还原产氢）；Q2 价带顶 VBM = ' + nhe2ev(STATE.vbm).toFixed(2) +
     ' eV（= ' + STATE.vbm.toFixed(2) + ' V vs NHE，带边图下方，能量低于 O₂/H₂O，光生空穴可氧化产氧）；' +
-    (STATE.realDone && STATE.func === 'PBE'
-      ? 'Q4：PBE 等半局域泛函因交换关联近似会明显低估带隙（HSE06 可显著改善）；'
-      : 'Q4：理论计算为 0 K 理想完整晶体，而实验值受温度、缺陷、层间堆垛、样品尺寸及测量方法（如 Tauc 外推）影响；') +
+    'Q4：理论计算对应 0 K 下理想完整的晶体模型，而实验样品受温度、缺陷浓度、层间堆垛与尺寸、测量方法（如 Tauc 外推）等影响，故存在差异；' +
     'Q5：PBE 低估带隙，可用剪刀算符（scissor operator，或换用 HSE06 杂化泛函）矫正；' +
     'Q6：PBE 耗时约为 HSE06 的 1/5（即 HSE06 ≈ PBE 的 5 倍，见第③步日志），PBE 适合定性筛选、HSE06 适合定量分析；' +
-    'Q7：推荐 O-掺杂或适度应变——C-空位使带隙骤降至 0.26 eV 并在禁带引入缺陷能级（光生载流子复合中心），不利；O-掺杂带隙适中（HSE06 ≈ 2.5 eV）、带边可调且对应变不敏感，性能稳健；应变可连续调节带隙（−4%→+4% 时 HSE06 Eg 2.72→2.97 eV）但需外场维持；' +
+    'Q7：推荐 O-掺杂或适度应变——C-空位使带隙骤降并在禁带引入缺陷能级（光生载流子复合中心），不利；O-掺杂带隙适中、带边可调且对应变不敏感，性能稳健；应变可连续调节带隙但需外场维持。判据上：带边越靠近 H⁺/H₂ 与 O₂/H₂O 电位（过电位越小）越好，可通过 pH 调整氧化还原电位、按可见光吸收最强的结构定型；' +
     'Q8：示例方案——O-掺杂 g-C₃N₄（ε = 0）+ HSE06（ENCUT ≥ 500 eV，K 网格经收敛测试）验证带边：CBM 高于 H⁺/H₂、VBM 低于 O₂/H₂O，满足全解水热力学条件，即"掺杂调性能 + HSE06 保精度 + 带边判活性"。';
   var q4hit = q4Reasonable(q4);
   var res = [
