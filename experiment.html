@@ -253,17 +253,11 @@
     <div id="stepExtra"></div>
 
     <div class="panel" id="subPanel">
-      <h3>📤 结果提交<span style="font-size:12px;color:#7a8798;font-weight:normal">· 小碳老师对话记录 + 作业提交</span></h3>
+      <h3>📤 结果提交<span style="font-size:12px;color:#7a8798;font-weight:normal">· 作业提交 + 小碳老师对话记录</span></h3>
       <div class="hint" style="margin:-2px 0 12px">需要 AI 协助时，点屏幕右上角「🤖 小碳老师」标签随时展开对话悬窗；对话为独立浮层，不占本页版面，收起后对话记录仍在。</div>
       <div id="aiFaqWrap">
         <div class="sub-block">
-          <h4>① 与小碳老师的对话记录<span style="font-weight:400;font-size:12px;color:#9aa7b6">　自动留痕，无需手动填写</span></h4>
-          <div class="hint" style="margin:0 0 8px">你在「小碳老师」悬窗里的每次提问都会自动记录并同步教师端，教师端可据此核对的检索与调研轨迹。</div>
-          <div id="myChat"><span class="hint">还没有对话记录。点右上角「🤖 小碳老师」标签提问后，你的问题会自动出现在这里。</span></div>
-          <div id="myKw" style="margin-top:10px"></div>
-        </div>
-        <div class="sub-block">
-          <h4 id="subH4">② 提交作业结果</h4>
+          <h4 id="subH4">① 提交作业结果</h4>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:0;align-items:center">
             <select id="subKind" class="sub-in">
               <option>阶段性成果</option>
@@ -274,37 +268,8 @@
             <span class="hint">点击左侧步骤即自动关联，无需选择</span>
           </div>
 
-          <!-- 第 3 步专用：按任务说明的 4 个问题填空作答 -->
-          <div id="fillWrap" style="display:none;margin-top:10px">
-            <div class="hint" style="margin:0 0 8px">对照任务说明逐题作答，<b>每空必填</b>；文献按「作者. 题目. 期刊, 年份」写全，便于教师端核验。</div>
-            <div class="fillq">
-              <div class="qn"><b>1.</b> 光催化分解水材料的种类有
-                <input class="bl" id="f1a" placeholder="种类①">、
-                <input class="bl" id="f1b" placeholder="种类②">和
-                <input class="bl" id="f1c" placeholder="种类③">
-                <span class="tk">（填 3 种即可）；</span> g-C<sub>3</sub>N<sub>4</sub> 的典型文献综述有<span class="tk">（填 2 篇即可）</span>
-                <input class="bl blk" id="f1d" placeholder="文献①：作者. 题目. 期刊, 年份">
-                <input class="bl blk" id="f1e" placeholder="文献②：作者. 题目. 期刊, 年份">
-              </div>
-            </div>
-            <div class="fillq">
-              <div class="qn"><b>2.</b> g-C<sub>3</sub>N<sub>4</sub> 作为光催化材料需要改性的地方是
-                <textarea class="blta" id="f2" rows="2" placeholder="如：带隙偏大导致可见光吸收不足、光生载流子复合快、比表面积小、活性位点少……"></textarea>
-              </div>
-            </div>
-            <div class="fillq">
-              <div class="qn"><b>3.</b> 掺杂、缺陷、应变等调控策略在第一性原理计算中的具体实施策略是
-                <textarea class="blta" id="f3" rows="2" placeholder="如：掺杂=构造 3×3×1 超胞替换 O/C 原子；缺陷=移除一个 C 原子形成 C 空位；应变=对晶格施加 ±1%~±4% 双轴应变；均需重算结构弛豫与能带。"></textarea>
-              </div>
-            </div>
-            <div class="fillq">
-              <div class="qn"><b>4.</b> 第一性原理对 g-C<sub>3</sub>N<sub>4</sub> 光催化材料的研究文献有<span class="tk">（填 1 篇）</span>
-                <input class="bl blk" id="f4a" placeholder="文献：作者. 题目. 期刊, 年份">
-                <span class="tk">其主要研究结论是（查该论文的全文作答）</span>
-                <textarea class="blta" id="f4b" rows="3" placeholder="查阅该论文全文后作答：计算/实验方法、获得的关键数据（带隙、带边位置等）与主要结论。"></textarea>
-              </div>
-            </div>
-          </div>
+          <!-- 第 3–6 步专用：按任务说明问题填空作答（表单内容由 JS 按当前步骤生成） -->
+          <div id="fillWrap" style="display:none;margin-top:10px"></div>
 
           <!-- 其它步骤：自由文本提交 -->
           <div id="freeWrap">
@@ -316,6 +281,12 @@
           </div>
           <button class="go-btn" style="padding:9px 24px;font-size:14px" onclick="doSubmit()">📤 提交给教师</button>
           <span id="subMsg"></span>
+        </div>
+        <div class="sub-block">
+          <h4>② 与小碳老师的对话记录<span style="font-weight:400;font-size:12px;color:#9aa7b6">　自动留痕，无需手动填写</span></h4>
+          <div class="hint" style="margin:0 0 8px">你在「小碳老师」悬窗里的每次提问都会自动记录并同步教师端，教师端可据此核对的检索与调研轨迹。</div>
+          <div id="myChat"><span class="hint">还没有对话记录。点右上角「🤖 小碳老师」标签提问后，你的问题会自动出现在这里。</span></div>
+          <div id="myKw" style="margin-top:10px"></div>
         </div>
         <h4 style="font-size:13.5px;color:var(--blue-d);margin:2px 0 6px">我的提交记录（含教师评分与评语）</h4>
         <div id="mySubs"><span class="hint">暂无提交记录。</span></div>
@@ -671,7 +642,7 @@ function gotoStep(i){
   document.getElementById('stDesc').innerHTML    = chem(esc(st[4]));
   /* 第 1、2 步（预习测评 / 任务认领）不开放智能体：既不需要，也避免答题时借助 AI */
   document.getElementById('subPanel').style.display = (i <= 2) ? 'none' : '';
-  setSubMode(i);                              /* 第 3 步：填空作答；其它步骤：自由文本 */
+  setSubMode(i);                              /* 第 3-6 步：填空作答；其它步骤：自由文本 */
   if(i <= 2){
     aiClose();
     document.getElementById('aiFab').style.display = 'none';
@@ -943,53 +914,158 @@ function ilabMarkSubmit(stepIdx, content, hasFile){
   var span = Math.max(60, Math.round((Date.now() - (STEP_T0[stepIdx] || Date.now() - 300000)) / 1000));
   ILABX.mark(d[0], d[1] + '（' + (hasFile ? '含附件' : len + ' 字正文') + '）', d[2], rate, span);
 }
-/* ---------- 第 3 步：按任务说明 4 个问题填空作答（每空必填，提交时拼成结构化正文） ---------- */
-var FILL_FIELDS = [
-  ['f1a', '第 1 题的「材料种类①」'],
-  ['f1b', '第 1 题的「材料种类②」'],
-  ['f1c', '第 1 题的「材料种类③」'],
-  ['f1d', '第 1 题的「文献综述①」'],
-  ['f1e', '第 1 题的「文献综述②」'],
-  ['f2',  '第 2 题「需要改性的地方」'],
-  ['f3',  '第 3 题「调控策略的实施方法」'],
-  ['f4a', '第 4 题的「研究文献」'],
-  ['f4b', '第 4 题的「主要研究结论」']
-];
+/* ---------- 第 3–6 步：按任务说明问题填空作答（每空必填，提交时拼成结构化正文） ---------- */
+var FILL_HTML = {
+  3: '<div class="fillq"><div class="qn"><b>1.</b> 光催化分解水材料的种类有' +
+     '<input class="bl" id="f1a" placeholder="种类①">、' +
+     '<input class="bl" id="f1b" placeholder="种类②">和' +
+     '<input class="bl" id="f1c" placeholder="种类③">' +
+     '<span class="tk">（填 3 种即可）；</span> g-C<sub>3</sub>N<sub>4</sub> 的典型文献综述有<span class="tk">（填 2 篇即可）</span>' +
+     '<input class="bl blk" id="f1d" placeholder="文献①：作者. 题目. 期刊, 年份">' +
+     '<input class="bl blk" id="f1e" placeholder="文献②：作者. 题目. 期刊, 年份"></div></div>' +
+     '<div class="fillq"><div class="qn"><b>2.</b> g-C<sub>3</sub>N<sub>4</sub> 作为光催化材料需要改性的地方是' +
+     '<textarea class="blta" id="f2" rows="2" placeholder="如：带隙偏大导致可见光吸收不足、光生载流子复合快、比表面积小、活性位点少……"></textarea></div></div>' +
+     '<div class="fillq"><div class="qn"><b>3.</b> 掺杂、缺陷、应变等调控策略在第一性原理计算中的具体实施策略是' +
+     '<textarea class="blta" id="f3" rows="2" placeholder="如：掺杂=构造 3×3×1 超胞替换 O/C 原子；缺陷=移除一个 C 原子形成 C 空位；应变=对晶格施加 ±1%~±4% 双轴应变；均需重算结构弛豫与能带。"></textarea></div></div>' +
+     '<div class="fillq"><div class="qn"><b>4.</b> 第一性原理对 g-C<sub>3</sub>N<sub>4</sub> 光催化材料的研究文献有<span class="tk">（填 1 篇）</span>' +
+     '<input class="bl blk" id="f4a" placeholder="文献：作者. 题目. 期刊, 年份">' +
+     '<span class="tk">其主要研究结论是（查该论文的全文作答）</span>' +
+     '<textarea class="blta" id="f4b" rows="3" placeholder="查阅该论文全文后作答：计算/实验方法、获得的关键数据（带隙、带边位置等）与主要结论。"></textarea></div></div>',
+  4: '<div class="fillq"><div class="qn"><b>1.</b> 光催化分解水材料的计算方案是' +
+     '<textarea class="blta" id="f41" rows="2" placeholder="如：以 g-C3N4 为研究对象，第一性原理计算本征 / O-掺杂 / C-空位三个体系的能带结构、带边位置与光学性质，评估其可见光分解水制氢活性。"></textarea></div></div>' +
+     '<div class="fillq"><div class="qn"><b>2.</b> 晶体结构选取' +
+     '<input class="bl" id="f42a" placeholder="如：g-C3N4 原胞（注明空间群）">；超胞设置' +
+     '<input class="bl" id="f42b" placeholder="如：3×3×1 超胞，避免掺杂/缺陷的周期性镜像相互作用"></div></div>' +
+     '<div class="fillq"><div class="qn"><b>3.</b> 典型的计算软件有' +
+     '<input class="bl" id="f43a" placeholder="软件①">、' +
+     '<input class="bl" id="f43b" placeholder="软件②">' +
+     '<span class="tk">（填 2 种即可）</span>，其基本原理是' +
+     '<textarea class="blta" id="f43c" rows="2" placeholder="如：密度泛函理论（DFT）——以电子密度为基本变量，求解 Kohn-Sham 方程得到多电子体系的基态性质（交换关联能用泛函近似处理）。"></textarea></div></div>' +
+     '<div class="fillq"><div class="qn"><b>4.</b> 计算流程图（用文字按顺序描述各环节）' +
+     '<textarea class="blta" id="f44" rows="2" placeholder="如：建模 → 结构弛豫 → 自洽计算（SCF）→ 能带 / 态密度计算 → 带边对齐与光催化活性分析。"></textarea></div></div>',
+  5: '<div class="fillq"><div class="qn"><b>1.</b> g-C<sub>3</sub>N<sub>4</sub> 原胞的空间群是' +
+     '<input class="bl" id="f51" placeholder="查文献/数据库">，晶格常数 a=b=' +
+     '<input class="bl" id="f52" placeholder="保留2位小数">Å、c=' +
+     '<input class="bl" id="f53" placeholder="保留2位小数">Å，原胞包含' +
+     '<input class="bl" id="f54" placeholder="总原子数">个原子（C ' +
+     '<input class="bl" id="f55" placeholder="C 数">个、N ' +
+     '<input class="bl" id="f56" placeholder="N 数">个）</div></div>' +
+     '<div class="fillq"><div class="qn"><b>2.</b> 生成的结构文件是' +
+     '<input class="bl blk" id="f57" placeholder="文件名 / 格式，如 POSCAR、cif">' +
+     '<span class="tk">，核验其正确性的方法与结果是</span>' +
+     '<textarea class="blta" id="f58" rows="2" placeholder="如：与 Materials Project 标准卡片对比空间群和晶格常数一致；用 VESTA 可视化检查三-s-三嗪环连接方式无误。"></textarea></div></div>' +
+     '<div class="fillq"><div class="qn"><b>3.</b> g-C<sub>3</sub>N<sub>4</sub> 的能带调控方法（掺杂、缺陷、应变）在本实验中的具体实施是' +
+     '<textarea class="blta" id="f59" rows="2" placeholder="如：O 掺杂=超胞中替换 1 个 C/N 位；C 空位=移除 1 个 C 原子；应变=施加 ±1%~±4% 双轴应变，均重新弛豫后算能带。"></textarea></div></div>',
+  6: '<div class="fillq"><div class="qn"><b>1.</b> VASP 四个输入文件的作用：INCAR——' +
+     '<input class="bl blk" id="f61" placeholder="一句话说明">；POSCAR——' +
+     '<input class="bl blk" id="f62" placeholder="一句话说明">；KPOINTS——' +
+     '<input class="bl blk" id="f63" placeholder="一句话说明">；POTCAR——' +
+     '<input class="bl blk" id="f64" placeholder="一句话说明"></div></div>' +
+     '<div class="fillq"><div class="qn"><b>2.</b> 平面波截断能（ENCUT）的物理含义是' +
+     '<textarea class="blta" id="f65" rows="2" placeholder="提示：平面波基组的动能上限，决定基组完备程度；过大浪费算力、过小结果不可靠，需收敛测试。"></textarea></div></div>' +
+     '<div class="fillq"><div class="qn"><b>3.</b> 交换关联泛函 PBE 和 HSE06 的物理含义分别是：PBE——' +
+     '<textarea class="blta" id="f66" rows="2" placeholder="提示：广义梯度近似（GGA），交换关联能依赖密度及其梯度，计算便宜但有带隙低估问题。"></textarea>' +
+     '<span class="tk">；HSE06——</span>' +
+     '<textarea class="blta" id="f67" rows="2" placeholder="提示：杂化泛函，混入 25% 精确 Hartree-Fock 交换，带隙更准但耗时高一个量级。"></textarea></div></div>'
+};
+var FILL_FIELDS = {
+  3: [['f1a', '第 1 题的「材料种类①」'],
+      ['f1b', '第 1 题的「材料种类②」'],
+      ['f1c', '第 1 题的「材料种类③」'],
+      ['f1d', '第 1 题的「文献综述①」'],
+      ['f1e', '第 1 题的「文献综述②」'],
+      ['f2',  '第 2 题「需要改性的地方」'],
+      ['f3',  '第 3 题「调控策略的实施方法」'],
+      ['f4a', '第 4 题的「研究文献」'],
+      ['f4b', '第 4 题的「主要研究结论」']],
+  4: [['f41',  '第 1 题「计算方案」'],
+      ['f42a', '第 2 题的「晶体结构选取」'],
+      ['f42b', '第 2 题的「超胞设置」'],
+      ['f43a', '第 3 题的「计算软件①」'],
+      ['f43b', '第 3 题的「计算软件②」'],
+      ['f43c', '第 3 题「计算软件的基本原理」'],
+      ['f44',  '第 4 题「计算流程」']],
+  5: [['f51', '第 1 题的「空间群」'],
+      ['f52', '第 1 题的「晶格常数 a=b」'],
+      ['f53', '第 1 题的「晶格常数 c」'],
+      ['f54', '第 1 题的「原子总数」'],
+      ['f55', '第 1 题的「C 原子数」'],
+      ['f56', '第 1 题的「N 原子数」'],
+      ['f57', '第 2 题的「结构文件」'],
+      ['f58', '第 2 题「核验方法与结果」'],
+      ['f59', '第 3 题「调控方法的具体实施」']],
+  6: [['f61', '第 1 题「INCAR 的作用」'],
+      ['f62', '第 1 题「POSCAR 的作用」'],
+      ['f63', '第 1 题「KPOINTS 的作用」'],
+      ['f64', '第 1 题「POTCAR 的作用」'],
+      ['f65', '第 2 题「ENCUT 的物理含义」'],
+      ['f66', '第 3 题「PBE 的物理含义」'],
+      ['f67', '第 3 题「HSE06 的物理含义」']]
+};
+var FILL_BUILD = {
+  3: function(v){
+    return '【第 3 步 · 智能体研究资料调研｜任务说明问题作答复】\n' +
+      '1. 光催化分解水材料的种类：' + v('f1a') + '、' + v('f1b') + '、' + v('f1c') +
+      '；g-C₃N₄ 的典型文献综述：' + v('f1d') + '；' + v('f1e') + '\n' +
+      '2. g-C₃N₄ 作为光催化材料需要改性的地方：' + v('f2') + '\n' +
+      '3. 掺杂、缺陷、应变等调控策略在第一性原理计算中的具体实施策略：' + v('f3') + '\n' +
+      '4. 第一性原理对 g-C₃N₄ 光催化材料的研究文献：' + v('f4a') +
+      '；其主要研究结论：' + v('f4b');
+  },
+  4: function(v){
+    return '【第 4 步 · 智能体辅助方案设计｜任务说明问题作答复】\n' +
+      '1. 光催化分解水材料的计算方案：' + v('f41') + '\n' +
+      '2. 晶体结构选取：' + v('f42a') + '；超胞设置：' + v('f42b') + '\n' +
+      '3. 典型的计算软件：' + v('f43a') + '、' + v('f43b') + '；其基本原理：' + v('f43c') + '\n' +
+      '4. 计算流程（文字描述）：' + v('f44');
+  },
+  5: function(v){
+    return '【第 5 步 · 智能体生成结构模型｜任务说明问题作答复】\n' +
+      '1. g-C₃N₄ 原胞：空间群 ' + v('f51') + '；晶格常数 a=b=' + v('f52') + ' Å、c=' + v('f53') +
+      ' Å；共 ' + v('f54') + ' 个原子（C ' + v('f55') + ' 个、N ' + v('f56') + ' 个）\n' +
+      '2. 生成的结构文件：' + v('f57') + '；核验方法与结果：' + v('f58') + '\n' +
+      '3. 能带调控方法（掺杂/缺陷/应变）的具体实施：' + v('f59');
+  },
+  6: function(v){
+    return '【第 6 步 · 输入文件生成与核验｜任务说明问题作答复】\n' +
+      '1. VASP 输入文件的作用：INCAR—' + v('f61') + '；POSCAR—' + v('f62') +
+      '；KPOINTS—' + v('f63') + '；POTCAR—' + v('f64') + '\n' +
+      '2. 平面波截断能（ENCUT）的物理含义：' + v('f65') + '\n' +
+      '3. 交换关联泛函的物理含义：PBE—' + v('f66') + '；HSE06—' + v('f67');
+  }
+};
 function fillVal(id){ var el = document.getElementById(id); return el ? el.value.trim() : ''; }
 function collectFill(){
-  for(var i = 0; i < FILL_FIELDS.length; i++){
-    if(!fillVal(FILL_FIELDS[i][0])) return {err: '请补全' + FILL_FIELDS[i][1] + '（每空必填）。'};
+  var fl = FILL_FIELDS[cur];
+  for(var i = 0; i < fl.length; i++){
+    if(!fillVal(fl[i][0])) return {err: '请补全' + fl[i][1] + '（每空必填）。'};
   }
-  var v = fillVal;
-  return {text:
-    '【第 3 步 · 智能体研究资料调研｜任务说明问题作答复】\n' +
-    '1. 光催化分解水材料的种类：' + v('f1a') + '、' + v('f1b') + '、' + v('f1c') +
-    '；g-C₃N₄ 的典型文献综述：' + v('f1d') + '；' + v('f1e') + '\n' +
-    '2. g-C₃N₄ 作为光催化材料需要改性的地方：' + v('f2') + '\n' +
-    '3. 掺杂、缺陷、应变等调控策略在第一性原理计算中的具体实施策略：' + v('f3') + '\n' +
-    '4. 第一性原理对 g-C₃N₄ 光催化材料的研究文献：' + v('f4a') +
-    '；其主要研究结论：' + v('f4b')};
+  return {text: FILL_BUILD[cur](fillVal)};
 }
 function clearFill(){
-  FILL_FIELDS.forEach(function(f){ var el = document.getElementById(f[0]); if(el) el.value = ''; });
+  var w = document.getElementById('fillWrap');
+  if(!w) return;
+  var els = w.querySelectorAll('input,textarea');
+  for(var i = 0; i < els.length; i++) els[i].value = '';
 }
-/* 第 3 步显示填空题；其它步骤显示自由文本提交 */
+/* 第 3–6 步显示按步骤生成的填空题；其它步骤显示自由文本提交 */
 function setSubMode(i){
   var fill = document.getElementById('fillWrap'), free = document.getElementById('freeWrap');
   if(!fill || !free) return;
-  var isFill = (i === 3);
-  fill.style.display = isFill ? '' : 'none';
-  free.style.display = isFill ? 'none' : '';
+  var tpl = FILL_HTML[i] || '';
+  fill.style.display = tpl ? '' : 'none';
+  fill.innerHTML = tpl ? '<div class="hint" style="margin:0 0 8px">对照任务说明逐题作答，<b>每空必填</b>；文献按「作者. 题目. 期刊, 年份」写全，便于教师端核验。</div>' + tpl : '';
+  free.style.display = tpl ? 'none' : '';
   var h = document.getElementById('subH4');
-  if(h) h.innerHTML = isFill ? '② 提交调研结果<span style="font-weight:400;font-size:12px;color:#9aa7b6">　按任务说明填空作答，附件可选</span>'
-                            : '② 提交作业结果';
+  if(h) h.innerHTML = tpl ? '① 提交结果<span style="font-weight:400;font-size:12px;color:#9aa7b6">　按任务说明填空作答，附件可选</span>'
+                          : '① 提交作业结果';
 }
 function doSubmit(){
   var kind  = document.getElementById('subKind').value;
   var step  = CUR_STEP || ('第' + cur + '步 · ' + (STEPS[cur] ? STEPS[cur][0] : '课后成果'));
   var title = step + '（' + (user ? user.name : '') + '）';   // 标题自动生成，无需学生填写
   var content = '';
-  if(cur === 3){                      /* 第 3 步：从填空题收集（每空必填） */
+  if(FILL_HTML[cur]){                 /* 第 3–6 步：从填空题收集（每空必填） */
     var cf = collectFill();
     if(cf.err){ setSubMsg(cf.err, false); return; }
     content = cf.text;
@@ -1008,7 +1084,7 @@ function doSubmit(){
     }
     api('/api/submit', payload, function(res){
       if(res.ok){
-        if(cur === 3) clearFill();
+        if(FILL_HTML[cur]) clearFill();
         else document.getElementById('subContent').value = '';
         fileEl.value = '';
         document.getElementById('fileInfo').textContent = '';

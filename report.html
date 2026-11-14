@@ -133,17 +133,8 @@
        报告建议结构：研究背景 → 计算方法（VASP/PBE、ENCUT、K 网格）→ 结果与讨论（带隙 / 带边 / 光催化活性）→ 结论与展望。</p>
   </div>
 
-  <div class="panel" id="aiPanel">
-    <h3>① 与智能体"小碳老师"讨论计算结果<span style="font-size:12px;color:#7a8798;font-weight:normal">· 由学校网络中心大模型平台（DeepSeek）驱动</span></h3>
-    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-      <button class="go-btn" onclick="aiOpen()">💬 打开小碳老师（右侧悬窗）</button>
-      <span class="hint" style="margin:0">对话已改为独立浮窗：点右上角「🤖 小碳老师」标签或此按钮随时展开，边聊边往下写报告，不再挤占本页版面。收起后对话记录仍在。</span>
-    </div>
-    <div class="hint">与 AI 助教"小碳老师"（自建 DeepSeek，需登录实验账号）讨论计算结果的物理含义，建议围绕：① 计算得到的带隙值与可见光吸收范围（λg = 1240/Eg）的关系；② 带边位置（VBM/CBM）相对水的氧化还原电势（0 / −4.44 eV vs 真空）是否满足全解水；③ 双轴应变、O-掺杂、C-空位各自如何调控能带结构及其物理机理；④ ENCUT 与 K 网格收敛性测试结论。讨论完成后，请让助教按"研究背景 → 计算方法 → 结果与讨论 → 结论与展望"框架引导你梳理《材料筛选评估报告》思路，独立撰写后人工核验数据再到 ② 提交。对话记录全程留痕、教师端可查。</div>
-  </div>
-
   <div class="panel">
-    <h3>② 《材料筛选评估报告》提交</h3>
+    <h3>① 《材料筛选评估报告》提交</h3>
     <div class="meta">对应第 18 步"计算报告生成"、第 19 步"AI 报告点评与修改" · 成绩类型：实验报告</div>
     <p class="desc">将 AI 辅助生成的报告初稿按学术规范改写定稿后在此提交。支持上传 docx / pdf 附件（≤10MB），或直接粘贴报告正文（数据表、结论等）。若已让 AI 点评，请连同修改说明一起提交。</p>
     <input id="rptTitle" class="in" placeholder="报告标题，例如：《材料筛选评估报告——g-C3N4 体系光催化活性评估》">
@@ -157,7 +148,7 @@
   </div>
 
   <div class="panel">
-    <h3>③ 答辩反思提交</h3>
+    <h3>② 答辩反思提交</h3>
     <div class="meta">对应第 20 步"小组答辩与同伴互评"、第 21 步"反思与改进" · 成绩类型：答辩反思</div>
     <p class="desc">完成小组答辩后，撰写反思日志：本次实验中 <b>AI 的作用与局限</b>（三关流程：AI 生成 — 人工核验 — 计算验证）、自身<b>计算能力的成长与不足</b>（建模 / 收敛测试 / 后处理）、以及<b>下一步的改进方向</b>（如燃料电池催化、光伏材料等关联体系）。支持附件。</p>
     <textarea id="refContent" class="in" rows="7" placeholder="反思日志正文……"></textarea>
@@ -167,6 +158,15 @@
     </div>
     <button class="go-btn" onclick="doSubmit('ref')">📤 提交答辩反思</button>
     <span id="refMsg"></span>
+  </div>
+
+  <div class="panel" id="aiPanel">
+    <h3>③ 与智能体"小碳老师"讨论计算结果<span style="font-size:12px;color:#7a8798;font-weight:normal">· 由学校网络中心大模型平台（DeepSeek）驱动 · 自动留痕</span></h3>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+      <button class="go-btn" onclick="aiOpen()">💬 打开小碳老师（右侧悬窗）</button>
+      <span class="hint" style="margin:0">对话已改为独立浮窗：点右上角「🤖 小碳老师」标签或此按钮随时展开，边聊边往下写报告，不再挤占本页版面。收起后对话记录仍在。</span>
+    </div>
+    <div class="hint">与 AI 助教"小碳老师"（自建 DeepSeek，需登录实验账号）讨论计算结果的物理含义，建议围绕：① 计算得到的带隙值与可见光吸收范围（λg = 1240/Eg）的关系；② 带边位置（VBM/CBM）相对水的氧化还原电势（0 / −4.44 eV vs 真空）是否满足全解水；③ 双轴应变、O-掺杂、C-空位各自如何调控能带结构及其物理机理；④ ENCUT 与 K 网格收敛性测试结论。讨论完成后，请让助教按"研究背景 → 计算方法 → 结果与讨论 → 结论与展望"框架引导你梳理《材料筛选评估报告》思路，独立撰写并人工核验数据后到 ① 提交。对话记录全程留痕、教师端可查。</div>
   </div>
 
   <div class="panel">
