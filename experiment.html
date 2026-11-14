@@ -296,14 +296,53 @@ if(!user){ location.href = 'index.html'; }
 TOKEN = user && user.token ? user.token : '';
 document.getElementById('stuName').textContent = user ? (user.guest ? '访客（体验模式）' : user.name + '（' + user.sid + '）') : '—';
 
+/* ---------- 实验空间（ilab-x）步骤埋点 ----------
+   与 simulation.html 内的 ILAB 共用同一 localStorage 轨迹键 ilab_track_<sid>，
+   这样本页完成的第 1–4 步（预习测评/任务认领/调研/方案设计）真实证据，
+   会被仿真台最终回传时一并带上；未埋点的步骤由云函数按完成度赋分。
+   score 一律按百分制（后端据此折算该步满分）。 */
+var ILABX = (function(){
+  var KEY = 'ilab_track_' + (user ? user.sid : 'anon');
+  var t = { start: Date.now(), steps: [] };
+  try{
+    var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if(saved && saved.steps && typeof saved.start === 'number') t = saved;
+  }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(t)); }catch(e){} }
+  function find(title){
+    for(var i=0;i<t.steps.length;i++){ if(t.steps[i].title === title) return t.steps[i]; }
+    return null;
+  }
+  function mark(title, model, expect, score, spanSec){
+    var now = Date.now();
+    var sc = Math.max(0, Math.min(100, Math.round(score)));
+    var s = find(title);
+    if(s){                              /* 重做：刷新时间与得分，不新增行 */
+      s.repeatCount = (s.repeatCount || 1) + 1;
+      s.endTime = now;
+      s.timeUsed = Math.max(1, Math.round((now - s.startTime) / 1000));
+      s.score = Math.max(s.score || 0, sc);
+      save(); return s;
+    }
+    var span = Math.max(1, Math.round(spanSec || 60));
+    s = { seq: t.steps.length + 1, title: String(title).slice(0, 100),
+          startTime: now - span * 1000, endTime: now, timeUsed: span,
+          expectTime: expect || 300, maxScore: 100, score: sc, repeatCount: 1,
+          evaluation: '已完成', scoringModel: String(model || '按完成情况赋分').slice(0, 200), remarks: '' };
+    t.steps.push(s); save(); return s;
+  }
+  return { mark: mark };
+})();
+
+
 /* ---------- 研究资料调研 6 步（原阶段一，第一步拆为任务认领 + 预习测评） ---------- */
 var NSTEP = 6;
 var STAGES = [
   {name:'一、研究资料调研', from:1, to:6}
 ];
 var STEPS = {
-  1:['预习测评（光催化材料基础）','10分钟',10,'预习成绩','完成 10 道光催化材料基础选择题，交卷后系统实时评分并自动上传教师端，计入预习成绩。建议先复习光催化与 g-C₃N₄ 相关教材内容再作答。'],
-  2:['任务认领（企业委托书）','5分钟',2,'预习成绩','阅读企业研发委托书，了解"双碳"战略背景、光催化分解水研究的意义与 g-C₃N₄ 研究进展，明确本组研究任务并确认认领。'],
+  1:['预习测评（光催化材料基础）','10分钟',11,'预习成绩','完成 10 道光催化材料基础选择题，交卷后系统实时评分并自动上传教师端，计入预习成绩。建议先复习光催化与 g-C₃N₄ 相关教材内容再作答。'],
+  2:['任务认领（企业委托书）','5分钟',1,'预习成绩','阅读企业研发委托书，了解"双碳"战略背景、光催化分解水研究的意义与 g-C₃N₄ 研究进展，明确本组研究任务并确认认领。'],
   3:['智能体研究资料调研','12分钟',5,'预习成绩','与调研智能体对话。\n1. 调研光催化分解水材料的种类，重点梳理 g-C₃N₄ 的典型文献综述（以近 5 年为主）\n2. g-C₃N₄ 光催化材料的研究现状\n3. 梳理掺杂、缺陷、应变等调控策略\n4. 调研基于第一性原理对 g-C₃N₄ 光催化材料的相关研究结果\n形成文献调研报告，从"结果提交"处提交调研结果。'],
   4:['智能体辅助方案设计','8分钟',4,'操作成绩','与智能体对话讨论：\n1. 光催化分解水材料的计算方案。\n2. 晶体结构选取、超胞设置。\n3. 典型的计算软件及基本原理。\n4. 计算流程图。\n形成计算方案文档，从"结果提交"处提交方案结果。'],
   5:['智能体生成结构模型','10分钟',5,'操作成绩','与调研智能体对话讨论：\n1. 检索 g-C₃N₄ 原胞的空间群、晶格常数、原子坐标。\n2. 生成 g-C₃N₄ 的晶体结构文件，核验其正确性。\n3. g-C₃N₄ 材料的能带调控方法，包括掺杂、缺陷、应变。\n形成结构模型说明文档，从"结果提交"处提交。'],
@@ -312,6 +351,7 @@ var STEPS = {
 var DONE_KEY = 'ai_lab_progress_v2_' + (user ? user.sid : '');
 var done = {};
 try{ done = JSON.parse(localStorage.getItem(DONE_KEY) || '{}'); }catch(e){}
+var STEP_T0 = {};   /* 各步首次进入时刻，供实验空间埋点计算真实用时 */
 var cur = 1;
 for(var i=1;i<=NSTEP;i++){ if(!done[i]){ cur=i; break; } if(i===NSTEP) cur=NSTEP+1; }
 var CUR_STEP = '第' + (cur <= NSTEP ? cur : 1) + '步 · ' + STEPS[cur <= NSTEP ? cur : 1][0];
@@ -496,6 +536,7 @@ var QUIZ = [
 ];
 var QUIZ_KEY = 'ai_lab_quiz_' + (user ? user.sid : '');
 var quizSaved = null;
+var quizT0 = 0;   /* 本次开始答题时刻，用于回传第 1 步真实用时 */
 try{ quizSaved = JSON.parse(localStorage.getItem(QUIZ_KEY) || 'null'); }catch(e){}
 
 /* 随机抽题：题序洗牌取 10 道，每题选项顺序再洗牌（答案索引同步重映射） */
@@ -540,6 +581,7 @@ function renderSide(){
 function gotoStep(i){
   if(i < 1 || i > NSTEP + 1) return;
   cur = i;
+  if(i >= 3 && i <= NSTEP && !STEP_T0[i]) STEP_T0[i] = Date.now();
   syncStepTag();
   var btn = document.getElementById('submitBtn');
   var extra = document.getElementById('stepExtra');
@@ -609,6 +651,8 @@ function claimTask(){
   api('/api/log_search', {token: TOKEN, keywords: '[任务认领] 已阅读企业研发委托书并认领任务', mode: 'claim'}, function(res){
     if(res.ok){ msg.className = 'submsg-ok'; msg.textContent = '✓ 认领已记录。'; }
   });
+  /* 实验空间埋点 · 第 2 步：认领即视为该步达成（1 分，属过程性记录） */
+  ILABX.mark('任务认领（企业委托书）', '阅读委托书并确认认领', 300, 100, 120);
   submitStep();
 }
 
@@ -623,6 +667,7 @@ function renderQuiz(){
     return;
   }
   QUIZSET = pickQuiz();
+  if(!quizT0) quizT0 = Date.now();
   var html = '<div class="panel"><h3>📝 预习测评 · 光催化材料基础（随机 10 题）</h3>' +
     '<div class="hint" style="margin:0 0 12px">系统已从 50 题题库中为您随机抽取 10 题（每人试卷各不相同，选项顺序也已打乱）。全部作答后点击"交卷"，系统实时评分并自动上传教师端。下一步将呈现企业研发委托书，请阅读后确认认领任务。</div>';
   QUIZSET.forEach(function(q, i){
@@ -692,6 +737,10 @@ function gradeQuiz(){
   });
   quizSaved = {score: n, review: review};
   localStorage.setItem(QUIZ_KEY, JSON.stringify(quizSaved));
+  /* 实验空间埋点 · 第 1 步：按真实正确率赋分（后端按此折算该步 11 分满分） */
+  ILABX.mark('预习测评（光催化材料基础）', '测评正确率线性赋分（' + n + '/' + QUIZSET.length + '）', 600,
+             n / QUIZSET.length * 100,
+             Math.max(60, (Date.now() - (quizT0 || (Date.now() - 300000))) / 1000));
   msg.className = 'submsg-ok';
   msg.textContent = '交卷成功！得分 ' + n + ' / 10，成绩正在上传…';
   done[1] = true;
@@ -794,6 +843,20 @@ function onFilePick(){
   info.textContent = '已选：' + f.name + '（' + Math.round(f.size/1024) + ' KB）';
   info.className = 'submsg-ok';
 }
+/* ---------- 实验空间埋点：第 3 步调研 / 第 4 步方案设计（以"结果提交"为达成证据） ---------- */
+var ILAB_STEP_DEF = {
+  3: ['智能体研究资料调研', '综述核验通过与指标提炼质量', 720],
+  4: ['智能体辅助方案设计', '方案要素完整性', 480]
+};
+function ilabMarkSubmit(stepIdx, content, hasFile){
+  var d = ILAB_STEP_DEF[stepIdx];
+  if(!d) return;
+  var len = (content || '').length;
+  /* 有附件或正文≥50 字视为实质提交；仅简短几句记 85 分，留待教师端复核调分 */
+  var rate = hasFile ? 100 : (len >= 50 ? 100 : (len > 0 ? 85 : 60));
+  var span = Math.max(60, Math.round((Date.now() - (STEP_T0[stepIdx] || Date.now() - 300000)) / 1000));
+  ILABX.mark(d[0], d[1] + '（' + (hasFile ? '含附件' : len + ' 字正文') + '）', d[2], rate, span);
+}
 function doSubmit(){
   var kind  = document.getElementById('subKind').value;
   var step  = CUR_STEP || ('第' + cur + '步 · ' + (STEPS[cur] ? STEPS[cur][0] : '课后成果'));
@@ -816,6 +879,7 @@ function doSubmit(){
         document.getElementById('fileInfo').textContent = '';
         setSubMsg('✓ 提交成功，教师端已收到。', true);
         loadMine();
+        ilabMarkSubmit(cur, content, !!file);   /* 第 3/4 步：调研与方案设计的达成证据 */
       }else setSubMsg(res.msg || '提交失败', false);
     });
   };
