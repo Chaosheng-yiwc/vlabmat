@@ -217,15 +217,15 @@
       <div class="stp-body">
         <label style="font-size:12.5px;color:var(--sub)">平面波截断能 ENCUT</label>
         <select class="sel" id="encut">
-          <option value="500" selected>500 eV（第①层收敛测试确定）</option>
+          <option value="500" selected>500 eV（第①层收敛测试选定）</option>
         </select>
         <label style="font-size:12.5px;color:var(--sub);display:block;margin-top:7px">交换关联泛函（决定能带计算方法）</label>
         <select class="sel" id="func">
-          <option value="PBE" selected>PBE（GGA 半局域泛函，快速）</option>
-          <option value="HSE06">HSE06（杂化泛函，更接近实验）</option>
+          <option value="PBE" selected>PBE（GGA 半局域泛函）</option>
+          <option value="HSE06">HSE06（杂化泛函）</option>
         </select>
         <div class="hint" id="funcHint"></div>
-        <div class="hint">提示：K 网格内部固定 5×5×3（Γ 居中，已通过收敛测试）。先用 PBE 全系列筛选，再用 HSE06 对候选方案精确复核。</div>
+        <div class="hint">提示：K 网格内部固定 5×5×3（Γ 居中，已通过收敛测试）。泛函与体系、应变可自由组合提交计算，探索记录自动登记，第④步判读以你自己的计算结果为准。</div>
       </div>
     </div>
 
@@ -1069,18 +1069,14 @@ function showConcl(){
     (STATE.align ? ' · ' + STATE.align : '');
   document.getElementById('conclBox').innerHTML =
     '<b>结论面板：</b>当前体系 <b>' + chem(sys.name) + '</b>（ε = ' + STATE.strain + ' %）｜来源：' + src + '｜' +
-    '带隙 <b>Eg = ' + STATE.Eg.toFixed(2) + ' eV</b>（' + STATE.func + ' 值，对应吸收边 ~' + lam + ' nm' + (STATE.func === 'PBE' ? '；PBE 低估带隙，按实验值 2.7 eV 吸收边约 460 nm，落在可见光区' : '') + '）｜' +
+    '带隙 <b>Eg = ' + STATE.Eg.toFixed(2) + ' eV</b>（' + STATE.func + ' 值，对应吸收边 ~' + lam + ' nm' + '）｜' +
     'CBM = <b>' + nhe2ev(STATE.cbm).toFixed(2) + ' eV</b>、VBM = <b>' + nhe2ev(STATE.vbm).toFixed(2) + ' eV</b>（电子能量，真空参考；对应电位 ' + STATE.cbm.toFixed(2) + ' / ' + STATE.vbm.toFixed(2) + ' V vs NHE，pH=0；' + alignTxt + '）' +
     (STATE.defect ? '｜<span style="color:var(--red)">⚠ 禁带中出现 C 空位缺陷能级（复合中心）</span>' : '') + '｜' +
     (straddle ? '<span class="ans-ok">✓ CBM(' + nhe2ev(STATE.cbm).toFixed(2) + ' eV) 在 H⁺/H₂(' + nhe2ev(rl.red).toFixed(2) +
                 ' eV) 之上、VBM(' + nhe2ev(STATE.vbm).toFixed(2) + ' eV) 在 O₂/H₂O(' + nhe2ev(rl.ox).toFixed(2) +
-                ' eV) 之下，满足全解水热力学条件（pH = ' + rl.ph + '；精确判据建议用 HSE06 复核）</span>'
+                ' eV) 之下，满足全解水热力学条件（pH = ' + rl.ph + '，判据基于你本次计算的带边）</span>'
               : '<span class="ans-no">✗ 不满足全解水热力学条件（pH = ' + rl.ph + '，带边未包住水的氧化还原电位）</span>' +
-                '<div class="hint" style="margin-top:4px">注：PBE 会低估带隙（本体系 Eg = ' + STATE.Eg.toFixed(2) +
-                ' eV，而实验值约 2.7 eV），导致带边位置与实验值存在较大差异；该结论请用 HSE06 矫正后再作最终判断。' +
-                '若以实验带隙 2.7 eV 锚定（中点 ' + nhe2ev((STATE.vbm + STATE.cbm) / 2).toFixed(2) + ' eV），CBM ≈ ' +
-                nhe2ev((STATE.vbm + STATE.cbm) / 2 + 1.35).toFixed(2) + ' eV、VBM ≈ ' +
-                nhe2ev((STATE.vbm + STATE.cbm) / 2 - 1.35).toFixed(2) + ' eV（电子能量），带边包住水的氧化还原电位，与文献报道一致。</div>');
+                '<div class="hint" style="margin-top:4px">注：以上判据基于你本次所选泛函与参数计算的带隙和带边。不同泛函给出的带隙不同，请把你的计算结果与实验测量带隙对比后，在第④步判读题中回答。</div>');
   /* 结论面板内的 Unicode 上下标统一转成 <sub>/<sup>（HTML 已生成，再对文本做一次替换即可） */
   var _cb = document.getElementById('conclBox');
   _cb.innerHTML = chem(_cb.innerHTML);
