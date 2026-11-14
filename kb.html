@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <link rel="icon" type="image/png" href="favicon.png">
+
+<script>
+/* 云端 API 网关适配：内网部署直连本地 server；公网(静态托管)走云函数网关 */
+(function(){
+  var h = location.hostname || "";
+  if (/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|localhost$|127\.)/.test(h)) return;
+  var GW = "https://vlabmat-d9gh3999c21421e1b.service.tcloudbase.com/apigw";
+  var _f = window.fetch ? window.fetch.bind(window) : null;
+  if (!_f) return;
+  window.fetch = function(input, init){
+    init = init || {};
+    var url = (typeof input === "string") ? input : (input && input.url) || "";
+    if (url.indexOf("/api/") === 0) {
+      var route = url.split("?")[0];
+      var body = {};
+      if (init.body) { try { body = JSON.parse(init.body); } catch (e) { body = { _raw: String(init.body) }; } }
+      body.__route = route;
+      init.method = "POST";
+      init.body = JSON.stringify(body);
+      var hh = Object.assign({}, init.headers || {});
+      delete hh["Content-Type"];
+      delete hh["content-type"];
+      init.headers = hh;  /* 无 Content-Type = CORS 简单请求，跳过 OPTIONS 预检 */
+      return _f(GW, init);
+    }
+    return _f(input, init);
+  };
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>实验知识库 · 文献 / 结构 / 数据 / 讲义</title>
+<style>
+  :root{--ink:#1a2332;--sub:#5a6b80;--line:#dfe6ee;--bg:#f3f6fa;--blue:#1a5dab;--blue-d:#12447e;
+        --gold:#c9a227;--green:#2e8b57;--card:#fff}
+  *{margin:0;padding:0;box-sizing:border-box}
+  sub,sup{font-size:.72em;line-height:0;position:relative;vertical-align:baseline}
+  sub{bottom:-.25em}
+  sup{top:-.42em}
+  body{font-family:"Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);
+       min-height:100vh;display:flex;flex-direction:column}
+  .topbar{background:linear-gradient(135deg,#0e3a6d,#1a5dab);color:#fff;padding:10px 20px;
+          display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+  .topbar .t{font-size:16px;font-weight:700}
+  .topbar .meta{font-size:13.5px;display:flex;gap:18px;align-items:center}
+  .topbar a{color:#cfe0f2;text-decoration:none}
+  .topbar a:hover{color:#fff}
+  .wrap{max-width:1080px;width:100%;margin:0 auto;padding:16px 18px 40px;flex:1}
+  .toolbar{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+           display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .toolbar input{flex:1;min-width:240px;padding:9px 14px;border:1.5px solid #c3cfdd;border-radius:9px;
+                 font-size:14px;outline:none}
+  .toolbar input:focus{border-color:var(--blue)}
+  .btn{background:var(--blue);color:#fff;border:none;border-radius:9px;padding:9px 20px;
+       font-size:14px;font-weight:600;cursor:pointer}
+  .btn:hover{background:var(--blue-d)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .chip{background:var(--card);border:1.5px solid var(--line);border-radius:20px;padding:5px 16px;
+        font-size:13px;color:var(--sub);cursor:pointer;user-select:none}
+  .chip.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  .hint-bar{font-size:12.8px;color:var(--sub);margin-bottom:12px;line-height:1.7}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+  .kb-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;
+           display:flex;flex-direction:column;gap:8px}
+  .kb-card .cat{display:inline-block;font-size:11.5px;font-weight:700;border-radius:5px;padding:2px 8px;width:max-content}
+  .cat-lit{background:#eaf2fb;color:#1a5dab}
+  .cat-struct{background:#eafaf1;color:#1e7a46}
+  .cat-data{background:#fff6e5;color:#8a6d1a}
+  .cat-guide{background:#f4edfb;color:#6b3fa0}
+  .kb-card h3{font-size:14.5px;line-height:1.55;color:var(--ink)}
+  .kb-card .src{font-size:12.3px;color:var(--sub);line-height:1.6}
+  .kb-card .sum{font-size:13px;line-height:1.75;color:#2c3b4e}
+  .tags{display:flex;gap:5px;flex-wrap:wrap}
+  .tag{background:#f0f4f9;border-radius:4px;padding:1.5px 7px;font-size:11.5px;color:#48607a}
+  .kb-card details{font-size:12.8px;color:#2c3b4e;line-height:1.8}
+  .kb-card details summary{cursor:pointer;color:var(--blue);font-size:12.5px;user-select:none}
+  .kb-card .foot{display:flex;gap:10px;align-items:center;margin-top:auto;flex-wrap:wrap}
+  .kb-card .foot a{font-size:12.5px;color:var(--blue);text-decoration:none;font-weight:600}
+  .kb-card .foot a:hover{text-decoration:underline}
+  .mini{font-size:12px;border:1px solid var(--line);background:#f7fafd;border-radius:7px;
+        padding:5px 10px;cursor:pointer;color:#2c5a8a}
+  .mini:hover{background:#eaf2fb}
+  .empty{grid-column:1/-1;text-align:center;color:var(--sub);padding:40px 0;font-size:14px}
+  #msg{font-size:13px;margin:6px 2px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="t">📚 实验知识库 · 文献 / 结构 / 数据 / 方法讲义</div>
+  <div class="meta">
+    <span>学生：<b id="stuName">游客</b></span>
+    <a href="lab.html">返回首页</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="toolbar">
+    <input id="q" placeholder="搜索：如 掺杂 / 应变 / 带隙 / vacancy / ENCUT / 氧化还原电位 …" onkeydown="if(event.key==='Enter')doSearch()">
+    <button class="btn" onclick="doSearch()">🔍 检索</button>
+  </div>
+  <div class="chips" id="chips">
+    <span class="chip on" data-cat="all" onclick="pickCat(this)">全部</span>
+    <span class="chip" data-cat="lit" onclick="pickCat(this)">📖 文献</span>
+    <span class="chip" data-cat="struct" onclick="pickCat(this)">🧊 结构与电位</span>
+    <span class="chip" data-cat="data" onclick="pickCat(this)">📊 平台数据</span>
+    <span class="chip" data-cat="guide" onclick="pickCat(this)">🧭 方法讲义</span>
+  </div>
+  <div class="hint-bar">
+    本知识库由教师整理维护：文献条目均经核实、附真实出处（DOI 可直达原文）；小碳老师回答文献类问题时只会引用本库条目。点击卡片底部「详细内容」展开全文摘要。
+  </div>
+  <div id="msg"></div>
+  <div class="cards" id="cards"><div class="empty">正在加载知识库……</div></div>
+</div>
+
+<script>
+var _SUBMAP = {'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','₊':'+','₋':'−','ₓ':'x'};
+var _SUPMAP = {'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁺':'+','⁻':'−','ⁿ':'n'};
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+/* 常见化学式转真上下标标签（在 esc 之后、按最长优先替换） */
+function fchem(s){
+  var reps = [
+    [/g-C3N4/g, 'g-C<sub>3</sub>N<sub>4</sub>'],
+    [/C3N4/g,  'C<sub>3</sub>N<sub>4</sub>'],
+    [/C9N12/g, 'C<sub>9</sub>N<sub>12</sub>'],
+    [/H2O/g,   'H<sub>2</sub>O'],
+    [/CO2/g,   'CO<sub>2</sub>'],
+    [/Cr\(VI\)/g, 'Cr(VI)'],
+    [/H2/g,    'H<sub>2</sub>'],
+    [/O2/g,    'O<sub>2</sub>'],
+    [/H\+\/H/g, 'H<sup>+</sup>/H'],
+    [/O2?\\\/H/g, 'O<sub>2</sub>/H']
+  ];
+  var out = String(s == null ? '' : s);
+  reps.forEach(function(r){ out = out.replace(r[0], r[1]); });
+  return out;
+}
+function fesc(s){ return fchem(esc(s)); }
+
+var user = null;
+try{ user = JSON.parse(localStorage.getItem('ai_lab_auth') || 'null'); }catch(e){}
+var CATN = { lit: '文献', struct: '结构与电位', data: '平台数据', guide: '方法讲义' };
+var CATCLS = { lit: 'cat-lit', struct: 'cat-struct', data: 'cat-data', guide: 'cat-guide' };
+var curCat = 'all';
+
+if (user && user.name) document.getElementById('stuName').textContent = user.name;
+
+function doSearch(){ load(); }
+function pickCat(el){
+  document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+  el.classList.add('on');
+  curCat = el.dataset.cat;
+  load();
+}
+
+function load(){
+  var msg = document.getElementById('msg');
+  var body = { q: document.getElementById('q').value.trim(), cat: curCat };
+  if (user && user.token) body.token = user.token;
+  document.getElementById('cards').innerHTML = '<div class="empty">正在加载知识库……</div>';
+  fetch('/api/kb', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (!res.ok){
+        document.getElementById('cards').innerHTML = '';
+        msg.innerHTML = '<span style="color:var(--gold)">' + esc(res.msg || '加载失败') +
+          (res.msg && res.msg.indexOf('登录') >= 0 ? '，请先<a href="lab.html" style="color:var(--blue)">返回首页登录</a>（访客亦可浏览）。' : '') + '</span>';
+        return;
+      }
+      render(res.items || [], res.total || 0);
+    })
+    .catch(function(){
+      document.getElementById('cards').innerHTML = '<div class="empty">服务器连接失败，请稍后重试。</div>';
+    });
+}
+
+function render(items, total){
+  var msg = document.getElementById('msg');
+  msg.innerHTML = '共 ' + items.length + ' 条' +
+    (items.length !== total ? '（库内合计 ' + total + ' 条）' : '') +
+    '　<span style="color:#8a97a6">数据更新于教师最近一次维护；发现资料有误请通过小碳老师或教师反馈。</span>';
+  var box = document.getElementById('cards');
+  if (!items.length){
+    box.innerHTML = '<div class="empty">没有匹配的知识条目——换个关键词试试（如「掺杂」「应变」「带隙」「vacancy」），或清空检索词浏览全部。</div>';
+    return;
+  }
+  box.innerHTML = items.map(function(it){
+    var h = '<div class="kb-card">' +
+      '<span class="cat ' + (CATCLS[it.cat] || '') + '">' + (CATN[it.cat] || it.cat) + ' · ' + esc(it.id) + '</span>' +
+      '<h3>' + fesc(it.title) + '</h3>' +
+      (it.sub ? '<div class="src">' + fesc(it.sub) + '</div>' : '') +
+      '<div class="sum">' + fesc(it.summary) + '</div>' +
+      (it.content ? '<details><summary>详细内容</summary><div style="margin-top:6px">' + fesc(it.content) + '</div></details>' : '') +
+      '<div class="tags">' + (it.tags || []).map(function(t){ return '<span class="tag">' + fesc(t) + '</span>'; }).join('') + '</div>' +
+      '<div class="foot">' +
+        (it.doi ? (/^S/i.test(it.doi)
+          ? '<a href="https://www.sciencedirect.com/science/article/pii/' + esc(it.doi) + '" target="_blank" rel="noopener">📄 原文（ScienceDirect）</a>'
+          : '<a href="https://doi.org/' + esc(it.doi) + '" target="_blank" rel="noopener">🔗 DOI: ' + esc(it.doi) + '</a>') : '') +
+        (it.id === 'S1' ? '<button class="mini" onclick="copyPoscar(this)">📋 复制 POSCAR</button>' : '') +
+      '</div></div>';
+    return h;
+  }).join('');
+}
+
+function copyPoscar(btn){
+  btn.disabled = true; btn.textContent = '正在获取……';
+  var body = {};
+  if (user && user.token) body.token = user.token;
+  fetch('/api/structure_builtin', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (!res.ok || !res.poscar) throw new Error(res.msg || '获取失败');
+      return navigator.clipboard.writeText(res.poscar).then(function(){
+        btn.textContent = '✓ 已复制到剪贴板';
+      }, function(){
+        showPoscarFallback(res.poscar);   /* 剪贴板被拒绝（http 非 https 等）→ 弹层手动复制 */
+        btn.textContent = '📋 复制 POSCAR';
+      });
+    })
+    .catch(function(e){
+      alert(e.message || '获取失败');
+      btn.textContent = '📋 复制 POSCAR';
+    })
+    .then(function(){ btn.disabled = false; setTimeout(function(){ btn.textContent = '📋 复制 POSCAR'; }, 3000); });
+}
+function showPoscarFallback(text){
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:99';
+  d.innerHTML = '<div style="background:#fff;border-radius:12px;padding:18px;max-width:560px;width:92%">' +
+    '<b>POSCAR（请手动全选复制）</b><textarea readonly style="width:100%;height:300px;margin-top:8px;font-family:monospace;font-size:12px"></textarea>' +
+    '<div style="text-align:right;margin-top:8px"><button class="mini" onclick="this.closest(\'div\').parentNode.parentNode.remove()">关闭</button></div></div>';
+  document.body.appendChild(d);
+  d.querySelector('textarea').value = text;
+  d.querySelector('textarea').select();
+}
+
+load();
+</script>
+</body>
+</html>
