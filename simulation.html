@@ -952,11 +952,18 @@ function buildQuiz(cv){
     '<div style="background:#eef4fb;border:1.5px solid #cfe0f2;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.5px;line-height:1.9;color:#1c2a3a">' +
     '<b style="color:#0e3a6d">🎯 对照实验目标作答</b>：目标一=学会选择准确计算 g-C<sub>3</sub>N<sub>4</sub> 电子结构的泛函、截断能等参数（Q1–Q6）；目标二=探索应变、O 掺杂、C 缺陷调控，找到最佳光催化性能调控手段（Q7–Q8）。数值保留两位小数；带边以电子能量表示（eV，真空能级参考）。</div>' +
 
+    '<div style="background:#eefaf1;border:1.5px solid #bfe3cd;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.2px;line-height:1.95;color:#14432a">' +
+    '<b style="color:#0e5a32">📐 光催化全解水三要素</b>（读谱、判题与 Q7/Q8 方案设计的统一标尺）：<br>' +
+    '① 材料必须是<b>半导体</b>：金属没有带隙，光生电子-空穴对瞬间复合，无法积累氧化还原能力；<br>' +
+    '② <b>带隙 Eg &gt; 1.23 eV</b>（OH<sup>−</sup>/O<sub>2</sub> 氧化电位与 H<sup>+</sup>/H<sub>2</sub> 还原电位之差）：带隙太小，载流子寿命低、电位差不足以驱动两个半反应；带隙太大，可见光利用率低（吸收边 λ = 1240/Eg，Eg 越大吸收边越蓝移）；<br>' +
+    '③ <b>价带顶能量低于 OH<sup>−</sup>/O<sub>2</sub> 氧化电位（−5.67 eV），导带底能量高于 H<sup>+</sup>/H<sub>2</sub> 还原电位（−4.44 eV）</b>——带边要"包住"水的氧化还原电位线；<br>' +
+    '④ 吸收光谱中<b>可见光吸收区域越大</b>，太阳光利用率越高。</div>' +
+
     '<div style="font-size:15px;font-weight:700;color:#0e3a6d;margin:4px 0 6px">🧭 目标一检验 · 你算得准吗？（泛函 / 截断能等参数方法，Q1–Q6）</div>' +
-    '<div class="hint" style="margin-bottom:5px">根据第③步计算结果与本次计算体验填空。</div>' +
-    '<label>Q1. 导带底（CBM）能量为 <input ' + inp2 + ' id="q1"> eV（带边图上方，导带的下边界）</label>' +
-    '<label>Q2. 价带顶（VBM）能量为 <input ' + inp + ' id="q2"> eV（带边图下方，价带的上边界）</label>' +
-    '<label>Q3. 带隙 Eg 为 <input ' + inp3 + ' id="q3"> eV</label>' +
+    '<div class="hint" style="margin-bottom:5px">根据第③步计算结果与本次计算体验填空，并对照上方三要素判读结果。</div>' +
+    '<label>Q1. 导带底（CBM）能量为 <input ' + inp2 + ' id="q1"> eV（带边图上方，导带的下边界；三要素③：须高于 H<sup>+</sup>/H<sub>2</sub> 的 −4.44 eV 方可还原水产氢）</label>' +
+    '<label>Q2. 价带顶（VBM）能量为 <input ' + inp + ' id="q2"> eV（带边图下方，价带的上边界；三要素③：须低于 OH<sup>−</sup>/O<sub>2</sub> 的 −5.67 eV 方可氧化水产氧）</label>' +
+    '<label>Q3. 带隙 Eg 为 <input ' + inp3 + ' id="q3"> eV（三要素②：须大于 1.23 eV，且不宜过大以免可见光利用率下降）</label>' +
     '<label style="margin-top:8px">Q4. 计算值与实验值（g-C<sub>3</sub>N<sub>4</sub> 实验带隙约 2.7 eV）存在差异，除泛函近似的影响外（Q5 已单独考察），还有哪些原因？</label>' +
     '<textarea class="sel" id="q4" rows="3" style="width:100%;resize:vertical" placeholder="可从温度（0 K 理想晶体）、缺陷、层间堆垛、测量方法等角度分析……"></textarea>' +
     '<label style="margin-top:8px">Q5. PBE 泛函会 <select id="q5sel" class="sel" style="display:inline-block;width:100px;padding:4px 8px;margin:0 4px">' +
@@ -975,7 +982,7 @@ function buildQuiz(cv){
     '<label>Q7. 结合你自己的计算：为使 g-C<sub>3</sub>N<sub>4</sub> 保持可见光响应并提升全解水能力，三种调控手段中最值得采用的是' + gsel + '</label>' +
     '<textarea class="sel" id="q7" rows="2" style="width:100%;resize:vertical;margin-top:4px" placeholder="说明理由：可从带隙是否适中、是否引入有害缺陷能级、带边是否包住水的氧化还原电位、是否需要外场维持等角度分析……"></textarea>' +
     '<label style="margin-top:8px">Q8. 综合两个实验目标，写出你认为 g-C<sub>3</sub>N<sub>4</sub> 光催化性能的最佳调控方案</label>' +
-    '<textarea class="sel" id="q8" rows="3" style="width:100%;resize:vertical" placeholder="应包含：① 选用哪种调控手段及其参数（如 O 掺杂 / 应变幅度）；② 用什么泛函、截断能等参数保证结果可靠；③ 预期的带隙、带边位置与全解水判据是否满足。"></textarea>' +
+    '<textarea class="sel" id="q8" rows="3" style="width:100%;resize:vertical" placeholder="应包含：① 选用哪种调控手段及其参数（如 O 掺杂 / 应变幅度）；② 用什么泛函、截断能等参数保证结果可靠；③ 预期的带隙、带边位置对照三要素逐条自检（半导体 / Eg > 1.23 eV / 带边包住水的氧化还原电位），可见光吸收是否改善。"></textarea>' +
     '<div style="margin-top:9px"><button class="go-btn" onclick="gradeQuiz()">✓ 提交判读</button> <span id="quizMsg"></span></div>';
   STATE.answered = false;
 }
@@ -1013,14 +1020,15 @@ function gradeQuiz(){
   /* 目标二 Q8：方案三要素——手段、参数可靠性、活性判据 */
   var q8hit = hitGroups(q8, [['o 掺杂','o掺杂','掺杂','应变','空位','缺陷'],
                              ['hse','泛函','截断','encut','收敛','参数','scissor','剪刀'],
-                             ['带边','cbm','vbm','氧化还原','nhe','ph','全解水','光催化','活性']]);
+                             ['带边','cbm','vbm','氧化还原','nhe','ph','全解水','光催化','活性',
+                              '1.23','半导体','载流子','电子-空穴','电子空穴','吸收']]);
   var ref = '参考答案：Q1 导带底 CBM = ' + nhe2ev(STATE.cbm).toFixed(2) + ' eV（= ' + STATE.cbm.toFixed(2) + ' V vs NHE，带边图上方，能量高于 H⁺/H₂，光生电子可还原产氢）；Q2 价带顶 VBM = ' + nhe2ev(STATE.vbm).toFixed(2) +
     ' eV（= ' + STATE.vbm.toFixed(2) + ' V vs NHE，带边图下方，能量低于 O₂/H₂O，光生空穴可氧化产氧）；' +
     'Q4：理论计算对应 0 K 下理想完整的晶体模型，而实验样品受温度、缺陷浓度、层间堆垛与尺寸、测量方法（如 Tauc 外推）等影响，故存在差异；' +
     'Q5：PBE 低估带隙，可用剪刀算符（scissor operator，或换用 HSE06 杂化泛函）矫正；' +
     'Q6：PBE 耗时约为 HSE06 的 1/5（即 HSE06 ≈ PBE 的 5 倍，见第③步日志），PBE 适合定性筛选、HSE06 适合定量分析；' +
     'Q7：推荐 O-掺杂或适度应变——C-空位使带隙骤降并在禁带引入缺陷能级（光生载流子复合中心），不利；O-掺杂带隙适中、带边可调且对应变不敏感，性能稳健；应变可连续调节带隙但需外场维持。判据上：带边越靠近 H⁺/H₂ 与 O₂/H₂O 电位（过电位越小）越好，可通过 pH 调整氧化还原电位、按可见光吸收最强的结构定型；' +
-    'Q8：示例方案——O-掺杂 g-C₃N₄（ε = 0）+ HSE06（ENCUT ≥ 500 eV，K 网格经收敛测试）验证带边：CBM 高于 H⁺/H₂、VBM 低于 O₂/H₂O，满足全解水热力学条件，即"掺杂调性能 + HSE06 保精度 + 带边判活性"。';
+    'Q8：示例方案——O-掺杂 g-C₃N₄（ε = 0）+ HSE06（ENCUT ≥ 500 eV，K 网格经收敛测试）验证带边，按三要素自检：① g-C₃N₄ 为半导体 ✓；② Eg ≈ 2.5 eV > 1.23 eV，既保证载流子寿命又保持可见光响应（吸收边约 490 nm）✓；③ CBM 高于 H⁺/H₂、VBM 低于 O₂/H₂O，带边包住水的氧化还原电位 ✓——即"掺杂调性能 + HSE06 保精度 + 三要素判活性"。';
   var q4hit = q4Reasonable(q4);
   var res = [
     [Math.abs(q1 - nhe2ev(STATE.cbm)) <= FILL_TOL, 'Q1 导带底：正确 ' + nhe2ev(STATE.cbm).toFixed(2) + ' eV（电子能量；= ' + STATE.cbm.toFixed(2) + ' V vs NHE）', 10],
