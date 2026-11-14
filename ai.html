@@ -46,8 +46,11 @@
   :root{--ink:#1a2332;--sub:#5a6b80;--line:#dfe6ee;--bg:#f3f6fa;--blue:#1a5dab;--blue-d:#12447e;
         --gold:#c9a227;--green:#2e8b57;--card:#fff}
   *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  /* 定高不滚动：整体按视口高度切分，只有 .msgs 内部滚动，输入框常驻底部 */
   body{font-family:"Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);
-       min-height:100vh;display:flex;flex-direction:column}
+       height:100vh;max-height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  @supports (height:100dvh){body{height:100dvh;max-height:100dvh}}
   .topbar{background:linear-gradient(135deg,#0e3a6d,#1a5dab);color:#fff;padding:10px 20px;
           display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
   .topbar .t{font-size:16px;font-weight:700}
@@ -57,7 +60,7 @@
   .jump{background:var(--gold);color:#3a2c00;padding:4px 12px;border-radius:6px;font-weight:700}
   .wrap{flex:1;display:flex;flex-direction:column;max-width:860px;width:100%;margin:0 auto;
         padding:18px 16px 14px;min-height:0}
-  body.embed .wrap{padding:10px 12px 8px;max-width:none}
+  body.embed .wrap{padding:10px 12px 10px;max-width:none}
   .hero{background:linear-gradient(135deg,#12447e,#1a5dab);color:#fff;border-radius:12px;
         padding:14px 20px;margin-bottom:12px}
   body.embed .topbar{display:none}
@@ -79,7 +82,8 @@
   /* 聊天区 */
   .chat{flex:1;display:flex;flex-direction:column;min-height:0;background:var(--card);
         border:1px solid var(--line);border-radius:10px;overflow:hidden}
-  .msgs{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+  .msgs{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+        padding:16px 18px;display:flex;flex-direction:column;gap:14px}
   .row{display:flex;gap:10px;align-items:flex-start}
   .row.me{flex-direction:row-reverse}
   .ava{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;
@@ -95,11 +99,11 @@
   .row.me .who{text-align:right}
   .typing{display:inline-block;animation:blink 1.1s infinite}
   @keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
-  .chips{display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 10px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 10px;flex-shrink:0}
   .chip{background:#eef4fb;border:1px solid #c9dbef;color:var(--blue-d);border-radius:14px;
         padding:5px 13px;font-size:12.5px;cursor:pointer;user-select:none}
   .chip:hover{background:#e0edfa}
-  .inputbar{display:flex;gap:10px;padding:12px 14px;border-top:1px solid var(--line);background:#fbfdff}
+  .inputbar{display:flex;gap:10px;padding:12px 14px;border-top:1px solid var(--line);background:#fbfdff;flex-shrink:0}
   .inputbar textarea{flex:1;resize:none;border:1.5px solid #ccd6e2;border-radius:8px;font-size:14px;
         font-family:inherit;outline:none;padding:9px 12px;height:52px;line-height:1.5;background:#fff}
   .inputbar textarea:focus{border-color:var(--blue)}
@@ -107,8 +111,9 @@
         font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
   .send:hover{filter:brightness(1.06)}
   .send:disabled{opacity:.55;cursor:default}
-  .foot{font-size:11.5px;color:#9aa7b6;text-align:center;padding:6px 0 10px}
+  .foot{font-size:11.5px;color:#9aa7b6;text-align:center;padding:6px 0 10px;flex-shrink:0}
   body.embed .foot{display:none}
+  body.embed .chat{border-radius:0;border:0}
 </style>
 </head>
 <body>
