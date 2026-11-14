@@ -121,6 +121,43 @@
   .score{color:var(--gold);font-weight:700}
   .msg-ok{color:var(--green);font-weight:700;font-size:12.5px}
   .msg-no{color:var(--red);font-weight:700;font-size:12.5px}
+  /* ---------- 实验目标弹窗 ---------- */
+  .goal-mask{position:fixed;inset:0;z-index:9500;background:rgba(10,25,45,.55);backdrop-filter:blur(2px);
+             display:flex;align-items:center;justify-content:center;padding:20px}
+  .goal-card{background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;
+             box-shadow:0 24px 80px rgba(6,20,40,.45);padding:30px 34px 26px;text-align:left}
+  .goal-card h2{font-size:23px;color:#0e3a6d;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  .goal-card .sub{font-size:14px;color:#7a8798;margin-bottom:18px}
+  .goal-item{display:flex;gap:12px;background:#f2f7fd;border:1.5px solid #cfe0f2;border-left:5px solid #1a5dab;
+             border-radius:10px;padding:14px 16px;margin-bottom:12px;font-size:16.5px;line-height:1.95;color:#1c2a3a}
+  .goal-item .no{flex-shrink:0;width:30px;height:30px;border-radius:50%;background:#1a5dab;color:#fff;
+                 font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:4px}
+  .goal-item b{color:#0e3a6d}
+  .goal-btn{display:block;margin:18px auto 0;background:linear-gradient(135deg,#e8a13a,#d68f22);color:#fff;
+            border:none;border-radius:10px;padding:14px 52px;font-size:19px;font-weight:700;cursor:pointer;
+            font-family:inherit;box-shadow:0 4px 14px rgba(214,143,34,.4)}
+  .goal-btn:hover{filter:brightness(1.07)}
+  /* ---------- 小碳老师悬窗（与 experiment/report 页同款） ---------- */
+  .ai-fab{position:fixed;right:0;top:92px;z-index:9000;display:flex;flex-direction:column;align-items:center;gap:4px;
+          padding:11px 7px 12px;border:1px solid #b9c9dc;border-right:0;border-radius:10px 0 0 10px;
+          background:linear-gradient(180deg,#12447e,#1a5aa0);color:#fff;cursor:pointer;font-family:inherit;
+          box-shadow:-3px 2px 12px rgba(18,68,126,.28);transition:padding .15s,background .15s}
+  .ai-fab:hover{padding-right:12px;background:linear-gradient(180deg,#0f3a6b,#12447e)}
+  .ai-fab .ico{font-size:18px;line-height:1}
+  .ai-fab .txt{writing-mode:vertical-rl;letter-spacing:2px;font-size:12px}
+  .ai-drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:94vw;z-index:9100;background:#fff;
+             border-left:1px solid #cfdae6;box-shadow:-8px 0 28px rgba(16,40,70,.18);
+             display:flex;flex-direction:column;transform:translateX(103%);transition:transform .24s ease}
+  .ai-drawer.open{transform:translateX(0)}
+  .ai-drawer-hd{display:flex;align-items:center;gap:10px;padding:10px 12px;background:linear-gradient(135deg,#0e3a6d,#1a5dab);color:#fff;flex-shrink:0}
+  .ai-drawer-hd .t{font-size:14px;font-weight:700;line-height:1.35}
+  .ai-drawer-hd .s{display:block;font-size:11.5px;font-weight:400;color:#c6d9ee;margin-top:2px}
+  .ai-drawer-x{margin-left:auto;background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:6px;
+               width:30px;height:30px;font-size:18px;line-height:1;cursor:pointer;flex-shrink:0}
+  .ai-drawer-x:hover{background:rgba(255,255,255,.3)}
+  .ai-drawer-bd{flex:1;min-height:0;background:#fff}
+  .ai-drawer-bd iframe{display:block;width:100%;height:100%;border:0}
+  @media (max-width:640px){.ai-drawer{width:100%;max-width:none}.ai-fab{top:auto;bottom:80px}}
 </style>
 </head>
 <body>
@@ -192,7 +229,7 @@
     <div class="stp-card">
       <div class="stp-head"><span>③ 提交计算</span><span class="dot" id="dot3">3</span></div>
       <div class="stp-body">
-        <div class="hint" id="clusterHint" style="margin:0 0 8px">计算由平台集群节点执行（PBE / HSE06，体相 g-C<sub>3</sub>N<sub>4</sub>：结构优化 → SCF → 能带 → 光学吸收全流程），提交后可在下方日志窗口实时查看各阶段运行输出。核数越多，计算越快。</div>
+        <div class="hint" id="clusterHint" style="margin:0 0 8px">计算由平台集群节点执行（PBE / HSE06，体相 g-C<sub>3</sub>N<sub>4</sub>：结构优化 → SCF → 能带 → 光学吸收全流程），提交后可在下方日志窗口实时查看各阶段运行输出。核数越多，计算越快。做实验需要查资料或排查报错时，点右侧「🤖 小碳老师」随时提问。</div>
         <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap">
           <span style="font-size:12.5px;color:var(--ink,#333)">集群核数（mpirun -n）</span>
           <select id="coresSel" onchange="STATE.cores=parseInt(this.value,10)" style="padding:4px 8px;border:1px solid #c3cfdd;border-radius:8px;background:#fff;font-size:13px">
@@ -288,6 +325,37 @@
     </div>
   </div>
 </div>
+
+<!-- 实验目标弹窗：进入仿真台必读，点击「收到任务」后关闭 -->
+<div class="goal-mask" id="goalMask">
+  <div class="goal-card">
+    <h2>🎯 实验目标</h2>
+    <div class="sub">AI 赋能 g-C<sub>3</sub>N<sub>4</sub> 光催化分解水制氢 · 3D 虚拟仿真实验台</div>
+    <div class="goal-item"><span class="no">1</span>
+      <span>通过计算模拟和实验结果比较，学会选择能够<b>准确计算</b> g-C<sub>3</sub>N<sub>4</sub> 光催化材料<b>电子结构</b>的<b>泛函、截断能</b>等计算参数。</span>
+    </div>
+    <div class="goal-item"><span class="no">2</span>
+      <span>通过探索<b>结构应变、O 掺杂、C 缺陷</b>等复合工艺的计算，找到<b>最佳的 g-C<sub>3</sub>N<sub>4</sub> 光催化性能调控手段</b>。</span>
+    </div>
+    <button class="goal-btn" onclick="goalAck()">✓ 收到任务，开始实验</button>
+  </div>
+</div>
+
+<!-- AI 助教悬窗：默认收在右上角，点标签滑出；点 × 或按 Esc 收起 -->
+<button class="ai-fab" id="aiFab" onclick="aiToggle()" title="打开 / 收起 AI 助教「小碳老师」">
+  <span class="ico">🤖</span><span class="txt">小碳老师</span>
+</button>
+<aside class="ai-drawer" id="aiDrawer" aria-hidden="true" aria-label="AI 助教对话">
+  <div class="ai-drawer-hd">
+    <div class="t">🤖 实验智能体"小碳老师"
+      <span class="s">DeepSeek 驱动 · 对话全程留痕、教师端可查</span>
+    </div>
+    <button class="ai-drawer-x" onclick="aiClose()" title="收起（Esc）">×</button>
+  </div>
+  <div class="ai-drawer-bd">
+    <iframe id="aiFrame" data-src="ai.html?embed=1" title="AI 助教对话" allow="microphone"></iframe>
+  </div>
+</aside>
 
 <script src="js/three.min.js"></script>
 <script src="js/OrbitControls.js"></script>
@@ -392,6 +460,10 @@ var STATE = {
    不依赖字体自带的下标字形（部分系统缺字形会显示成方块或大小不一）。必须在 HTML 转义之后调用。 */
 var _SUBMAP = {'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','₊':'+','₋':'−','ₓ':'x'};
 var _SUPMAP = {'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁺':'+','⁻':'−','ⁿ':'n'};
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 function chem(s){
   return String(s == null ? '' : s)
     .replace(/[₀-₉₊₋ₓ]+/g, function(m){
@@ -875,8 +947,14 @@ function buildQuiz(cv){
   var inp3 = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="如 2.87"';
   var inp5 = 'class="sel" style="display:inline-block;width:160px;padding:4px 8px;margin:0 4px" placeholder="如：剪刀算符 / scissor"';
   var inp6 = 'class="sel" style="display:inline-block;width:90px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="如 5"';
+  var gsel = '<select id="q7sel" class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px">' +
+    '<option value="">请选择</option><option>O-掺杂</option><option>应变工程</option><option>C-空位（缺陷）</option></select>';
   box.innerHTML =
-    '<div class="hint" style="margin-bottom:5px">根据第③步计算结果与本次计算体验填空（数值保留两位小数；带边以电子能量表示，单位 eV，真空能级参考——能量向上，CBM 高于 VBM，两者均为负值）。</div>' +
+    '<div style="background:#eef4fb;border:1.5px solid #cfe0f2;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.5px;line-height:1.9;color:#1c2a3a">' +
+    '<b style="color:#0e3a6d">🎯 对照实验目标作答</b>：目标一=学会选择准确计算 g-C<sub>3</sub>N<sub>4</sub> 电子结构的泛函、截断能等参数（Q1–Q6）；目标二=探索应变、O 掺杂、C 缺陷调控，找到最佳光催化性能调控手段（Q7–Q8）。数值保留两位小数；带边以电子能量表示（eV，真空能级参考）。</div>' +
+
+    '<div style="font-size:15px;font-weight:700;color:#0e3a6d;margin:4px 0 6px">🧭 目标一检验 · 你算得准吗？（泛函 / 截断能等参数方法，Q1–Q6）</div>' +
+    '<div class="hint" style="margin-bottom:5px">根据第③步计算结果与本次计算体验填空。</div>' +
     '<label>Q1. 导带底（CBM）能量为 <input ' + inp2 + ' id="q1"> eV（带边图上方，导带的下边界）</label>' +
     '<label>Q2. 价带顶（VBM）能量为 <input ' + inp + ' id="q2"> eV（带边图下方，价带的上边界）</label>' +
     '<label>Q3. 带隙 Eg 为 <input ' + inp3 + ' id="q3"> eV</label>' +
@@ -887,8 +965,39 @@ function buildQuiz(cv){
       '可用 <input ' + inp5 + ' id="q5"> 矫正带隙</label>' +
     '<label style="margin-top:8px">Q6. HSE06 计算时间是 PBE 计算时间的 <input ' + inp6 + ' id="q6"> 倍' +
       '（对比第③步日志中两种泛函的耗时），因此 PBE 更适合做定性分析，HSE06 更适合做定量分析。</label>' +
+
+    '<div style="font-size:15px;font-weight:700;color:#0e3a6d;margin:16px 0 6px">🔬 目标二检验 · 哪种调控最优？（应变 / 掺杂 / 缺陷对比，Q7–Q8）</div>' +
+    '<div class="hint" style="margin:0 0 6px">平台计算计划已入库结果（ε = 0，ENCUT 500 eV，供对比判读；也可切换体系/应变自行计算验证）：</div>' +
+    '<table style="border-collapse:collapse;width:100%;font-size:12.8px;margin-bottom:10px">' +
+    '<tr style="background:#eef4fb"><th style="border:1px solid #c9d8ea;padding:5px 8px">调控体系</th>' +
+    '<th style="border:1px solid #c9d8ea;padding:5px 8px">PBE Eg（eV）</th><th style="border:1px solid #c9d8ea;padding:5px 8px">HSE06 Eg（eV）</th>' +
+    '<th style="border:1px solid #c9d8ea;padding:5px 8px">判读要点</th></tr>' +
+    '<tr><td style="border:1px solid #dbe5f0;padding:5px 8px">本征（ε = 0）</td><td style="border:1px solid #dbe5f0;padding:5px 8px;text-align:center">1.31</td>' +
+    '<td style="border:1px solid #dbe5f0;padding:5px 8px;text-align:center">2.72 ~ 2.97（ε = −4% → +4% 单调增大）</td>' +
+    '<td style="border:1px solid #dbe5f0;padding:5px 8px">应变可连续调节带隙，但需外场维持</td></tr>' +
+    '<tr><td style="border:1px solid #dbe5f0;padding:5px 8px">O-掺杂（ε = 0）</td><td style="border:1px solid #dbe5f0;padding:5px 8px;text-align:center">1.59</td>' +
+    '<td style="border:1px solid #dbe5f0;padding:5px 8px;text-align:center">2.52（ε = −3 / +1 / +2 时 2.51 ~ 2.53）</td>' +
+    '<td style="border:1px solid #dbe5f0;padding:5px 8px">带隙适中、对应变不敏感，性能稳健</td></tr>' +
+    '<tr><td style="border:1px solid #dbe5f0;padding:5px 8px">C-空位（ε = 0）</td><td style="border:1px solid #dbe5f0;padding:5px 8px;text-align:center">0.26</td>' +
+    '<td style="border:1px solid #dbe5f0;padding:5px 8px;text-align:center">补算中</td>' +
+    '<td style="border:1px solid #dbe5f0;padding:5px 8px">带隙骤降，禁带出现缺陷能级（复合中心）</td></tr></table>' +
+    '<label>Q7. 结合上表与你自己的计算：为使 g-C<sub>3</sub>N<sub>4</sub> 保持可见光响应并提升全解水能力，三种调控手段中最值得采用的是' + gsel + '</label>' +
+    '<textarea class="sel" id="q7" rows="2" style="width:100%;resize:vertical;margin-top:4px" placeholder="说明理由：可从带隙是否适中、是否引入有害缺陷能级、带边是否包住水的氧化还原电位、是否需要外场维持等角度分析……"></textarea>' +
+    '<label style="margin-top:8px">Q8. 综合两个实验目标，写出你认为 g-C<sub>3</sub>N<sub>4</sub> 光催化性能的最佳调控方案</label>' +
+    '<textarea class="sel" id="q8" rows="3" style="width:100%;resize:vertical" placeholder="应包含：① 选用哪种调控手段及其参数（如 O 掺杂 / 应变幅度）；② 用什么泛函、截断能等参数保证结果可靠；③ 预期的带隙、带边位置与全解水判据是否满足。"></textarea>' +
     '<div style="margin-top:9px"><button class="go-btn" onclick="gradeQuiz()">✓ 提交判读</button> <span id="quizMsg"></span></div>';
   STATE.answered = false;
+}
+/* 关键词分组命中数：命中几类（每组任一关键词出现记 1 类） */
+function hitGroups(t, groups){
+  t = t.toLowerCase();
+  var hit = 0;
+  for (var g = 0; g < groups.length; g++){
+    for (var i = 0; i < groups[g].length; i++){
+      if (t.indexOf(groups[g][i]) >= 0){ hit++; break; }
+    }
+  }
+  return hit;
 }
 function gradeQuiz(){
   var q1 = parseFloat(document.getElementById('q1').value);
@@ -898,27 +1007,44 @@ function gradeQuiz(){
   var q5sel = document.getElementById('q5sel').value;
   var q5 = (document.getElementById('q5').value || '').trim();
   var q6 = parseFloat(document.getElementById('q6').value);
+  var q7sel = document.getElementById('q7sel').value;
+  var q7 = (document.getElementById('q7').value || '').trim();
+  var q8 = (document.getElementById('q8').value || '').trim();
   var msg = document.getElementById('quizMsg');
-  if (isNaN(q1) || isNaN(q2) || isNaN(q3) || !q4 || !q5sel || !q5 || isNaN(q6)){
+  if (isNaN(q1) || isNaN(q2) || isNaN(q3) || !q4 || !q5sel || !q5 || isNaN(q6) || !q7sel || !q7 || !q8){
     msg.innerHTML = '<span class="msg-no">请填完所有空再提交。</span>'; return;
   }
   STATE.answered = true;
+  /* 目标二 Q7：手段选择 + 理由（是否提到有害/有利机制） */
+  var q7OK = (q7sel === 'O-掺杂' || q7sel === '应变工程');
+  var q7why = hitGroups(q7, [['复合','缺陷能级','空位','有害','不利','失活'],
+                             ['带隙','带边','可见光','吸收','氧化还原','全解水','稳定']]);
+  /* 目标二 Q8：方案三要素——手段、参数可靠性、活性判据 */
+  var q8hit = hitGroups(q8, [['o 掺杂','o掺杂','掺杂','应变','空位','缺陷'],
+                             ['hse','泛函','截断','encut','收敛','参数','scissor','剪刀'],
+                             ['带边','cbm','vbm','氧化还原','nhe','ph','全解水','光催化','活性']]);
   var ref = '参考答案：Q1 导带底 CBM = ' + nhe2ev(STATE.cbm).toFixed(2) + ' eV（= ' + STATE.cbm.toFixed(2) + ' V vs NHE，带边图上方，能量高于 H⁺/H₂，光生电子可还原产氢）；Q2 价带顶 VBM = ' + nhe2ev(STATE.vbm).toFixed(2) +
     ' eV（= ' + STATE.vbm.toFixed(2) + ' V vs NHE，带边图下方，能量低于 O₂/H₂O，光生空穴可氧化产氧）；' +
     (STATE.realDone && STATE.func === 'PBE'
       ? 'Q4：PBE 等半局域泛函因交换关联近似会明显低估带隙（HSE06 可显著改善）；'
       : 'Q4：理论计算为 0 K 理想完整晶体，而实验值受温度、缺陷、层间堆垛、样品尺寸及测量方法（如 Tauc 外推）影响；') +
     'Q5：PBE 低估带隙，可用剪刀算符（scissor operator，或换用 HSE06 杂化泛函）矫正；' +
-    'Q6：PBE 耗时约为 HSE06 的 1/5（即 HSE06 ≈ PBE 的 5 倍，见第③步日志），PBE 适合定性筛选、HSE06 适合定量分析。';
+    'Q6：PBE 耗时约为 HSE06 的 1/5（即 HSE06 ≈ PBE 的 5 倍，见第③步日志），PBE 适合定性筛选、HSE06 适合定量分析；' +
+    'Q7：推荐 O-掺杂或适度应变——C-空位使带隙骤降至 0.26 eV 并在禁带引入缺陷能级（光生载流子复合中心），不利；O-掺杂带隙适中（HSE06 ≈ 2.5 eV）、带边可调且对应变不敏感，性能稳健；应变可连续调节带隙（−4%→+4% 时 HSE06 Eg 2.72→2.97 eV）但需外场维持；' +
+    'Q8：示例方案——O-掺杂 g-C₃N₄（ε = 0）+ HSE06（ENCUT ≥ 500 eV，K 网格经收敛测试）验证带边：CBM 高于 H⁺/H₂、VBM 低于 O₂/H₂O，满足全解水热力学条件，即"掺杂调性能 + HSE06 保精度 + 带边判活性"。';
   var q4hit = q4Reasonable(q4);
   var res = [
-    [Math.abs(q1 - nhe2ev(STATE.cbm)) <= FILL_TOL, 'Q1 导带底：正确 ' + nhe2ev(STATE.cbm).toFixed(2) + ' eV（电子能量；= ' + STATE.cbm.toFixed(2) + ' V vs NHE）', 15],
-    [Math.abs(q2 - nhe2ev(STATE.vbm)) <= FILL_TOL, 'Q2 价带顶：正确 ' + nhe2ev(STATE.vbm).toFixed(2) + ' eV（电子能量；= ' + STATE.vbm.toFixed(2) + ' V vs NHE）', 15],
-    [Math.abs(q3 - STATE.Eg) <= FILL_TOL, 'Q3 带隙：正确 ' + STATE.Eg.toFixed(2) + ' eV（真实 ' + STATE.func + ' 计算）', 15],
-    [q4hit >= 1, 'Q4 差异原因分析（命中 ' + q4hit + ' 类原因' + (q4hit >= 2 ? '' : '，命中 ≥2 类可得满分') + '）', q4hit >= 2 ? 15 : 7],
+    [Math.abs(q1 - nhe2ev(STATE.cbm)) <= FILL_TOL, 'Q1 导带底：正确 ' + nhe2ev(STATE.cbm).toFixed(2) + ' eV（电子能量；= ' + STATE.cbm.toFixed(2) + ' V vs NHE）', 10],
+    [Math.abs(q2 - nhe2ev(STATE.vbm)) <= FILL_TOL, 'Q2 价带顶：正确 ' + nhe2ev(STATE.vbm).toFixed(2) + ' eV（电子能量；= ' + STATE.vbm.toFixed(2) + ' V vs NHE）', 10],
+    [Math.abs(q3 - STATE.Eg) <= FILL_TOL, 'Q3 带隙：正确 ' + STATE.Eg.toFixed(2) + ' eV（真实 ' + STATE.func + ' 计算）', 10],
+    [q4hit >= 1, 'Q4 差异原因分析（命中 ' + q4hit + ' 类原因' + (q4hit >= 2 ? '' : '，命中 ≥2 类可得满分') + '）', q4hit >= 2 ? 10 : 5],
     [q5sel === '低估' && /剪刀|scissor|杂化|hse/i.test(q5),
-      'Q5 泛函对带隙的影响与矫正方法（低估；剪刀算符/scissor 或 HSE06 杂化泛函）', 20],
-    [q6 > 4 && q6 < 6, 'Q6 计算耗时对比（HSE06 ≈ PBE 的 5 倍，见第③步日志）', 20]
+      'Q5 泛函对带隙的影响与矫正方法（低估；剪刀算符/scissor 或 HSE06 杂化泛函）', 15],
+    [q6 > 4 && q6 < 6, 'Q6 计算耗时对比（HSE06 ≈ PBE 的 5 倍，见第③步日志）', 10],
+    [q7OK && q7why >= 1, 'Q7 最佳调控手段判断（选 ' + q7sel + '；' +
+      (q7OK ? '手段合理' : '<b>C-空位引入复合中心，非最佳手段</b>') +
+      (q7why >= 1 ? '，理由充分' : '，建议在理由中说明带隙/缺陷能级/带边判据等机制') + '）', q7OK ? (q7why >= 1 ? 15 : 8) : 0],
+    [q8hit >= 3, 'Q8 最佳调控方案（命中 ' + q8hit + '/3 要素：调控手段、计算参数可靠性、活性判据）', q8hit >= 3 ? 20 : (q8hit === 2 ? 12 : 6)]
   ];
   var score = 0;
   var html = '';
@@ -1630,6 +1756,47 @@ function buildModel2D(){
 }
 window.addEventListener('load', function(){ tryInit3D(0); });
 hideStruct();          // 初始：结构未导入，模型区显示空态
+
+/* ================= 实验目标弹窗 ================= */
+function goalAck(){
+  var m = document.getElementById('goalMask');
+  if(m) m.style.display = 'none';
+}
+
+/* ================= 小碳老师悬窗（与 experiment/report 页同款） ================= */
+function aiLazyLoad(){
+  var f = document.getElementById('aiFrame');
+  if(f && !f.getAttribute('src')) f.src = f.getAttribute('data-src') || 'ai.html?embed=1';
+}
+function aiOpen(){
+  var dr = document.getElementById('aiDrawer');
+  if(!dr) return;
+  aiLazyLoad();
+  dr.classList.add('open');
+  dr.setAttribute('aria-hidden', 'false');
+  var fab = document.getElementById('aiFab');
+  if(fab) fab.style.display = 'none';          /* 展开时隐藏标签，避免压住抽屉 */
+  if(TOKEN){
+    fetch('/api/log_search', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({token: TOKEN, keywords: '[仿真台] 打开小碳老师对话', mode: 'deep_open'})}).catch(function(){});
+  }
+}
+function aiClose(){
+  var dr = document.getElementById('aiDrawer');
+  if(!dr) return;
+  dr.classList.remove('open');
+  dr.setAttribute('aria-hidden', 'true');
+  var fab = document.getElementById('aiFab');
+  if(fab) fab.style.display = 'flex';
+}
+function aiToggle(){
+  var dr = document.getElementById('aiDrawer');
+  if(!dr) return;
+  if(dr.classList.contains('open')) aiClose(); else aiOpen();
+}
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape' || e.key === 'Esc') aiClose();
+});
 </script>
 </body>
 </html>
