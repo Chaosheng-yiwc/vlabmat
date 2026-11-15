@@ -215,13 +215,15 @@
           <option value="500" selected>500 eV</option>
           <option value="550">550 eV</option>
         </select>
+        <label style="font-size:12.5px;color:var(--sub);display:block;margin-top:7px">K 点密度（布里渊区采样）</label>
+        <div style="padding:7px 10px;border:1px solid #c3cfdd;border-radius:8px;background:#f2f6fb;font-size:13px;color:#5a6b80">5×5×3（Γ 居中 · 收敛测试后锁定，见第④步参考数据）</div>
         <label style="font-size:12.5px;color:var(--sub);display:block;margin-top:7px">交换关联泛函</label>
         <select class="sel" id="func">
           <option value="PBE" selected>PBE（GGA 半局域泛函）</option>
           <option value="HSE06">HSE06（杂化泛函）</option>
         </select>
         <div class="hint" id="funcHint"></div>
-        <div class="hint">提示：K 网格内部固定 5×5×3（Γ 居中，已通过收敛测试）。请按第④步「参数收敛记录表」的指引，依次更换参数完成多次计算。</div>
+        <div class="hint">本层通过<b>三项测试</b>确定计算参数：① 截断能（总能收敛+耗时）② K 点密度（总能收敛+耗时）③ 泛函（带隙 vs 实验值）。ENCUT 用第②步切换、配合第③步计算完成自测；K 网格已锁定，收敛数据见第④步「📊 平台收敛测试参考数据」。</div>
       </div>
     </div>
 
@@ -251,6 +253,8 @@
         <div class="quiz" id="quizBox">
           <div class="hint">完成第③步计算后作答。</div>
         </div>
+
+<details id="convRefBox" style="margin-top:10px;border:1.5px solid #cfe0f2;border-radius:9px;background:#f8fbff;overflow:hidden"><summary style="cursor:pointer;padding:8px 12px;font-size:13px;font-weight:700;color:#0e3a6d;user-select:none">📊 平台收敛测试参考数据（截断能 &amp; K 网格）</summary><div style="padding:0 12px 10px;font-size:12px;line-height:1.8;color:#33404f"><div class="hint" style="margin:6px 0 8px">平台集群用生产配方（本征 g-C<sub>3</sub>N<sub>4</sub> 三层体相 · 21 原子 · PBE · EDIFF 1E-05 · VASP 6.5.1）完成的全套单点收敛测试，可用来核对你自己的收敛记录。图中蓝线为总能 <i>E</i><sub>0</sub>（左轴），绿色虚线为 SCF 耗时（右轴），红色虚线为收敛基准。</div><b style="color:#0e3a6d">① 平面波截断能 ENCUT 测试</b>（K 网格固定 5×5×3）<table style="border-collapse:collapse;margin:4px 0 6px;font-size:11.5px;width:100%"><tr style="background:#eef4fb"><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap">ENCUT (eV)</th><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap"><i>E</i><sub>0</sub> (eV)</th><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap">ΔE vs 550 (meV)</th><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap">SCF 耗时 (s)</th></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">250</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−173.97506</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">+1533.2</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">41.7</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">300</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.72010</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−211.8</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">42.7</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">350</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.66635</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−158.1</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">43.7</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">400</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.60111</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−92.8</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">45.2</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">450</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.53190</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−23.6</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">47.7</td></tr><tr style="background:#eef4fb"><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">500</td><td style="border:1px solid #cfe0f2;padding:2px 4px;font-weight:700;text-align:center;white-space:nowrap">−175.50537</td><td style="border:1px solid #cfe0f2;padding:2px 4px;color:#0e3a6d;text-align:center;white-space:nowrap">+2.9</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">48.3</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">550</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.50829</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">0（基准）</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">49.4</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">600</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.54462</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−36.3</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">51.5</td></tr></table><svg viewBox="0 0 340 200" style="width:100%;height:auto;background:#fff;font-family:system-ui,sans-serif"><rect x="44" y="16" width="256" height="150" fill="none" stroke="#c3cfdd"/><line x1="44" y1="16.0" x2="300" y2="16.0" stroke="#e7edf5"/><text x="40" y="19.0" font-size="8.5" fill="#5a6b80" text-anchor="end">-173.6</text><line x1="44" y1="71.1" x2="300" y2="71.1" stroke="#e7edf5"/><text x="40" y="74.1" font-size="8.5" fill="#5a6b80" text-anchor="end">-174.5</text><line x1="44" y1="101.7" x2="300" y2="101.7" stroke="#e7edf5"/><text x="40" y="104.7" font-size="8.5" fill="#5a6b80" text-anchor="end">-175.0</text><line x1="44" y1="132.3" x2="300" y2="132.3" stroke="#e7edf5"/><text x="40" y="135.3" font-size="8.5" fill="#5a6b80" text-anchor="end">-175.5</text><line x1="44" y1="166.0" x2="300" y2="166.0" stroke="#e7edf5"/><text x="40" y="169.0" font-size="8.5" fill="#5a6b80" text-anchor="end">-176.0</text><text x="304" y="150.2" font-size="8.5" fill="#2e8b57" text-anchor="start">40s</text><text x="304" y="94.0" font-size="8.5" fill="#2e8b57" text-anchor="start">46</text><text x="304" y="37.8" font-size="8.5" fill="#2e8b57" text-anchor="start">52s</text><text x="44.0" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">250</text><text x="80.6" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">300</text><text x="117.1" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">350</text><text x="153.7" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">400</text><text x="190.3" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">450</text><text x="226.9" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">500</text><text x="263.4" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">550</text><text x="300.0" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">600</text><text x="10" y="22" font-size="9" fill="#33404f">E₀ (eV)</text><polyline points="44.0,39.0 80.6,145.8 117.1,142.5 153.7,138.5 190.3,134.3 226.9,132.7 263.4,132.8 300.0,135.1" fill="none" stroke="#2e6fd8" stroke-width="1.8"/><circle cx="44.0" cy="39.0" r="2.6" fill="#2e6fd8"/><circle cx="80.6" cy="145.8" r="2.6" fill="#2e6fd8"/><circle cx="117.1" cy="142.5" r="2.6" fill="#2e6fd8"/><circle cx="153.7" cy="138.5" r="2.6" fill="#2e6fd8"/><circle cx="190.3" cy="134.3" r="2.6" fill="#2e6fd8"/><circle cx="226.9" cy="132.7" r="2.6" fill="#2e6fd8"/><circle cx="263.4" cy="132.8" r="2.6" fill="#2e6fd8"/><circle cx="300.0" cy="135.1" r="2.6" fill="#2e6fd8"/><polyline points="44.0,131.7 80.6,122.0 117.1,112.4 153.7,98.7 190.3,74.9 226.9,69.7 263.4,59.2 300.0,39.6" fill="none" stroke="#2e8b57" stroke-width="1.4" stroke-dasharray="4 3"/><circle cx="44.0" cy="131.7" r="2.0" fill="#2e8b57"/><circle cx="80.6" cy="122.0" r="2.0" fill="#2e8b57"/><circle cx="117.1" cy="112.4" r="2.0" fill="#2e8b57"/><circle cx="153.7" cy="98.7" r="2.0" fill="#2e8b57"/><circle cx="190.3" cy="74.9" r="2.0" fill="#2e8b57"/><circle cx="226.9" cy="69.7" r="2.0" fill="#2e8b57"/><circle cx="263.4" cy="59.2" r="2.0" fill="#2e8b57"/><circle cx="300.0" cy="39.6" r="2.0" fill="#2e8b57"/><line x1="44" y1="132.8" x2="300" y2="132.8" stroke="#d84a3a" stroke-width="1" stroke-dasharray="3 3"/><text x="48" y="129.8" font-size="8" fill="#d84a3a">收敛基准 550 eV</text></svg><div class="hint" style="margin:4px 0 10px">ENCUT ≥ 500 eV 后 |ΔE| ≤ 0.03 eV（约 1.4 meV/原子）；550 → 600 的回弹 0.036 eV 是基组振荡（Pulay），属正常现象，收敛判据应看相邻两档的差而非单调性。平台生产参数取 <b>ENCUT = 500 eV</b>。</div><b style="color:#0e3a6d">② K 网格密度测试</b>（ENCUT 固定 500 eV）<table style="border-collapse:collapse;margin:4px 0 6px;font-size:11.5px;width:100%"><tr style="background:#eef4fb"><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap">K 网格</th><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap"><i>E</i><sub>0</sub> (eV)</th><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap">ΔE vs 6×6×6 (meV)</th><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap">SCF 耗时 (s)</th></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">1×1×1</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−156.95440</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap"><b style="color:#d84a3a">+18550.7（不可用）</b></td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">32.9</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">2×2×2</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.31162</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">+193.5</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">36.6</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">2×2×3</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.31172</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">+193.4</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">36.4</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">3×3×3</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.50159</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">+3.5</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">38.8</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">4×4×4</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.50437</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">+0.7</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">48.2</td></tr><tr style="background:#eef4fb"><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">5×5×3</td><td style="border:1px solid #cfe0f2;padding:2px 4px;font-weight:700;text-align:center;white-space:nowrap">−175.50537</td><td style="border:1px solid #cfe0f2;padding:2px 4px;color:#0e3a6d;text-align:center;white-space:nowrap">−0.3</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">48.3</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">5×5×5</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.50510</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">+0.0</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">58.1</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">6×6×6</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.50511</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">0（基准）</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">75.0</td></tr></table><svg viewBox="0 0 340 200" style="width:100%;height:auto;background:#fff;font-family:system-ui,sans-serif"><rect x="44" y="16" width="256" height="150" fill="none" stroke="#c3cfdd"/><line x1="44" y1="157.2" x2="300" y2="157.2" stroke="#e7edf5"/><text x="40" y="160.2" font-size="8.5" fill="#5a6b80" text-anchor="end">-175.6</text><line x1="44" y1="113.1" x2="300" y2="113.1" stroke="#e7edf5"/><text x="40" y="116.1" font-size="8.5" fill="#5a6b80" text-anchor="end">-175.5</text><line x1="44" y1="68.9" x2="300" y2="68.9" stroke="#e7edf5"/><text x="40" y="71.9" font-size="8.5" fill="#5a6b80" text-anchor="end">-175.4</text><line x1="44" y1="24.8" x2="300" y2="24.8" stroke="#e7edf5"/><text x="40" y="27.8" font-size="8.5" fill="#5a6b80" text-anchor="end">-175.3</text><text x="304" y="169.0" font-size="8.5" fill="#2e8b57" text-anchor="start">30s</text><text x="304" y="109.0" font-size="8.5" fill="#2e8b57" text-anchor="start">50</text><text x="304" y="49.0" font-size="8.5" fill="#2e8b57" text-anchor="start">70s</text><text x="62.3" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">2×2×2</text><text x="98.9" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">2×2×3</text><text x="135.4" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">3×3×3</text><text x="172.0" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">4×4×4</text><text x="208.6" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">5×5×3</text><text x="245.1" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">5×5×5</text><text x="281.7" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">6×6×6</text><text x="10" y="22" font-size="9" fill="#33404f">E₀ (eV)</text><polyline points="62.3,30.0 98.9,30.0 135.4,113.8 172.0,115.0 208.6,115.4 245.1,115.3 281.7,115.3" fill="none" stroke="#2e6fd8" stroke-width="1.8"/><circle cx="62.3" cy="30.0" r="2.6" fill="#2e6fd8"/><circle cx="98.9" cy="30.0" r="2.6" fill="#2e6fd8"/><circle cx="135.4" cy="113.8" r="2.6" fill="#2e6fd8"/><circle cx="172.0" cy="115.0" r="2.6" fill="#2e6fd8"/><circle cx="208.6" cy="115.4" r="2.6" fill="#2e6fd8"/><circle cx="245.1" cy="115.3" r="2.6" fill="#2e6fd8"/><circle cx="281.7" cy="115.3" r="2.6" fill="#2e6fd8"/><polyline points="62.3,146.1 98.9,146.9 135.4,139.5 172.0,111.5 208.6,111.2 245.1,81.8 281.7,30.9" fill="none" stroke="#2e8b57" stroke-width="1.4" stroke-dasharray="4 3"/><circle cx="62.3" cy="146.1" r="2.0" fill="#2e8b57"/><circle cx="98.9" cy="146.9" r="2.0" fill="#2e8b57"/><circle cx="135.4" cy="139.5" r="2.0" fill="#2e8b57"/><circle cx="172.0" cy="111.5" r="2.0" fill="#2e8b57"/><circle cx="208.6" cy="111.2" r="2.0" fill="#2e8b57"/><circle cx="245.1" cy="81.8" r="2.0" fill="#2e8b57"/><circle cx="281.7" cy="30.9" r="2.0" fill="#2e8b57"/><line x1="44" y1="115.3" x2="300" y2="115.3" stroke="#d84a3a" stroke-width="1" stroke-dasharray="3 3"/><text x="48" y="112.3" font-size="8" fill="#d84a3a">收敛基准 6×6×6</text></svg><div class="hint" style="margin:4px 0 2px">1×1×1 偏差高达 +18.55 eV，完全不可用；K 网格 ≥ 3×3×3 后即收敛（|ΔE| &lt; 4 meV）。2×2×2 / 2×2×3 绝对总能系统性偏高约 0.19 eV（布里渊区采样不足），内部相对比较不受影响，但跨体系比较绝对能量时必须统一网格。平台生产参数取 <b>5×5×3（Γ 居中）</b>。</div></div></details>
       </div>
     </div>
 
@@ -318,7 +322,7 @@
     <h2>🎯 实验目标（共三层）</h2>
     <div class="sub">AI 赋能 g-C<sub>3</sub>N<sub>4</sub> 光催化分解水制氢 · 当前进入 <b style="color:#0e3a6d">第①层 计算方法与参数确定</b></div>
     <div class="goal-item"><span class="no">1</span>
-      <span><b>【第①层 · 本层】</b>通过计算模拟和实验结果比较，学会选择能够<b>准确计算</b> g-C<sub>3</sub>N<sub>4</sub> 光催化材料<b>电子结构</b>的<b>泛函、截断能</b>等计算参数。</span>
+      <span><b>【第①层 · 本层】</b>通过<b>截断能</b>、<b>K 点密度</b>（总能收敛+耗时）与<b>泛函</b>（带隙 vs 实验值）三项测试，学会选择能够<b>准确计算</b> g-C<sub>3</sub>N<sub>4</sub> 电子结构的计算参数。</span>
     </div>
     <div class="goal-item dim"><span class="no">2</span>
       <span>【第②层】理解 g-C<sub>3</sub>N<sub>4</sub> 计算结果的分析方法，理解光催化材料须满足的三个条件，明白 g-C<sub>3</sub>N<sub>4</sub> 带隙偏大、可见光吸收不足是需要优化的方向。</span>
@@ -907,97 +911,88 @@ function buildQuiz(){
           '<td style="border:1px solid #cfe0f2;padding:3px 12px;text-align:center">500 eV</td>' +
           egCell(REC.get('pristine', 0, 500, 'HSE06')) + tCell(REC.getTime('pristine', 0, 500, 'HSE06')) + '</tr>';
   var sel = 'class="sel" style="display:inline-block;width:95px;padding:4px 8px;margin:0 4px"';
-  var selW = 'class="sel" style="display:inline-block;width:110px;padding:4px 8px;margin:0 4px"';
+  var selW = 'class="sel" style="display:inline-block;width:130px;padding:4px 8px;margin:0 4px"';
   var inpN = 'class="sel" style="display:inline-block;width:100px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="填数值"';
+  var subT = 'style="font-size:12.5px;color:#0e3a6d;display:block;margin:10px 0 2px;font-weight:700"';
   box.innerHTML =
     '<div style="background:#eef4fb;border:1.5px solid #cfe0f2;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.5px;line-height:1.9;color:#1c2a3a">' +
-    '<b style="color:#0e3a6d">🎯 第①层目标检验：怎样才算"算得准"？</b>（本层 40 分 · 三层合计 100 分）按记录表指引完成参数考核，结合右侧能带图与吸收谱作答。</div>' +
+    '<b style="color:#0e3a6d">🎯 第①层目标检验：确定可靠的三项计算参数</b>——<b>截断能</b>、<b>K 点密度</b>、<b>泛函</b>（本层 40 分 · 三层合计 100 分）。结合记录表、右侧结果图与下方「📊 平台收敛测试参考数据」折叠区作答。</div>' +
     '<div style="background:#fff;border:1.5px solid #cfe0f2;border-radius:9px;padding:8px 12px;margin-bottom:10px;font-size:12.8px;line-height:1.8">' +
     '<b style="color:#0e3a6d">📋 参数收敛记录表</b>（在第②步切换参数 → 第③步提交计算后自动登记）<br>' +
     '<table style="border-collapse:collapse;margin-top:6px;font-size:12.5px">' +
     '<tr style="background:#eef4fb"><th style="border:1px solid #cfe0f2;padding:3px 12px">泛函</th><th style="border:1px solid #cfe0f2;padding:3px 12px">ENCUT</th>' +
     '<th style="border:1px solid #cfe0f2;padding:3px 12px">带隙 E<sub>g</sub> (eV)</th><th style="border:1px solid #cfe0f2;padding:3px 12px">计算总耗时</th></tr>' +
     rows + '</table></div>' +
-    '<label>Q1. 对比记录表中 ENCUT = 400 ~ 550 eV 四次计算：不同截断能对带隙的影响' +
-    '<select id="q1" ' + sel + '><option value="">请选择</option><option>不大</option><option>显著</option></select></label>' +
-    '<label style="margin-top:8px">Q2. 请通过智能体（小碳老师），查询 g-C<sub>3</sub>N<sub>4</sub> 的实验测量带隙值为 ' +
-    '<input ' + inpN + ' id="q2a"> eV，' +
-    '<select id="q2b" ' + sel + '><option value="">请选择</option><option>PBE</option><option>HSE06</option></select>' +
-    ' 能够更加准确地计算 g-C<sub>3</sub>N<sub>4</sub> 的带隙值。</label>' +
-    '<label style="margin-top:8px">Q3. HSE06 的计算量是 PBE 计算量的 ' +
-    '<input ' + inpN + ' id="q3a" step="0.1"> 倍（对比记录表/第③步日志中两种泛函的耗时），因此，在做定性计算时用 ' +
-    '<select id="q3b" ' + sel + '><option value="">请选择</option><option>PBE</option><option>HSE06</option></select>' +
-    ' 泛函，做定量计算时用 ' +
-    '<select id="q3c" ' + sel + '><option value="">请选择</option><option>PBE</option><option>HSE06</option></select>' +
-    ' 泛函。<span class="hint">（定性计算指判断掺杂后带隙会变大或变小；定量计算指计算值与实验值对比）</span></label>' +
-    '<label style="margin-top:8px">Q4. 在右侧能带结构中，g-C<sub>3</sub>N<sub>4</sub> 的带隙类型是 ' +
-    '<select id="q4a" ' + sel + '><option value="">请选择</option><option>直接</option><option>间接</option></select>' +
-    ' 带隙，高对称点 Γ→A 之间能带比较平的原因是：</label>' +
-    '<textarea class="sel" id="q4b" rows="2" style="width:100%;resize:vertical" placeholder="提示：从层间相互作用的角度分析……"></textarea>' +
-    '<label style="margin-top:8px">Q5. 在吸收光谱中，g-C<sub>3</sub>N<sub>4</sub> 对可见光的吸收' +
-    '<select id="q5" ' + sel + '><option value="">请选择</option><option>很强</option><option>较弱</option></select>' +
-    '，这是它需要改性优化的方向之一。</label>' +
-    '<label style="margin-top:8px">Q6. g-C<sub>3</sub>N<sub>4</sub> 带边位置主要是由于 ' +
-    '<select id="q6" ' + selW + '><option value="">请选择</option><option>CBM</option><option>VBM</option></select>' +
-    ' 偏离水的氧化还原电位较大，导致其光催化效率低，这也是需要优化的方向。</label>' +
-    '<label style="margin-top:8px">Q7. 根据计算时间和带隙值，本次实验应该选择的截断能是 ' +
-    '<select id="q7a" ' + sel + '><option value="">请选择</option><option>400</option><option>450</option><option>500</option><option>550</option></select>' +
-    ' eV，泛函应该选择 ' +
-    '<select id="q7b" ' + sel + '><option value="">请选择</option><option>PBE</option><option>HSE06</option></select>' +
+    '<span ' + subT + '>测试一 · 截断能 ENCUT（总能收敛 + 耗时）</span>' +
+    '<label>Q1. 按总能收敛判据（相邻两档 |ΔE| &lt; 0.03 eV），并兼顾计算耗时：ENCUT 至少应取' +
+    '<select id="q1" ' + sel + '><option value="">请选择</option><option>250</option><option>300</option><option>450</option><option>500</option><option>550</option></select>' +
+    ' eV。<span class="hint">（看「平台收敛测试参考数据」图①：蓝线为总能，450→500 差 24 meV，500→550 仅差 3 meV）</span></label>' +
+    '<label style="margin-top:8px">Q2. 随截断能增大，SCF 计算耗时' +
+    '<select id="q2" ' + selW + '><option value="">请选择</option><option>近似线性增大</option><option>基本不变</option><option>近似线性减小</option></select>' +
+    '。<span class="hint">（图①绿色虚线：41.7 → 51.5 s）</span></label>' +
+    '<span ' + subT + '>测试二 · K 点密度（总能收敛 + 耗时）</span>' +
+    '<label>Q3. K 网格收敛测试（ENCUT = 500 eV）：总能首次收敛（|ΔE| &lt; 4 meV）的网格是' +
+    '<select id="q3" ' + selW + '><option value="">请选择</option><option>1×1×1</option><option>2×2×2</option><option>2×2×3</option><option>3×3×3</option><option>4×4×4</option></select>' +
+    '。<span class="hint">（图②：红虚线为 6×6×6 基准）</span></label>' +
+    '<label style="margin-top:8px">Q4. 1×1×1 网格的总能偏差高达 +18.55 eV、完全不可用，其原因是' +
+    '<select id="q4" ' + selW + '><option value="">请选择</option><option>布里渊区采样过粗，k 点过少</option><option>平面波基组不完备</option><option>SCF 自洽未收敛</option><option>赝势选择不当</option></select>' +
+    '。</label>' +
+    '<span ' + subT + '>测试三 · 泛函（带隙 vs 实验值）</span>' +
+    '<label>Q5. 请通过智能体（小碳老师）查询：g-C<sub>3</sub>N<sub>4</sub> 实验测量带隙为' +
+    '<input ' + inpN + ' id="q5a"> eV，其中' +
+    '<select id="q5b" ' + sel + '><option value="">请选择</option><option>PBE</option><option>HSE06</option></select>' +
+    ' 的计算结果与实验值最接近。<span class="hint">（自己分别在 PBE / HSE06 下各算一次，对比记录表带隙列）</span></label>' +
+    '<label style="margin-top:8px">Q6. 由记录表耗时列：HSE06 的计算量约为 PBE 的' +
+    '<input ' + inpN + ' id="q6a" step="0.1"> 倍，因此做定性判断（带隙变大/变小）用' +
+    '<select id="q6b" ' + sel + '><option value="">请选择</option><option>PBE</option><option>HSE06</option></select>' +
+    '，做定量对比（与实验值比较）用' +
+    '<select id="q6c" ' + sel + '><option value="">请选择</option><option>PBE</option><option>HSE06</option></select>' +
     ' 泛函。</label>' +
+    '<label style="margin-top:8px">Q7. 综合三项测试，本实验最终确定的参数：ENCUT = ' +
+    '<select id="q7a" ' + sel + '><option value="">请选择</option><option>250</option><option>300</option><option>450</option><option>500</option><option>550</option></select>' +
+    ' eV，K 网格 = ' +
+    '<select id="q7b" ' + selW + '><option value="">请选择</option><option>1×1×1</option><option>2×2×2</option><option>3×3×3</option><option>5×5×3</option><option>6×6×6</option></select>' +
+    '，泛函 = ' +
+    '<select id="q7c" ' + sel + '><option value="">请选择</option><option>PBE</option><option>HSE06</option></select>' +
+    '。</label>' +
     '<div style="margin-top:9px"><button class="go-btn" onclick="gradeQuiz()">✓ 提交判读</button> <span id="quizMsg"></span></div>';
   STATE.answered = false;
-}
-/* Γ→A 能带平坦原因：命中任一关键词即认可 */
-function flatBandOK(t){
-  t = t.toLowerCase();
-  var kws = ['层间', '范德华', 'vdw', '弱相互作用', '相互作用弱', '弱键', '无键', '没有键', '无化学键', '没有化学键', '不成键', '不形成键', '弱', '间距大', '距离大'];
-  for (var i = 0; i < kws.length; i++){ if (t.indexOf(kws[i]) >= 0) return true; }
-  return false;
 }
 function gradeQuiz(){
   function v(id){ var el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; }
   function num(id){ var x = parseFloat(v(id)); return isNaN(x) ? null : x; }
   var msg = document.getElementById('quizMsg');
-  if (!v('q1') || num('q2a') == null || !v('q2b') || num('q3a') == null || !v('q3b') || !v('q3c') ||
-      !v('q4a') || !v('q4b') || !v('q5') || !v('q6') || !v('q7a') || !v('q7b')){
-    msg.innerHTML = '<span class="msg-no">请填完所有空再提交（Q2 实验带隙可向小碳老师查询）。</span>'; return;
+  if (!v('q1') || !v('q2') || !v('q3') || !v('q4') || num('q5a') == null || !v('q5b') ||
+      num('q6a') == null || !v('q6b') || !v('q6c') || !v('q7a') || !v('q7b') || !v('q7c')){
+    msg.innerHTML = '<span class="msg-no">请填完所有空再提交（Q5 实验带隙可向小碳老师查询）。</span>'; return;
   }
   STATE.answered = true;
   var res = [];
-  /* Q1 4 分：截断能对带隙影响小（400→550 仅差 0.0076 eV） */
-  res.push([v('q1') === '不大', 'Q1 截断能的影响：不大（400 → 550 eV 带隙仅变化约 0.008 eV，截断能取值主要影响基组完备性，收敛后变化很小）', 4]);
-  /* Q2 8 分：实验带隙（接受 2.4 ~ 3.0 eV，文献常见 2.6 ~ 2.8）+ HSE06 更准 */
-  var q2a = num('q2a');
-  var ok2a = (q2a >= 2.4 && q2a <= 3.0);
-  var ok2 = (ok2a && v('q2b') === 'HSE06');
-  res.push([ok2, 'Q2 实验测量带隙（文献值约 2.6 ~ 2.8 eV，你填 ' + (ok2a ? q2a : '超出常见范围') + ' eV）；' +
-    (v('q2b') === 'HSE06' ? 'HSE06 含 25% 精确交换，能给出与实验吻合的带隙' : '<b>应选 HSE06</b>（PBE 因"自相互作用误差"系统性低估带隙）'), 8]);
-  /* Q3 9 分：倍数（3~8，实测约 5）+ 定性 PBE + 定量 HSE06 */
-  var q3a = num('q3a');
-  var ok3 = (q3a >= 3 && q3a <= 8 && v('q3b') === 'PBE' && v('q3c') === 'HSE06');
-  res.push([ok3, 'Q3 计算量对比（HSE06 ≈ PBE 的 5 倍，见记录表耗时列' +
-    (q3a >= 3 && q3a <= 8 ? '' : '，你填的倍数偏离较大') + '）；定性判断带隙变大/变小用 PBE（快），与实验值定量对比用 HSE06（准）', 9]);
-  /* Q4 8 分：带隙类型按当前右侧能带图（本人最后一次计算）+ Γ→A 平坦原因 */
-  var direct = !(STATE.real && STATE.real.direct === false);   // 默认直接带隙
-  var ok4a = (v('q4a') === (direct ? '直接' : '间接'));
-  var ok4 = (ok4a && flatBandOK(v('q4b')));
-  res.push([ok4, 'Q4 带隙类型（本计算为' + (direct ? '直接' : '间接') + '带隙：VBM 与 CBM 位于同一 k 点）；' +
-    (flatBandOK(v('q4b')) ? 'Γ→A 方向平坦：g-C<sub>3</sub>N<sub>4</sub> 为层状材料，层间仅靠微弱的范德华相互作用，无化学键，电荷密度低，能带沿 c* 方向色散小' : '<b>原因要点：层间（Γ→A，即 c* 方向）只有微弱的范德华相互作用、无化学键</b>，能带在该方向几乎无色散'), 8]);
-  /* Q5 3 分：可见光吸收较弱（带隙 ~2.9 eV，吸收边在紫外区） */
-  res.push([v('q5') === '较弱', 'Q5 可见光吸收较弱（带隙偏大 → 吸收边 λ = 1240/E<sub>g</sub> ≈ 430 nm 蓝移到紫外区，可见光利用率低——正是需要改性缩带隙的原因）', 3]);
-  /* Q6 4 分：CBM 偏离更大（CBM = −1.39 V vs H⁺/H₂ 的 0 V，偏离 1.39 V；VBM = 1.47 V vs O₂/H₂O 的 1.23 V，仅偏离 0.24 V） */
-  res.push([v('q6') === 'CBM', 'Q6 CBM 偏离更大：导带底（≈ −1.39 V vs NHE）远高于 H<sup>+</sup>/H<sub>2</sub> 电位（0 V），电子还原产氢的过电位大；VBM 距 O<sub>2</sub>/H<sub>2</sub>O 电位仅约 0.24 V。故主要优化方向是把导带底"压"向 H<sup>+</sup>/H<sub>2</sub> 电位（缩小带隙且保持带边包住水）', 4]);
-  /* Q7 4 分：兼顾时间与精度 → 450/500/550 均收敛（推荐 500）；泛函 HSE06（本实验须与实验值定量对比） */
-  var q7a = v('q7a');
-  res.push([q7a === '500' || q7a === '450' || q7a === '550', 'Q7 截断能：≥ 450 eV 带隙已收敛（变化 &lt; 0.01 eV），兼顾精度与算力常取 <b>500 eV</b>' +
-    (q7a === '400' ? '（你选的 400 eV 尚未收敛，不推荐）' : '') + '；泛函：<b>HSE06</b>（本实验要与实验带隙定量对比并判读带边位置，PBE 低估带隙只能作定性筛选）', 4]);
+  /* 测试一 · 截断能（10 分） */
+  var q1 = v('q1');
+  res.push([q1 === '500' || q1 === '550', 'Q1 截断能：≥ 500 eV 总能收敛（450→500 差 24 meV，500→550 仅 3 meV），兼顾耗时推荐 <b>500 eV</b>' +
+    (q1 === '450' ? '（你选的 450 eV 偏差 24 meV，处于收敛边缘）' : (q1 === '550' ? '（550 eV 亦收敛，但耗时更长）' : (q1 === '500' ? '' : '（远未收敛）'))), 6]);
+  res.push([v('q2') === '近似线性增大', 'Q2 耗时：ENCUT 250 → 600 eV，SCF 耗时 41.7 → 51.5 s，近似线性增大（平面波基数随截断能增多）', 4]);
+  /* 测试二 · K 点密度（10 分） */
+  res.push([v('q3') === '3×3×3', 'Q3 K 网格：<b>3×3×3</b> 起总能即收敛（偏差 &lt; 4 meV）；2×2×2 / 2×2×3 系统性偏高约 0.19 eV（采样不足）', 6]);
+  res.push([v('q4').indexOf('布里渊区') === 0, 'Q4 1×1×1 只取 Γ 一个 k 点，<b>布里渊区采样过粗</b>，无法描述周期性材料的能带结构（与平面波基组、SCF 收敛、赝势无关）', 4]);
+  /* 测试三 · 泛函（14 分） */
+  var q5a = num('q5a');
+  var ok5a = (q5a >= 2.4 && q5a <= 3.0);
+  res.push([ok5a && v('q5b') === 'HSE06', 'Q5 实验测量带隙（文献值约 2.6 ~ 2.8 eV，你填 ' + (ok5a ? q5a : '超出常见范围') + ' eV）；<b>HSE06</b> 计算值与实验吻合，PBE 因"自相互作用误差"系统性低估带隙', 8]);
+  var q6a = num('q6a');
+  res.push([(q6a >= 3 && q6a <= 8) && v('q6b') === 'PBE' && v('q6c') === 'HSE06', 'Q6 计算量对比（HSE06 ≈ PBE 的 5 倍，见记录表耗时列' +
+    (q6a >= 3 && q6a <= 8 ? '' : '，你填的倍数偏离较大') + '）；定性判断用 PBE（快），与实验值定量对比用 HSE06（准）', 6]);
+  /* Q7 最终参数（6 分，各 2 分） */
+  res.push([v('q7a') === '500', 'Q7 截断能：<b>500 eV</b>（测试一收敛结论，兼顾耗时）', 2]);
+  res.push([v('q7b') === '5×5×3', 'Q7 K 网格：<b>5×5×3（Γ 居中）</b>（测试二：3×3×3 已收敛，生产取更充裕的 5×5×3）', 2]);
+  res.push([v('q7c') === 'HSE06', 'Q7 泛函：<b>HSE06</b>（测试三：与实验带隙定量对比并判读带边位置）', 2]);
   var pts = 0, html = '';
   res.forEach(function(r){
     if (r[0]) pts += r[2];
     html += '<div class="' + (r[0] ? 'ans-ok' : 'ans-no') + '">' + (r[0] ? '✓ ' : '✗ ') + r[1] + '</div>';
   });
-  html += '<div class="hint" style="margin-top:4px">参考：截断能收敛后对带隙影响不大；实验带隙约 2.7 eV，HSE06 更准；HSE06 耗时 ≈ PBE 的 5 倍（定性用 PBE、定量用 HSE06）；g-C<sub>3</sub>N<sub>4</sub> 为直接带隙半导体，Γ→A 平坦源于层间弱范德华相互作用；可见光吸收较弱、CBM 偏离水的氧化还原电位大，是改性的两个方向。</div>';
+  html += '<div class="hint" style="margin-top:4px">参考：三项测试确定参数——ENCUT 500 eV（总能收敛 |ΔE| ≤ 0.03 eV）、K 网格 5×5×3（Γ 居中，3×3×3 已收敛）、定量泛函 HSE06（≈ PBE 的 5 倍耗时，与实验带隙约 2.7 eV 吻合；PBE 低估带隙只作定性筛选）。平台完整收敛数据见上方「📊 平台收敛测试参考数据」。</div>';
   STATE.score = pts;                    // 本层得分（满分 40）
   SCORES.set('g1', pts);
   html += '<div style="margin-top:6px">第①层判读得分：<span class="score" style="font-size:16px">' + pts + ' / 40</span>' +
@@ -1005,7 +1000,7 @@ function gradeQuiz(){
   document.getElementById('quizMsg').innerHTML = html;
   markOK('dot4');
   document.getElementById('subBtn').disabled = false;
-  ILAB.mark('填空判读与实验结果核对', '截断能收敛测试与泛函精度对比判读正确率赋分', 420, Math.round(pts / 40 * 100));
+  ILAB.mark('填空判读与实验结果核对', '截断能/K 网格收敛测试与泛函选择判读正确率赋分', 420, Math.round(pts / 40 * 100));
 }
 
 /* ================= ⑤ 提交本层结论（第①层） ================= */
@@ -1014,20 +1009,16 @@ function submitResult(){
   if (!user){ msg.innerHTML = '<span class="msg-no">未登录：请从实验流程页登录后再提交。</span>'; return; }
   if (!STATE.answered){ msg.innerHTML = '<span class="msg-no">请先完成第④步判读。</span>'; return; }
   function eg(en, fn){ var x = REC.get('pristine', 0, en, fn); return x == null ? '—' : x.toFixed(4); }
+  function eg(en, fn){ var x = REC.get('pristine', 0, en, fn); return x == null ? '—' : x.toFixed(4); }
+  function qv(id){ var el = document.getElementById(id); return el ? String(el.value || '—').trim() : '—'; }
   var content =
     '【3D虚拟仿真·第①层 计算方法与参数确定】\n' +
     '体系：本征 g-C₃N₄（ε = 0，R3m 体相原胞 21 原子）\n' +
     '计算来源：真实集群计算（VASP 6.3.1，PBS 队列），K 网格 Γ 居中 5×5×3\n' +
-    '参数考核：PBE 截断能收敛测试 Eg(400/450/500/550) = ' + eg(400,'PBE') + ' / ' + eg(450,'PBE') + ' / ' + eg(500,'PBE') + ' / ' + eg(550,'PBE') + ' eV；' +
-    'HSE06@500 = ' + eg(500,'HSE06') + ' eV（实验带隙约 2.7 eV）\n' +
-    '判读结论：实验带隙 ' + (document.getElementById('q2a').value || '—') + ' eV，' +
-    (document.getElementById('q2b').value || '—') + ' 更准；HSE06 耗时 ≈ PBE 的 ' + (document.getElementById('q3a').value || '—') +
-    ' 倍（定性用 ' + (document.getElementById('q3b').value || '—') + '、定量用 ' + (document.getElementById('q3c').value || '—') + '）\n' +
-    '能带判读：' + (document.getElementById('q4a').value || '—') + '带隙；Γ→A 平坦原因：' +
-    (document.getElementById('q4b').value || '').trim().slice(0, 200) +
-    '\n光催化判读：可见光吸收' + (document.getElementById('q5').value || '—') + '；' +
-    (document.getElementById('q6').value || '—') + ' 偏离水的氧化还原电位较大；' +
-    '参数选择：ENCUT = ' + (document.getElementById('q7a').value || '—') + ' eV + ' + (document.getElementById('q7b').value || '—') + '\n' +
+    '测试一·截断能：PBE Eg(400/450/500/550) = ' + eg(400,'PBE') + ' / ' + eg(450,'PBE') + ' / ' + eg(500,'PBE') + ' / ' + eg(550,'PBE') + ' eV；平台总能收敛判据：ENCUT ≥ 500 eV（|ΔE| ≤ 0.03 eV，耗时 42→48 s 近线性）\n' +
+    '测试二·K 点密度：平台总能收敛判据：≥ 3×3×3 收敛（|ΔE| < 4 meV），生产取 5×5×3（Γ 居中）\n' +
+    '测试三·泛函：实验带隙 ' + qv('q5a') + ' eV；HSE06@500 = ' + eg(500,'HSE06') + ' eV 与实验值吻合（PBE 系统性低估，仅作定性筛选）；HSE06 耗时 ≈ PBE 的 ' + qv('q6a') + ' 倍\n' +
+    '最终参数：ENCUT = ' + qv('q7a') + ' eV，K 网格 = ' + qv('q7b') + '，泛函 = ' + qv('q7c') + '\n' +
     '本层得分：' + STATE.score + ' / 40（三层累计 ' + SCORES.total() + ' / 100）';
   fetch('/api/submit', {method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({token: user.token, kind: '阶段性成果', step: '3D虚拟仿真实验台·第①层',
