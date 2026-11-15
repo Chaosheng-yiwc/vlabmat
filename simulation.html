@@ -538,7 +538,8 @@ function planAvailable(sys, strain, encut, func){
     return (sys === 'pristine' && strain === 0);
   }
   if (encut !== 500) return false;
-  if (sys === 'pristine') return true;   /* HSE06：本征 ε=0 精度对比 */
+  if (sys === 'pristine') return true;   /* HSE06：本征 ε=−4~+4 全系列 */
+  if (sys === 'o_dop') return true;      /* HSE06：O-掺杂 ε=−4~+4 全系列 */
   return false;
 }
 function applyPlanLock(){
@@ -680,7 +681,7 @@ function submitReal(){
   if (!planAvailable(STATE.sys, STATE.strain, STATE.encut, STATE.func)){
     realLog('[计算] ✗ 参数组合（体系=' + SYS[STATE.sys].name + '、应变=' + STATE.strain + '%、ENCUT=' + STATE.encut + '、泛函=' + STATE.func + '）暂无计算数据——' +
       (STATE.func === 'HSE06'
-        ? 'HSE06 已入库组合：本征 ε = −4 ~ +4 全系列；O-掺杂 ε = −3 / 0 / +1 / +2（均 ENCUT 500）；其余组合正在集群补算，可先选用 PBE 完成实验。'
+        ? 'HSE06 已入库组合：本征 ε = −4 ~ +4 全系列；O-掺杂 ε = −4 ~ +4 全系列（均 ENCUT 500）；其余组合正在集群补算，可先选用 PBE 完成实验。'
         : '请按实验指导书调整参数后重新提交。'));
     return;
   }
