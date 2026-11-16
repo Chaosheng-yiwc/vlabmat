@@ -217,24 +217,19 @@
     <div class="stp-card">
       <div class="stp-head"><span>② 设置计算参数</span><span class="dot" id="dot2">2</span></div>
       <div class="stp-body">
-        <label style="font-size:12.5px;color:var(--sub)">平面波截断能 ENCUT</label>
-        <select class="sel" id="encut">
-          <option value="500" selected>500 eV（第②层收敛测试选定）</option>
-        </select>
+        <div class="hint">使用第2步测试通过的平面波截断能和K点密度。</div>
         <label style="font-size:12.5px;color:var(--sub);display:block;margin-top:7px">交换关联泛函（决定能带计算方法）</label>
         <select class="sel" id="func">
           <option value="PBE" selected>PBE（GGA 半局域泛函）</option>
           <option value="HSE06">HSE06（杂化泛函）</option>
         </select>
-        <div class="hint" id="funcHint"></div>
-        <div class="hint">提示：K 网格内部固定 5×5×3（Γ 居中，已通过收敛测试）。泛函与体系、应变可自由组合提交计算，探索记录自动登记，第④步判读以你自己的计算结果为准。</div>
       </div>
     </div>
 
     <div class="stp-card">
       <div class="stp-head"><span>③ 提交计算</span><span class="dot" id="dot3">3</span></div>
       <div class="stp-body">
-        <div class="hint" id="clusterHint" style="margin:0 0 8px">计算由平台集群节点执行（PBE / HSE06，体相 g-C<sub>3</sub>N<sub>4</sub>：结构优化 → SCF → 能带 → 光学吸收全流程），提交后可在下方日志窗口实时查看各阶段运行输出。核数越多，计算越快。做实验需要查资料或排查报错时，点右侧「🤖 小碳老师」随时提问。</div>
+        <div class="hint" id="clusterHint" style="margin:0 0 8px">PBE 流水：结构优化 → SCF → 非自洽能带（ICHARG=11）→ 光学谱；HSE06 流水：PBE SCF 波函数初猜 + 一次杂化自洽同时完成 SCF 与能带。做实验需要查资料或排查报错时，点右侧「🤖 小碳老师」随时提问。</div>
         <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap">
           <span style="font-size:12.5px;color:var(--ink,#333)">集群核数（mpirun -n）</span>
           <select id="coresSel" onchange="STATE.cores=parseInt(this.value,10)" style="padding:4px 8px;border:1px solid #c3cfdd;border-radius:8px;background:#fff;font-size:13px">
@@ -568,25 +563,11 @@ function planAvailable(sys, strain, encut, func){
   return false;
 }
 function applyPlanLock(){
-  var isMod = (STATE.sys !== 'pristine');
   var func = document.getElementById('func');
-  var hint = document.getElementById('funcHint');
-  /* HSE06 放开范围：本征全系列 + O-掺杂 ε=−3/0/+1/+2（已入库）；其余掺杂组合锁 PBE */
-  var hseOK = (STATE.sys === 'pristine')
-           || (STATE.sys === 'o_dop' && (STATE.strain === -3 || STATE.strain === 0 || STATE.strain === 1 || STATE.strain === 2));
+  /* HSE06 放开范围：本征全系列 + O-掺杂全系列已入库；其余掺杂组合锁 PBE */
+  var hseOK = (STATE.sys === 'pristine') || (STATE.sys === 'o_dop');
   Array.prototype.forEach.call(func.options, function(o){ o.disabled = !hseOK && o.value !== 'PBE'; });
   if (STATE.func === 'HSE06' && !hseOK){ func.value = 'PBE'; STATE.func = 'PBE'; }
-  var method = 'PBE 流水：结构优化 → SCF → 非自洽能带（ICHARG=11）→ 光学谱；HSE06 流水：PBE SCF 波函数初猜 + 一次杂化自洽同时完成 SCF 与能带。';
-  if (isMod){
-    var hseTxt = (STATE.sys === 'o_dop')
-      ? 'HSE06 已入库：ε = −3 / 0 / +1 / +2（ENCUT 500），其余应变集群补算中，入库后开放。'
-      : 'HSE06 对照数据集群补算中，入库后开放。';
-    hint.innerHTML = method + '当前体系（' + chem(SYS[STATE.sys].name) + '）计划：<b>PBE · ENCUT 500 eV · 应变 ε = −4% ~ +4% 全系列</b>；' + hseTxt;
-    hint.style.color = '#8a6d1a';
-  } else {
-    hint.innerHTML = method + '本征体系：PBE / HSE06 应变 ε = −4% ~ +4% 全系列已入库（ENCUT 500）。';
-    hint.style.color = '';
-  }
 }
 
 /* 各体系显示名称（计算结果一律来自集群真实计算，经 PRECALC 结果库返回）。
@@ -602,10 +583,7 @@ function applyStructOK(res, name){
   STATE.structOK = true;
   var msg = document.getElementById('structMsg');
   msg.style.color = 'var(--green)';
-  msg.innerHTML = '✓ 结构校验通过：' + chem(name) + '（' + res.comp + '，' + res.natoms + ' 原子，' +
-    (res.matched === 'bulk' ? 'R3m 三层原胞' : '单层 slab') +
-    (res.max_dev != null ? '，最大原子偏差 ' + res.max_dev.toFixed(3) + ' Å' : '') +
-    '）。已载入右侧模型，可继续第①步。';
+  msg.innerHTML = '✓ 结构校验通过。';
   document.getElementById('dot0').className = 'dot ok';
   document.getElementById('dot0').textContent = '✓';
   document.getElementById('poscarBox').style.display = '';
@@ -673,13 +651,6 @@ document.getElementById('strain').oninput = function(){
   STATE.realDone = false; STATE.real = null;
   document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
   updateModel();
-  applyPlanLock();
-};
-document.getElementById('encut').onchange = function(){
-  STATE.encut = parseInt(this.value);
-  STATE.computed = false;
-  STATE.realDone = false; STATE.real = null;
-  document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
   applyPlanLock();
 };
 document.getElementById('func').onchange = function(){
