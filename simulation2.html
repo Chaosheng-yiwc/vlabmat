@@ -222,29 +222,28 @@
         <div class="hint">提示：两种泛函都可以提交计算。哪种更适合定性分析、哪种更适合定量分析，请用你自己的计算结果与实验测量带隙对比后，在第④步判读题中回答。</div>
         <div class="hint" style="background:#f3f0fb;border:1px solid #ddd4f0">
           <b style="color:#4a3a80">❓ 设问：第①层已经用 PBE 选定了参数，为什么第②层还要提供 HSE06？两种泛函算出的带隙差多少？</b>
+          ——请不要预习答案：分别用 PBE 与 HSE06 在第③步各提交一次计算（本征 ε=0），下表会由<b>你自己的计算结果</b>逐格生成，算完两种泛函后对比解读才会出现。
           <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:12.5px">
             <tr style="background:#e9e3f6;color:#3a2d66">
               <th style="padding:4px 6px;text-align:left">计算方法</th>
-              <th style="padding:4px 6px;text-align:center">带隙 E<sub>g</sub>（本征 ε=0）</th>
+              <th style="padding:4px 6px;text-align:center">带隙 E<sub>g</sub>（你的计算）</th>
               <th style="padding:4px 6px;text-align:center">与实验值 2.70 eV 的偏差</th>
-              <th style="padding:4px 6px;text-align:center">计算耗时（24 核实测）</th>
+              <th style="padding:4px 6px;text-align:center">计算耗时（你本次运行）</th>
             </tr>
             <tr style="border-top:1px solid #ddd4f0">
               <td style="padding:4px 6px">PBE（GGA 半局域）</td>
-              <td style="padding:4px 6px;text-align:center">1.31 eV</td>
-              <td style="padding:4px 6px;text-align:center">−51%（严重低估）</td>
-              <td style="padding:4px 6px;text-align:center">≈ 47 min</td>
+              <td id="fnEgPBE" style="padding:4px 6px;text-align:center">—</td>
+              <td id="fnDevPBE" style="padding:4px 6px;text-align:center">—</td>
+              <td id="fnTmPBE" style="padding:4px 6px;text-align:center">—</td>
             </tr>
             <tr style="border-top:1px solid #ddd4f0">
               <td style="padding:4px 6px">HSE06（25% 精确交换）</td>
-              <td style="padding:4px 6px;text-align:center">2.87 eV</td>
-              <td style="padding:4px 6px;text-align:center">+6%（接近实验）</td>
-              <td style="padding:4px 6px;text-align:center">≈ 234 min</td>
+              <td id="fnEgHSE06" style="padding:4px 6px;text-align:center">—</td>
+              <td id="fnDevHSE06" style="padding:4px 6px;text-align:center">—</td>
+              <td id="fnTmHSE06" style="padding:4px 6px;text-align:center">—</td>
             </tr>
           </table>
-          <div style="margin-top:6px;line-height:1.75">
-          答案藏在表里：<b>HSE06 计算值（2.87 eV）明显更接近实验带隙（≈ 2.7 eV，偏差仅 +6%）</b>，而 PBE 因半局域交换关联的<b>自相互作用误差</b>把带隙低估了一半以上（−51%）——定性看"是不是半导体、带边在哪"PBE 够用，定量谈带隙就必须上杂化泛函。但精度是有代价的：HSE06 要对每个 k 点做精确交换对角化（Fock 矩阵），<b>计算时间约为 PBE 的 5 倍</b>（同为 24 核：234 min vs 47 min）。请分别用两种泛函提交计算，用你自己的结果验证这张表。
-          </div>
+          <div id="fnVerdict" style="margin-top:6px;line-height:1.75"></div>
         </div>
       </div>
     </div>
@@ -659,6 +658,51 @@ document.getElementById('func').onchange = function(){
 };
 applyPlanLock();   // 初始提示与控件状态同步
 
+/* ================= PBE vs HSE06 对比表（由学生自己的计算结果生成，不预制数据） ================= */
+var FUNCRES_KEY = 'ai_lab_sim2_funcres';
+function loadFnRes(){
+  try { return JSON.parse(localStorage.getItem(FUNCRES_KEY) || '{}') || {}; } catch(e){ return {}; }
+}
+function saveFnRes(o){ try { localStorage.setItem(FUNCRES_KEY, JSON.stringify(o)); } catch(e){} }
+function fmtPct(d){
+  return (d > 0 ? '+' : '−') + Math.abs(d).toFixed(0) + '%';
+}
+function devTxt(eg){
+  var d = (eg - 2.70) / 2.70 * 100;
+  return fmtPct(d) + (Math.abs(d) <= 15 ? '（接近实验）' : (d < 0 ? '（低估）' : '（偏高）'));
+}
+function renderFnTbl(){
+  var o = loadFnRes();
+  ['PBE', 'HSE06'].forEach(function(f){
+    var r = o[f], egCell = document.getElementById('fnEg' + f);
+    if (!egCell) return;
+    if (r && r.eg != null && !isNaN(r.eg)){
+      egCell.innerHTML = r.eg.toFixed(2) + ' eV';
+      document.getElementById('fnDev' + f).innerHTML = devTxt(r.eg);
+      document.getElementById('fnTm' + f).innerHTML = Math.round(r.sec / 60) + ' min';
+    } else {
+      egCell.innerHTML = '<span style="color:#9aa7b6">待计算</span>';
+      document.getElementById('fnDev' + f).innerHTML = '—';
+      document.getElementById('fnTm' + f).innerHTML = '—';
+    }
+  });
+  var v = document.getElementById('fnVerdict');
+  if (!v) return;
+  var p = o.PBE, h = o.HSE06;
+  var both = p && p.eg != null && !isNaN(p.eg) && h && h.eg != null && !isNaN(h.eg);
+  if (!both){
+    v.innerHTML = '<span style="color:#6b5a9e">⏳ 两行都填上你自己的计算结果后，这里才会给出对比解读——请到第③步把另一种泛函也算完。</span>';
+    return;
+  }
+  var dp = (p.eg - 2.70) / 2.70 * 100, dh = (h.eg - 2.70) / 2.70 * 100;
+  var ratio = (h.sec && p.sec) ? (h.sec / p.sec) : 5;
+  v.innerHTML =
+    '答案就在你算出的表里：<b>HSE06 计算值（' + h.eg.toFixed(2) + ' eV）明显更接近实验带隙（≈ 2.7 eV，偏差仅 ' + fmtPct(dh) + '）</b>，' +
+    '而 PBE 因半局域交换关联的<b>自相互作用误差</b>把带隙低估了（' + fmtPct(dp) + '）——定性看"是不是半导体、带边在哪"PBE 够用，定量谈带隙就必须上杂化泛函。' +
+    '但精度是有代价的：HSE06 要对每个 k 点做精确交换对角化（Fock 矩阵），<b>你本次 HSE06 的耗时约为 PBE 的 ' + ratio.toFixed(1) + ' 倍</b>。';
+}
+renderFnTbl();   // 恢复历史计算结果（localStorage）
+
 function markOK(id, text){ var d = document.getElementById(id); d.className = 'dot ok'; d.textContent = '✓'; }
 
 /* ================= ③ 提交计算（集群流水线执行） ================= */
@@ -863,6 +907,13 @@ function finishReal(r){
   }
   STATE.defect = (STATE.sys === 'c_vac');
   REC.put(STATE.sys, STATE.strain, STATE.encut, STATE.func, r.eg);   // 登记到三层共享计算记录
+  /* 登记到 PBE vs HSE06 对比表（仅本征 ε=0 · 500 eV 的结果参与对比，由学生计算生成） */
+  if (STATE.sys === 'pristine' && STATE.strain === 0 && STATE.encut === 500 && r.eg != null){
+    var fr = loadFnRes();
+    fr[STATE.func] = {eg: r.eg, sec: wallSeconds()};
+    saveFnRes(fr);
+    renderFnTbl();
+  }
   markOK('dot3'); markOK('dot4');
   setPhase4Lock(false);   // 计算完成，开放④区 pH 选择
   ILAB.close('提交第一性原理计算并监控作业');
