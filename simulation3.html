@@ -240,31 +240,9 @@
     </div>
 
     <div class="stp-card">
-      <div class="stp-head"><span>④ 结果分析与光催化三要素判读</span><span class="dot" id="dot4">4</span></div>
+      <div class="stp-head"><span>④ 结果分析与讨论</span><span class="dot" id="dot4">4</span></div>
       <div class="stp-body">
-        <div style="background:#eefaf1;border:1.5px solid #bfe3cd;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.2px;line-height:1.95;color:#14432a">
-          <b style="color:#0e5a32">📐 光催化全解水三要素</b>（读谱与判题的统一标尺）：<br>
-          ① 材料必须是<b>半导体</b>：金属没有带隙，光生电子-空穴对瞬间复合，无法积累氧化还原能力；<br>
-          ② <b>带隙 E<sub>g</sub> &gt; 1.23 eV</b>（OH<sup>−</sup>/O<sub>2</sub> 氧化电位与 H<sup>+</sup>/H<sub>2</sub> 还原电位之差）：带隙太小，载流子寿命低、电位差不足以驱动两个半反应；<br>
-          ③ <b>价带顶能量低于 OH<sup>−</sup>/O<sub>2</sub> 氧化电位（−5.67 eV），导带底能量高于 H<sup>+</sup>/H<sub>2</sub> 还原电位（−4.44 eV）</b>——带边要"包住"水的氧化还原电位线；<br>
-          ④ 补充判据：吸收光谱中<b>可见光吸收区域越大</b>，太阳光利用率越高（吸收边 λ ≈ 1240/E<sub>g</sub>，E<sub>g</sub> 越大吸收边越蓝移）。
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap">
-          <span style="font-size:12.5px;color:var(--ink,#333)" title="水的氧化还原电位随 pH 线性下移 0.059 V/pH（能斯特方程）；带边位置 vs NHE 不随 pH 变，改变的是全解水判据">溶液 pH（水氧化还原电位校正）</span>
-          <select id="phSel" disabled onchange="STATE.ph=parseInt(this.value,10);onPhChange()" title="完成第③步“提交计算”后开放" style="padding:4px 8px;border:1px solid #c3cfdd;border-radius:8px;background:#fff;font-size:13px">
-            <option value="0" selected>0（酸性，标准氢标定）</option>
-            <option value="2">2</option>
-            <option value="4">4</option>
-            <option value="7">7（中性）</option>
-            <option value="10">10</option>
-            <option value="12">12</option>
-            <option value="14">14（碱性）</option>
-          </select>
-          <span style="font-size:12px;color:#7a8a9c">能斯特方程：水氧化还原参考线随 pH 下移 0.059 V/pH；带边位置 vs NHE 不变，变的是全解水判据（完成第③步“提交计算”后开放）</span>
-        </div>
-        <div class="quiz" id="quizBox">
-          <div class="hint">完成第③步计算后作答。</div>
-        </div>
+        <div style="font-size:14.5px;font-weight:700;color:#0e3a6d;margin:2px 0 6px">第一点｜PBE 与 HSE06 带隙对比</div>
         <div class="hint" style="background:#f3f0fb;border:1px solid #ddd4f0">
           <b style="color:#4a3a80">❓ 设问：第②层已经用 PBE 选定了参数，为什么第③层还要提供 HSE06？两种泛函算出的带隙差多少？</b>
           <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:12.5px">
@@ -288,6 +266,34 @@
             </tr>
           </table>
           <div id="fnVerdict" style="margin-top:6px;line-height:1.75"></div>
+        </div>
+        <div class="quiz" id="quizBox1">
+          <div class="hint">分别用 PBE 与 HSE06 各完成一次计算（第③步）后作答。</div>
+        </div>
+
+        <div style="font-size:14.5px;font-weight:700;color:#0e3a6d;margin:14px 0 6px">第二点｜g-C<sub>3</sub>N<sub>4</sub> 在 HSE06 泛函下的计算结果分析</div>
+        <div style="background:#eefaf1;border:1.5px solid #bfe3cd;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.2px;line-height:1.95;color:#14432a">
+          <b style="color:#0e5a32">📐 光催化全解水三要素</b>（读谱与判题的统一标尺）：<br>
+          ① 材料必须是<b>半导体</b>：金属没有带隙，光生电子-空穴对瞬间复合，无法积累氧化还原能力；<br>
+          ② <b>带隙 E<sub>g</sub> &gt; 1.23 eV</b>（OH<sup>−</sup>/O<sub>2</sub> 氧化电位与 H<sup>+</sup>/H<sub>2</sub> 还原电位之差）：带隙太小，载流子寿命低、电位差不足以驱动两个半反应；<br>
+          ③ <b>价带顶能量低于 OH<sup>−</sup>/O<sub>2</sub> 氧化电位（−5.67 eV），导带底能量高于 H<sup>+</sup>/H<sub>2</sub> 还原电位（−4.44 eV）</b>——带边要"包住"水的氧化还原电位线；<br>
+          ④ 补充判据：吸收光谱中<b>可见光吸收区域越大</b>，太阳光利用率越高（吸收边 λ ≈ 1240/E<sub>g</sub>，E<sub>g</sub> 越大吸收边越蓝移）。
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap">
+          <span style="font-size:12.5px;color:var(--ink,#333)" title="水的氧化还原电位随 pH 线性移动（能斯特方程）；带边位置 vs NHE 是否随之改变，请通过调节 pH 观察带边图后作答">溶液 pH（水氧化还原电位校正）</span>
+          <select id="phSel" disabled onchange="STATE.ph=parseInt(this.value,10);onPhChange()" title="完成第③步“提交计算”后开放" style="padding:4px 8px;border:1px solid #c3cfdd;border-radius:8px;background:#fff;font-size:13px">
+            <option value="0" selected>0（酸性，标准氢标定）</option>
+            <option value="2">2</option>
+            <option value="4">4</option>
+            <option value="7">7（中性）</option>
+            <option value="10">10</option>
+            <option value="12">12</option>
+            <option value="14">14（碱性）</option>
+          </select>
+          <span style="font-size:12px;color:#7a8a9c">能斯特方程：水氧化还原参考线随 pH 线性移动；带边位置 vs NHE 是否随之改变，请调节 pH 观察带边图后作答（完成第③步“提交计算”后开放）</span>
+        </div>
+        <div class="quiz" id="quizBox2">
+          <div class="hint">完成第③步计算后作答。</div>
         </div>
       </div>
     </div>
@@ -933,64 +939,74 @@ function finishReal(r){
   btn.textContent = '↻ 重新计算（改参数/体系后需重算）';
 }
 
-/* ================= ④ 结果分析与光催化三要素判读（第③层 · 30 分） ================= */
-var FILL_TOL = 0.20;   // 数值填空容差
+/* ================= ④ 结果分析与讨论（第③层 · 30 分：第一点泛函对比 14 + 第二点带边/pH 16） ================= */
+var FILL_TOL = 0.20;   // 带边数值填空容差（eV）
+var EG_TOL = 0.05;     // 带隙填空容差（对照自己的对比表，保留两位小数）
+function qInp(id){
+  return 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="填数值" id="' + id + '"';
+}
+function qSel(id){
+  return 'id="' + id + '" class="sel" style="display:inline-block;width:110px;padding:4px 8px;margin:0 4px"';
+}
 function buildQuiz(){
-  var box = document.getElementById('quizBox');
-  var inp = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="填数值"';
-  box.innerHTML =
-    '<div style="background:#eef4fb;border:1.5px solid #cfe0f2;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.5px;line-height:1.9;color:#1c2a3a">' +
-    '<b style="color:#0e3a6d">🎯 第③层目标检验：你会读计算结果吗？</b>（本层 30 分 · 三层合计 100 分）对照上方三要素与三张结果图作答，数值以你<b>本次提交计算</b>的结果为准（保留两位小数，容差 0.20 eV）。</div>' +
-    '<div style="font-size:15px;font-weight:700;color:#0e3a6d;margin:4px 0 6px">🧭 结果判读（对照带边位置图）</div>' +
-    '<label>Q1. 导带底（CBM）能量为 <input ' + inp + ' id="q1"> eV（带边图上方，导带的下边界；三要素③：须高于 H<sup>+</sup>/H<sub>2</sub> 的 −4.44 eV 方可还原水产氢）</label>' +
-    '<label>Q2. 价带顶（VBM）能量为 <input ' + inp + ' id="q2"> eV（带边图下方，价带的上边界；三要素③：须低于 OH<sup>−</sup>/O<sub>2</sub> 的 −5.67 eV 方可氧化水产氧）</label>' +
-    '<label>Q3. 带隙 E<sub>g</sub> 为 <input ' + inp + ' id="q3"> eV（三要素②：须大于 1.23 eV；同时对照吸收光谱看可见光吸收范围）</label>' +
-    '<label style="margin-top:8px">Q4. 对照光催化三要素（半导体 / E<sub>g</sub> &gt; 1.23 eV / 带边包住水的氧化还原电位）与可见光吸收：本征 g-C<sub>3</sub>N<sub>4</sub> 已满足哪几条？最需要优化的是什么？为什么？</label>' +
-    '<textarea class="sel" id="q4" rows="4" style="width:100%;resize:vertical" placeholder="提示：先逐条对照三要素判断是否满足，再结合吸收光谱中可见光吸收区域的大小，指出带隙偏大 / 可见光吸收不足的优化方向（可从吸收边波长、调控手段等角度说明）……"></textarea>' +
+  var b1 = document.getElementById('quizBox1');
+  var b2 = document.getElementById('quizBox2');
+  var fr = loadFnRes();
+  var pOK = fr.PBE && fr.PBE.eg != null && !isNaN(fr.PBE.eg);
+  var hOK = fr.HSE06 && fr.HSE06.eg != null && !isNaN(fr.HSE06.eg);
+  if (pOK && hOK){
+    b1.innerHTML =
+      '<div style="background:#eef4fb;border:1.5px solid #cfe0f2;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.5px;line-height:1.9;color:#1c2a3a">' +
+      '<b style="color:#0e3a6d">🎯 第③层目标检验：你会读计算结果吗？</b>（本层 30 分 · 三层合计 100 分）' +
+      '第一点泛函对比 14 分（对照上方你自己的对比表作答）＋ 第二点带边与 pH 分析 16 分（数值以你<b>本次提交计算</b>的结果为准，容差 0.20 eV）。</div>' +
+      '<label>Q1. 你的 PBE 计算带隙 E<sub>g</sub> = <input ' + qInp('q1') + '> eV（对照对比表第 2 行）</label>' +
+      '<label>Q2. 你的 HSE06 计算带隙 E<sub>g</sub> = <input ' + qInp('q2') + '> eV（对照对比表第 3 行）</label>' +
+      '<label>Q3. 两种泛函中，计算速度快、适合做<b>定性分析</b>（如判断掺杂后带隙如何变化）的是<select ' + qSel('q3') + '><option value="">请选择</option><option>PBE</option><option>HSE06</option></select></label>' +
+      '<label>Q4. 能<b>准确计算</b> g-C<sub>3</sub>N<sub>4</sub> 带隙、可与实验值（≈ 2.7 eV）直接对比、适合<b>定量分析</b>的是<select ' + qSel('q4') + '><option value="">请选择</option><option>PBE</option><option>HSE06</option></select></label>';
+  } else {
+    b1.innerHTML = '<div class="hint">请先到第③步分别用 PBE 与 HSE06 各提交一次计算（本征 ε=0），上方对比表填好后此处开放填空。</div>';
+  }
+  b2.innerHTML =
+    '<div style="font-size:15px;font-weight:700;color:#0e3a6d;margin:2px 0 6px">🧭 带边判读与 pH 影响（16 分）</div>' +
+    '<div class="hint">❓ 设问：调节上方 pH 观察带边位置图——水的氧化还原电位线与 g-C<sub>3</sub>N<sub>4</sub> 的带边能级，谁在随 pH 移动？</div>' +
+    '<label>Q5. 导带底（CBM）电子能量 = <input ' + qInp('q5') + '> eV（带边图上方；须高于 H<sup>+</sup>/H<sub>2</sub> 的 −4.44 eV 方可还原水产氢）</label>' +
+    '<label>Q6. 价带顶（VBM）电子能量 = <input ' + qInp('q6') + '> eV（带边图下方；须低于 OH<sup>−</sup>/O<sub>2</sub> 的 −5.67 eV 方可氧化水产氧）</label>' +
+    '<label>Q7. pH 每升高 1，水的氧化还原电位线（O<sub>2</sub>/H<sub>2</sub>O 与 H<sup>+</sup>/H<sub>2</sub>）整体移动 <input ' + qInp('q7') + '> V（能斯特方程）</label>' +
+    '<label>Q8. 随 pH 增大，g-C<sub>3</sub>N<sub>4</sub> 的带边位置（vs NHE）<select ' + qSel('q8') + '><option value="">请选择</option><option>不移动</option><option>同步下移</option><option>同步上移</option></select>（调节 pH 观察带边图可验证）</label>' +
     '<div style="margin-top:9px"><button class="go-btn" onclick="gradeQuiz()">✓ 提交判读</button> <span id="quizMsg"></span></div>';
   STATE.answered = false;
 }
-/* 关键词分组命中数：命中几类（每组任一关键词出现记 1 类） */
-function hitGroups(t, groups){
-  t = t.toLowerCase();
-  var hit = 0;
-  for (var g = 0; g < groups.length; g++){
-    for (var i = 0; i < groups[g].length; i++){
-      if (t.indexOf(groups[g][i]) >= 0){ hit++; break; }
-    }
-  }
-  return hit;
-}
 function gradeQuiz(){
-  var q1 = parseFloat(document.getElementById('q1').value);
-  var q2 = parseFloat(document.getElementById('q2').value);
-  var q3 = parseFloat(document.getElementById('q3').value);
-  var q4 = (document.getElementById('q4').value || '').trim();
+  var fr = loadFnRes();
+  if (!(fr.PBE && fr.PBE.eg != null && !isNaN(fr.PBE.eg) && fr.HSE06 && fr.HSE06.eg != null && !isNaN(fr.HSE06.eg))){
+    document.getElementById('quizMsg').innerHTML = '<span class="msg-no">请先到第③步分别用 PBE 与 HSE06 各完成一次计算，再提交判读。</span>';
+    return;
+  }
+  var v = {};
+  ['q1','q2','q5','q6','q7'].forEach(function(id){ v[id] = parseFloat(document.getElementById(id).value); });
+  ['q3','q4','q8'].forEach(function(id){ v[id] = document.getElementById(id).value; });
   var msg = document.getElementById('quizMsg');
-  if (isNaN(q1) || isNaN(q2) || isNaN(q3) || !q4){
+  var blank = ['q1','q2','q5','q6','q7'].some(function(id){ return isNaN(v[id]); }) ||
+              ['q3','q4','q8'].some(function(id){ return !v[id]; });
+  if (blank){
     msg.innerHTML = '<span class="msg-no">请填完所有空再提交。</span>'; return;
   }
   STATE.answered = true;
-  /* Q4：三要素逐条对照 + 优化方向，按类别命中判分 */
-  var q4hit = hitGroups(q4, [
-    /* 类别1：正确指出已满足项（半导体 / Eg>1.23 / 带边包住） */
-    ['半导体','1.23','带边','包住','氧化还原','满足'],
-    /* 类别2：正确指出不足与优化方向（带隙偏大 → 可见光吸收不足 → 调控减小带隙/拓宽吸收） */
-    ['带隙','可见光','吸收','蓝移','460','490','减小','缩小','窄','拓宽','调控','改性','掺杂','应变','缺陷','优化']
-  ]);
-  var ref = '参考：本征 g-C₃N₄ 是半导体 ✓；实验带隙约 2.7 eV > 1.23 eV ✓（PBE 计算值因低估带隙需注意）；带边大体包住水的氧化还原电位 ✓——三要素基本满足，但带隙偏大使吸收边蓝移（λ ≈ 1240/Eg ≈ 460 nm，仅吸收紫外和少部分蓝紫光），<b>可见光利用率不足是最需要优化的方向</b>：需要通过掺杂、缺陷、应变等调控适度减小带隙、把吸收边向长波方向拓展，同时保持带边仍包住水的氧化还原电位。';
   var res = [
-    [Math.abs(q1 - nhe2ev(STATE.cbm)) <= FILL_TOL, 'Q1 导带底：正确 ' + nhe2ev(STATE.cbm).toFixed(2) + ' eV（电子能量；= ' + STATE.cbm.toFixed(2) + ' V vs NHE，能量高于 H⁺/H₂，光生电子可还原产氢）', 8],
-    [Math.abs(q2 - nhe2ev(STATE.vbm)) <= FILL_TOL, 'Q2 价带顶：正确 ' + nhe2ev(STATE.vbm).toFixed(2) + ' eV（电子能量；= ' + STATE.vbm.toFixed(2) + ' V vs NHE，能量低于 O₂/H₂O，光生空穴可氧化产氧）', 8],
-    [Math.abs(q3 - STATE.Eg) <= FILL_TOL, 'Q3 带隙：正确 ' + STATE.Eg.toFixed(2) + ' eV（真实 ' + STATE.func + ' 计算；对应吸收边 ~' + (1239.8 / STATE.Eg).toFixed(0) + ' nm）', 8],
-    [q4hit >= 1, 'Q4 三要素对照与优化方向分析（命中 ' + q4hit + '/2 类：已满足项判断、不足与优化方向' + (q4hit >= 2 ? '' : '，两类都答到可得满分') + '）', q4hit >= 2 ? 6 : 3]
+    [Math.abs(v.q1 - fr.PBE.eg) <= EG_TOL, 'Q1 PBE 带隙：正确 ' + fr.PBE.eg.toFixed(2) + ' eV（你的 PBE 计算；半局域泛函因自相互作用误差低估带隙）', 4],
+    [Math.abs(v.q2 - fr.HSE06.eg) <= EG_TOL, 'Q2 HSE06 带隙：正确 ' + fr.HSE06.eg.toFixed(2) + ' eV（你的 HSE06 计算；含 25% 精确交换）', 4],
+    [v.q3 === 'PBE', 'Q3 定性分析选 PBE：计算快，适合判断掺杂/应变后带隙的变化趋势', 3],
+    [v.q4 === 'HSE06', 'Q4 定量分析选 HSE06：能准确计算带隙，可与实验值（≈ 2.7 eV）直接对比', 3],
+    [Math.abs(v.q5 - nhe2ev(STATE.cbm)) <= FILL_TOL, 'Q5 导带底：正确 ' + nhe2ev(STATE.cbm).toFixed(2) + ' eV（电子能量；= ' + STATE.cbm.toFixed(2) + ' V vs NHE，能量高于 H⁺/H₂，光生电子可还原产氢）', 4],
+    [Math.abs(v.q6 - nhe2ev(STATE.vbm)) <= FILL_TOL, 'Q6 价带顶：正确 ' + nhe2ev(STATE.vbm).toFixed(2) + ' eV（电子能量；= ' + STATE.vbm.toFixed(2) + ' V vs NHE，能量低于 O₂/H₂O，光生空穴可氧化产氧）', 4],
+    [Math.abs(v.q7 - 0.059) <= 0.005, 'Q7 能斯特方程：0.059 V/pH——水氧化还原电位线随 pH 线性下移', 4],
+    [v.q8 === '不移动', 'Q8 带边位置（vs NHE）不随 pH 移动（真空能级参考的电子能量固定）——移动的是水的氧化还原电位线，改变的是全解水判据', 4]
   ];
   var pts = 0, html = '';
   res.forEach(function(r){
     if (r[0]) pts += r[2];
     html += '<div class="' + (r[0] ? 'ans-ok' : 'ans-no') + '">' + (r[0] ? '✓ ' : '✗ ') + r[1] + '</div>';
   });
-  html += '<div class="hint" style="margin-top:4px">' + chem(ref) + '</div>';
   STATE.score = pts;                    // 本层得分（满分 30）
   SCORES.set('g2', pts);
   html += '<div style="margin-top:6px">第③层判读得分：<span class="score" style="font-size:16px">' + pts + ' / 30</span>' +
@@ -1008,19 +1024,23 @@ function submitResult(){
   if (!STATE.answered){ msg.innerHTML = '<span class="msg-no">请先完成第④步判读。</span>'; return; }
   var rl = redoxLevels();
   var straddle = (STATE.cbm < rl.red && STATE.vbm > rl.ox);
+  var fr = loadFnRes();
+  var fnTxt = (fr.PBE && fr.PBE.eg != null && fr.HSE06 && fr.HSE06.eg != null)
+    ? 'PBE Eg = ' + fr.PBE.eg.toFixed(2) + ' eV（定性）/ HSE06 Eg = ' + fr.HSE06.eg.toFixed(2) + ' eV（定量，接近实验 2.7 eV）'
+    : '（两种泛函对比计算未完成）';
   var content =
-    '【3D虚拟仿真·第③层 结果分析与光催化判据】\n' +
+    '【3D虚拟仿真·第③层 结果分析与讨论】\n' +
     '体系：本征 g-C₃N₄（ε = 0，R3m 体相原胞 21 原子）\n' +
     '计算来源：真实集群计算（VASP 6.3.1/' + STATE.func + '，PBS 队列），ENCUT = ' + STATE.encut + ' eV，K 网格 Γ 居中 5×5×3\n' +
+    '泛函对比：' + fnTxt + '\n' +
     '结果判读：Eg = ' + STATE.Eg.toFixed(2) + ' eV（' + STATE.func + '），CBM = ' + nhe2ev(STATE.cbm).toFixed(2) +
     ' eV，VBM = ' + nhe2ev(STATE.vbm).toFixed(2) + ' eV（电子能量，真空参考；对应电位 ' + STATE.cbm.toFixed(2) + ' / ' + STATE.vbm.toFixed(2) + ' V vs NHE，pH = ' + rl.ph + '）\n' +
     '三要素对照：半导体 ✓；Eg = ' + STATE.Eg.toFixed(2) + ' eV > 1.23 eV ✓；带边' +
     (straddle ? '包住' : '未包住') + '水的氧化还原电位；吸收边 ~' + (1239.8 / STATE.Eg).toFixed(0) + ' nm，可见光吸收不足 → 需优化\n' +
-    '学生分析：' + (document.getElementById('q4').value || '').trim().slice(0, 300) + '\n' +
     '本层得分：' + STATE.score + ' / 30（三层累计 ' + SCORES.total() + ' / 100）';
   fetch('/api/submit', {method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({token: user.token, kind: '阶段性成果', step: '3D虚拟仿真实验台·第③层',
-      title: '结果分析与光催化判据（本征 g-C₃N₄，' + STATE.func + '）', content: content})})
+      title: '结果分析与讨论（本征 g-C₃N₄，' + STATE.func + '）', content: content})})
   .then(function(r){ return r.json(); })
   .then(function(res){
     msg.innerHTML = res.ok ? '<span class="msg-ok">✓ 第③层记录已提交，教师端可在后台查收。</span>'
