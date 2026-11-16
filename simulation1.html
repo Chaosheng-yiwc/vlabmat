@@ -123,6 +123,35 @@
             border:none;border-radius:10px;padding:14px 52px;font-size:19px;font-weight:700;cursor:pointer;
             font-family:inherit;box-shadow:0 4px 14px rgba(214,143,34,.4)}
   .goal-btn:hover{filter:brightness(1.07)}
+
+  /* ---------- 小碳老师悬窗（与 simulation2 页同款） ---------- */
+  .ai-fab{position:fixed;right:0;top:92px;z-index:9000;display:flex;flex-direction:column;align-items:center;gap:4px;
+          padding:11px 7px 12px;border:1px solid #b9c9dc;border-right:0;border-radius:10px 0 0 10px;
+          background:linear-gradient(180deg,#12447e,#1a5aa0);color:#fff;cursor:pointer;font-family:inherit;
+          box-shadow:-3px 2px 12px rgba(18,68,126,.28);transition:padding .15s,background .15s}
+  .ai-fab:hover{padding-right:12px;background:linear-gradient(180deg,#0f3a6b,#12447e)}
+  .ai-fab .ico{font-size:18px;line-height:1}
+  .ai-fab .txt{writing-mode:vertical-rl;letter-spacing:2px;font-size:12px}
+  .ai-drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:94vw;z-index:9100;background:#fff;
+             border-left:1px solid #cfdae6;box-shadow:-8px 0 28px rgba(16,40,70,.18);
+             display:flex;flex-direction:column;transform:translateX(103%);transition:transform .24s ease}
+  .ai-drawer.open{transform:translateX(0)}
+  .ai-drawer-hd{display:flex;align-items:center;gap:10px;padding:10px 12px;background:linear-gradient(135deg,#0e3a6d,#1a5dab);color:#fff;flex-shrink:0}
+  .ai-drawer-hd .t{font-size:14px;font-weight:700;line-height:1.35}
+  .ai-drawer-hd .s{display:block;font-size:11.5px;font-weight:400;color:#c6d9ee;margin-top:2px}
+  .ai-drawer-x{margin-left:auto;background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:6px;
+               width:30px;height:30px;font-size:18px;line-height:1;cursor:pointer;flex-shrink:0}
+  .ai-drawer-x:hover{background:rgba(255,255,255,.3)}
+  .ai-drawer-bd{flex:1;min-height:0;background:#fff}
+  .ai-drawer-bd iframe{display:block;width:100%;height:100%;border:0}
+  /* ---------- 提交记录 ---------- */
+  .hist-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;
+             margin-top:6px;font-size:12.5px;background:#fbfdff}
+  .hist-item.last{border-color:#bcd4ec;background:#f2f7fd}
+  .hist-item .ht{color:var(--sub);flex-shrink:0}
+  .hist-item .hl{flex:1;min-width:0;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hist-item button{padding:4px 10px;font-size:12px;flex-shrink:0}
+  @media (max-width:640px){.ai-drawer{width:100%;max-width:none}.ai-fab{top:auto;bottom:80px}}
 </style>
 </head>
 <body>
@@ -192,7 +221,7 @@
         <label><i>γ</i> <input id="inGa" type="number" step="0.1" min="10" max="170"> °</label>
         <button id="btnLat" onclick="confirmLat()">确认晶格参数</button>
       </div>
-      <div class="hint" id="latHint"><b>先选空间群，再填晶格常数</b>：选定空间群后，晶格参数按该晶系的对称性自动约束（灰框为锁定项）。晶格常数<b>不做对错检查</b>——本层考察建模操作本身，任意合法数值右侧均可实时显示。</div>
+      <div class="hint" id="latHint"><b>先选空间群，再填晶格常数</b>：选定空间群后，晶格参数按该晶系的对称性自动约束（灰框为锁定项）。</div>
 
       <div id="atomBlock" class="locked" style="margin-top:10px;border-top:1px dashed var(--line);padding-top:8px">
         <div class="row">
@@ -262,6 +291,11 @@
       <div class="hint" id="msgVac">完成 C 空位后即可提交。</div>
     </div>
 
+    <div class="stp">
+      <h3><span class="no" style="background:var(--gold)">📋</span>我的提交记录（本机缓存）</h3>
+      <div id="histBox"></div>
+    </div>
+
   </div>
 
   <!-- ============ 右：实时 3D 视图 ============ -->
@@ -274,6 +308,23 @@
     <div id="statLine">就绪 —— 请先在第 1 部分选定空间群并确认晶格参数。</div>
   </div>
 </div>
+
+
+<!-- AI 助教悬窗：默认收在右上角，点标签滑出；点 × 或按 Esc 收起 -->
+<button class="ai-fab" id="aiFab" onclick="aiToggle()" title="打开 / 收起 AI 助教「小碳老师」">
+  <span class="ico">🤖</span><span class="txt">小碳老师</span>
+</button>
+<aside class="ai-drawer" id="aiDrawer" aria-hidden="true" aria-label="AI 助教对话">
+  <div class="ai-drawer-hd">
+    <div class="t">🤖 实验智能体"小碳老师"
+      <span class="s">DeepSeek 驱动 · 对话全程留痕、教师端可查</span>
+    </div>
+    <button class="ai-drawer-x" onclick="aiClose()" title="收起（Esc）">×</button>
+  </div>
+  <div class="ai-drawer-bd">
+    <iframe id="aiFrame" data-src="ai.html?embed=1" title="AI 助教对话" allow="microphone"></iframe>
+  </div>
+</aside>
 
 <script>
 /* ================= 登录态 ================= */
@@ -347,6 +398,7 @@ var S = {
   dop:{sup:null, ver:-1, opIdx:-1},   /* O 掺杂超胞 */
   vac:{sup:null, ver:-1, opIdx:-1},   /* C 空位超胞 */
   view:'prim',         /* 当前右侧显示：prim | dop | vac */
+  ready:false,         /* 初始化完成后 true，之后 gate() 触发本地自动保存 */
   sel:-1,
   log:[]               /* 原胞建模记录（提交摘要用） */
 };
@@ -612,6 +664,7 @@ function gate(){
     document.getElementById('btnSubmit'+(k==='dop'?'Dop':'Vac')).disabled = !(fresh && P.opIdx>=0);
     document.getElementById('btnCif'+(k==='dop'?'Dop':'Vac')).disabled = !fresh;
   });
+  if(S.ready) saveLocal();
 }
 
 /* ================= 第 1 部分：空间群 + 晶格 + 不对称单元 ================= */
@@ -625,16 +678,26 @@ function applySysUI(){
   S.sgNo=g.no; S.sgHm=g.hm; S.sys=g.sys; S.nops=g.nops;
   document.getElementById('sysBadge').textContent=SYS_CN[g.sys]+'晶系 · '+toSub(g.hm)+'（No.'+g.no+'）';
   document.getElementById('opBadge').textContent='对称操作 × '+g.nops;
-  /* 按晶系锁定：free=可编辑，值=锁定值 */
-  var plan={ // [a自由, b模式('free'|'=a'|'=ac'), c模式, alpha, beta, gamma]  角度：'free'|数值
-    triclinic:  [1,'free','free','free','free','free'],
-    monoclinic: [1,'free','free',90,'free',90],
-    orthorhombic:[1,'free','free',90,90,90],
-    tetragonal: [1,'=a','free',90,90,90],
-    trigonal:   [1,'=a','free',90,90,120],
-    hexagonal:  [1,'=a','free',90,90,120],
-    cubic:      [1,'=a','=ac',90,90,90]
-  }[g.sys];
+  lockBySysUI();
+  /* 切换空间群 → 旧展开原子失效 */
+  if(S.atoms.length){
+    clearAtoms(true);
+    document.getElementById('atomHint').className='hint';
+    document.getElementById('atomHint').textContent='已切换空间群，此前按旧空间群展开的原子已清空，请重新添加不对称单元。';
+  }
+}
+/* 按晶系锁定晶格输入框：free=可编辑，值=锁定值，'=a'/'=ac'=联动占位 */
+function lockBySysUI(){
+  var g=SGBYNO[S.sgNo];
+  var plan={ // [a, b, c, alpha, beta, gamma]
+    triclinic:  ['free','free','free','free','free','free'],
+    monoclinic: ['free','free','free',90,'free',90],
+    orthorhombic:['free','free','free',90,90,90],
+    tetragonal: ['free','=a','free',90,90,90],
+    trigonal:   ['free','=a','free',90,90,120],
+    hexagonal:  ['free','=a','free',90,90,120],
+    cubic:      ['free','=a','=ac',90,90,90]
+  }[g?g.sys:'triclinic'] || ['free','free','free','free','free','free'];
   function cfg(id, mode){
     var e=document.getElementById(id);
     if(mode==='free'){ e.disabled=false; e.placeholder=''; return; }
@@ -642,16 +705,8 @@ function applySysUI(){
     if(mode==='=a'||mode==='=ac'){ e.value=''; e.placeholder=mode; }
     else { e.value=mode; }
   }
-  cfg('inA','free');
-  cfg('inB',plan[1]);
-  cfg('inC',plan[2]);
+  cfg('inA',plan[0]); cfg('inB',plan[1]); cfg('inC',plan[2]);
   cfg('inAl',plan[3]); cfg('inBe',plan[4]); cfg('inGa',plan[5]);
-  /* 切换空间群 → 旧展开原子失效 */
-  if(S.atoms.length){
-    clearAtoms(true);
-    document.getElementById('atomHint').className='hint';
-    document.getElementById('atomHint').textContent='已切换空间群，此前按旧空间群展开的原子已清空，请重新添加不对称单元。';
-  }
 }
 document.getElementById('inSG').addEventListener('change', applySysUI);
 
@@ -957,8 +1012,9 @@ function submitPart(kind){
       document.getElementById(cfg.btn).disabled=false; gate();
       if(res && res.ok){
         msg.className='hint ok';
-        msg.innerHTML='提交成功 ✓ 教师将在管理端「提交与打分」中查看你的结构与建模思考并打分。可以继续修改后再次提交（每次提交都会记录）。'
+        msg.innerHTML='提交成功 ✓ 已自动存入下方「我的提交记录」（本机缓存），教师将在管理端「提交与打分」中查看你的结构与建模思考并打分。可随时载入修改后再次提交，评阅以<b>最后一次提交</b>为准。'
           +'<div class="hint">第①层各部分完成后，从顶部导航进入 <a href="simulation2.html"><b>第②层 · 计算方法与参数确定</b></a> 继续实验。</div>';
+        pushHist(cfg.label.replace('3x3x1','3×3×1'));
       } else {
         msg.className='hint err';
         msg.textContent=(res&&res.msg)||('提交失败：'+JSON.stringify(res).slice(0,120));
@@ -968,8 +1024,150 @@ function submitPart(kind){
       msg.className='hint err'; msg.textContent='服务器连接失败，请稍后重试。'; });
 }
 
+/* ================= 本地缓存：进度自动保存 + 提交历史 ================= */
+var LS_SID = user ? user.sid : 'anon';
+var LS_STATE = 'ai_lab_sim1_state_' + LS_SID;
+var LS_HIST  = 'ai_lab_sim1_subs_' + LS_SID;
+
+function snapState(){
+  return {
+    v:1, t:Date.now(),
+    a:S.a, b:S.b, c:S.c, al:S.al, be:S.be, ga:S.ga,
+    sgNo:S.sgNo, sgHm:S.sgHm, sys:S.sys, nops:S.nops,
+    latOK:S.latOK, primVer:S.primVer, view:S.view, sel:S.sel,
+    atoms:JSON.parse(JSON.stringify(S.atoms)),
+    seeds:JSON.parse(JSON.stringify(S.seeds)),
+    log:JSON.parse(JSON.stringify(S.log)),
+    dop:{sup:S.dop.sup?JSON.parse(JSON.stringify(S.dop.sup)):null, ver:S.dop.ver, opIdx:S.dop.opIdx},
+    vac:{sup:S.vac.sup?JSON.parse(JSON.stringify(S.vac.sup)):null, ver:S.vac.ver, opIdx:S.vac.opIdx},
+    think1:document.getElementById('inThink1').value,
+    think2:document.getElementById('inThink2').value,
+    think3:document.getElementById('inThink3').value
+  };
+}
+function saveLocal(){
+  try{ localStorage.setItem(LS_STATE, JSON.stringify(snapState())); }catch(e){}
+}
+function applySnap(sn){
+  if(!sn || sn.v!==1) return false;
+  ['a','b','c','al','be','ga','sgNo','sgHm','sys','nops','latOK','primVer','view','sel'].forEach(function(k){ S[k]=sn[k]; });
+  S.atoms=JSON.parse(JSON.stringify(sn.atoms||[]));
+  S.seeds=JSON.parse(JSON.stringify(sn.seeds||[]));
+  S.log=JSON.parse(JSON.stringify(sn.log||[]));
+  S.dop={sup:(sn.dop&&sn.dop.sup)?JSON.parse(JSON.stringify(sn.dop.sup)):null, ver:sn.dop?sn.dop.ver:-1, opIdx:sn.dop?sn.dop.opIdx:-1};
+  S.vac={sup:(sn.vac&&sn.vac.sup)?JSON.parse(JSON.stringify(sn.vac.sup)):null, ver:sn.vac?sn.vac.ver:-1, opIdx:sn.vac?sn.vac.opIdx:-1};
+  /* 界面回填 */
+  var g=SGBYNO[S.sgNo];
+  document.getElementById('inSG').value=S.sgNo;
+  document.getElementById('sysBadge').textContent=g?(SYS_CN[g.sys]+'晶系 · '+toSub(g.hm)+'（No.'+g.no+'）'):(toSub(S.sgHm)+'（No.'+S.sgNo+'）');
+  document.getElementById('opBadge').textContent='对称操作 × '+(g?g.nops:S.nops);
+  lockBySysUI();
+  document.getElementById('inA').value=S.a||'';
+  document.getElementById('inB').value=S.b||'';
+  document.getElementById('inC').value=S.c||'';
+  document.getElementById('inAl').value=S.al; document.getElementById('inBe').value=S.be; document.getElementById('inGa').value=S.ga;
+  document.getElementById('inThink1').value=sn.think1||'';
+  document.getElementById('inThink2').value=sn.think2||'';
+  document.getElementById('inThink3').value=sn.think3||'';
+  rebuildAtoms(false); drawCell(); fitView(false); gate(); stat();
+  return true;
+}
+function histArr(){
+  try{ return JSON.parse(localStorage.getItem(LS_HIST)||'[]')||[]; }catch(e){ return []; }
+}
+function pushHist(label){
+  var arr=histArr();
+  arr.unshift({t:Date.now(), label:label, snap:snapState()});
+  if(arr.length>30) arr.length=30;
+  try{ localStorage.setItem(LS_HIST, JSON.stringify(arr)); }catch(e){}
+  renderHist();
+}
+function renderHist(){
+  var box=document.getElementById('histBox');
+  if(!box) return;
+  var arr=histArr();
+  if(!arr.length){
+    box.innerHTML='<div class="hint">暂无提交记录。每次成功提交后，这里会自动保存一份完整快照（仅存在你本机浏览器中，换设备或清理浏览器缓存不会同步）。</div>';
+    return;
+  }
+  var h='';
+  arr.forEach(function(it,i){
+    var d=new Date(it.t);
+    var hh=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+    h+='<div class="hist-item'+(i===0?' last':'')+'">'
+      +'<span class="ht">'+(i===0?'<b>最新</b> · ':'')+(d.getMonth()+1)+'月'+d.getDate()+'日 '+hh+'</span>'
+      +'<span class="hl">'+it.label+'</span>'
+      +'<button class="ghost" onclick="loadHist('+i+')">载入此结构</button></div>';
+  });
+  box.innerHTML=h
+    +'<div class="hint">点「载入此结构」可完整恢复该次提交的空间群、晶格常数、原子、超胞修饰与建模思考，修改后再次提交（教师评阅以<b>最后一次提交</b>为准）。</div>';
+}
+function loadHist(i){
+  var arr=histArr();
+  if(!arr[i]) return;
+  if(S.atoms.length && !confirm('载入历史提交将覆盖当前建模内容（未提交的修改会丢失），继续？')) return;
+  if(applySnap(arr[i].snap)){
+    S.log.push('从本地提交记录载入结构：'+arr[i].label);
+    saveLocal();
+    var hm=document.getElementById('atomHint');
+    hm.className='hint ok';
+    hm.textContent='已载入提交记录：'+arr[i].label+'（'+new Date(arr[i].t).toLocaleString('zh-CN')+'），可修改后再次提交。';
+  }
+}
+
+/* ================= 小碳老师悬窗（与 simulation2 页同款） ================= */
+function aiLazyLoad(){
+  var f = document.getElementById('aiFrame');
+  if(f && !f.getAttribute('src')) f.src = f.getAttribute('data-src') || 'ai.html?embed=1';
+}
+function aiOpen(){
+  var dr = document.getElementById('aiDrawer');
+  if(!dr) return;
+  aiLazyLoad();
+  dr.classList.add('open');
+  dr.setAttribute('aria-hidden', 'false');
+  var fab = document.getElementById('aiFab');
+  if(fab) fab.style.display = 'none';
+  if(TOKEN){
+    fetch('/api/log_search', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({token: TOKEN, keywords: '[仿真台] 打开小碳老师对话', mode: 'deep_open'})}).catch(function(){});
+  }
+}
+function aiClose(){
+  var dr = document.getElementById('aiDrawer');
+  if(!dr) return;
+  dr.classList.remove('open');
+  dr.setAttribute('aria-hidden', 'true');
+  var fab = document.getElementById('aiFab');
+  if(fab) fab.style.display = 'flex';
+}
+function aiToggle(){
+  var dr = document.getElementById('aiDrawer');
+  if(!dr) return;
+  if(dr.classList.contains('open')) aiClose(); else aiOpen();
+}
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape' || e.key === 'Esc') aiClose();
+});
+
 /* 初始 */
 gate(); stat();
+(function(){
+  var sn=null;
+  try{ sn=JSON.parse(localStorage.getItem(LS_STATE)||'null'); }catch(e){}
+  if(sn && sn.v===1 && (sn.latOK || (sn.atoms&&sn.atoms.length))){
+    if(applySnap(sn)){
+      var hm=document.getElementById('latHint');
+      hm.className='hint ok';
+      hm.innerHTML='已自动恢复上次建模进度（'+new Date(sn.t||Date.now()).toLocaleString('zh-CN')+'），可继续修改后提交；历史提交见下方「我的提交记录」。';
+    }
+  }
+  S.ready=true; gate();
+})();
+['inThink1','inThink2','inThink3'].forEach(function(id){
+  document.getElementById(id).addEventListener('input', saveLocal);
+});
+renderHist();
 </script>
 </body>
 </html>
