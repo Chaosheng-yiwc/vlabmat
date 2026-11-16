@@ -215,40 +215,14 @@
           <option value="PBE" selected>PBE（GGA 半局域泛函）</option>
           <option value="HSE06">HSE06（杂化泛函）</option>
         </select>
-        <div class="hint" id="funcHint"></div>
         <div class="hint">提示：两种泛函都可以提交计算。哪种更适合定性分析、哪种更适合定量分析，请用你自己的计算结果与实验测量带隙对比后，在第④步判读题中回答。</div>
-        <div class="hint" style="background:#f3f0fb;border:1px solid #ddd4f0">
-          <b style="color:#4a3a80">❓ 设问：第②层已经用 PBE 选定了参数，为什么第③层还要提供 HSE06？两种泛函算出的带隙差多少？</b>
-          ——请不要预习答案：分别用 PBE 与 HSE06 在第③步各提交一次计算（本征 ε=0），下表会由<b>你自己的计算结果</b>逐格生成，算完两种泛函后对比解读才会出现。
-          <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:12.5px">
-            <tr style="background:#e9e3f6;color:#3a2d66">
-              <th style="padding:4px 6px;text-align:left">计算方法</th>
-              <th style="padding:4px 6px;text-align:center">带隙 E<sub>g</sub>（你的计算）</th>
-              <th style="padding:4px 6px;text-align:center">与实验值 2.70 eV 的偏差</th>
-              <th style="padding:4px 6px;text-align:center">计算耗时（你本次运行）</th>
-            </tr>
-            <tr style="border-top:1px solid #ddd4f0">
-              <td style="padding:4px 6px">PBE（GGA 半局域）</td>
-              <td id="fnEgPBE" style="padding:4px 6px;text-align:center">—</td>
-              <td id="fnDevPBE" style="padding:4px 6px;text-align:center">—</td>
-              <td id="fnTmPBE" style="padding:4px 6px;text-align:center">—</td>
-            </tr>
-            <tr style="border-top:1px solid #ddd4f0">
-              <td style="padding:4px 6px">HSE06（25% 精确交换）</td>
-              <td id="fnEgHSE06" style="padding:4px 6px;text-align:center">—</td>
-              <td id="fnDevHSE06" style="padding:4px 6px;text-align:center">—</td>
-              <td id="fnTmHSE06" style="padding:4px 6px;text-align:center">—</td>
-            </tr>
-          </table>
-          <div id="fnVerdict" style="margin-top:6px;line-height:1.75"></div>
-        </div>
       </div>
     </div>
 
     <div class="stp-card">
       <div class="stp-head"><span>③ 提交计算</span><span class="dot" id="dot3">3</span></div>
       <div class="stp-body">
-        <div class="hint" id="clusterHint" style="margin:0 0 8px">计算由平台集群节点执行（PBE / HSE06，体相 g-C<sub>3</sub>N<sub>4</sub>：结构优化 → SCF → 能带 → 光学吸收全流程），提交后可在下方日志窗口实时查看各阶段运行输出。核数越多，计算越快。做实验需要查资料或排查报错时，点右侧「🤖 小碳老师」随时提问。</div>
+        <div class="hint" id="clusterHint" style="margin:0 0 8px">PBE 流水：结构优化 → SCF → 非自洽能带（ICHARG=11）→ 光学吸收（LOPTICS）四步；HSE06 流水：PBE 波函数初猜 + 一次杂化自洽同时完成 SCF 与能带。做实验需要查资料或排查报错时，点右侧「🤖 小碳老师」随时提问。</div>
         <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap">
           <span style="font-size:12.5px;color:var(--ink,#333)">集群核数（mpirun -n）</span>
           <select id="coresSel" onchange="STATE.cores=parseInt(this.value,10)" style="padding:4px 8px;border:1px solid #c3cfdd;border-radius:8px;background:#fff;font-size:13px">
@@ -290,6 +264,30 @@
         </div>
         <div class="quiz" id="quizBox">
           <div class="hint">完成第③步计算后作答。</div>
+        </div>
+        <div class="hint" style="background:#f3f0fb;border:1px solid #ddd4f0">
+          <b style="color:#4a3a80">❓ 设问：第②层已经用 PBE 选定了参数，为什么第③层还要提供 HSE06？两种泛函算出的带隙差多少？</b>
+          <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:12.5px">
+            <tr style="background:#e9e3f6;color:#3a2d66">
+              <th style="padding:4px 6px;text-align:left">计算方法</th>
+              <th style="padding:4px 6px;text-align:center">带隙 E<sub>g</sub>（你的计算）</th>
+              <th style="padding:4px 6px;text-align:center">与实验值 2.70 eV 的偏差</th>
+              <th style="padding:4px 6px;text-align:center">计算耗时（你本次运行）</th>
+            </tr>
+            <tr style="border-top:1px solid #ddd4f0">
+              <td style="padding:4px 6px">PBE（GGA 半局域）</td>
+              <td id="fnEgPBE" style="padding:4px 6px;text-align:center">—</td>
+              <td id="fnDevPBE" style="padding:4px 6px;text-align:center">—</td>
+              <td id="fnTmPBE" style="padding:4px 6px;text-align:center">—</td>
+            </tr>
+            <tr style="border-top:1px solid #ddd4f0">
+              <td style="padding:4px 6px">HSE06（25% 精确交换）</td>
+              <td id="fnEgHSE06" style="padding:4px 6px;text-align:center">—</td>
+              <td id="fnDevHSE06" style="padding:4px 6px;text-align:center">—</td>
+              <td id="fnTmHSE06" style="padding:4px 6px;text-align:center">—</td>
+            </tr>
+          </table>
+          <div id="fnVerdict" style="margin-top:6px;line-height:1.75"></div>
         </div>
       </div>
     </div>
@@ -575,10 +573,6 @@ function onPhChange(){
 function planAvailable(sys, strain, encut, func){
   return (sys === 'pristine' && strain === 0 && encut === 500 && (func === 'PBE' || func === 'HSE06'));
 }
-function applyPlanLock(){
-  var hint = document.getElementById('funcHint');
-  hint.innerHTML = 'PBE 流水：结构优化 → SCF → 非自洽能带（ICHARG=11）→ 光学吸收（LOPTICS）四步；HSE06 流水：PBE 波函数初猜 + 一次杂化自洽同时完成 SCF 与能带。';
-}
 
 /* 各体系显示名称（计算结果一律来自集群真实计算，经 PRECALC 结果库返回）。
    pristine 附带本征 ε=0 HSE06 参考带边（带边图"本征"参考条用） */
@@ -644,9 +638,7 @@ document.getElementById('func').onchange = function(){
   STATE.computed = false;
   STATE.realDone = false; STATE.real = null;
   document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
-  applyPlanLock();
 };
-applyPlanLock();   // 初始提示与控件状态同步
 
 /* ================= PBE vs HSE06 对比表（由学生自己的计算结果生成，不预制数据） ================= */
 var FUNCRES_KEY = 'ai_lab_sim2_funcres';
@@ -680,10 +672,7 @@ function renderFnTbl(){
   if (!v) return;
   var p = o.PBE, h = o.HSE06;
   var both = p && p.eg != null && !isNaN(p.eg) && h && h.eg != null && !isNaN(h.eg);
-  if (!both){
-    v.innerHTML = '<span style="color:#6b5a9e">⏳ 两行都填上你自己的计算结果后，这里才会给出对比解读——请到第③步把另一种泛函也算完。</span>';
-    return;
-  }
+  if (!both) return;
   var dp = (p.eg - 2.70) / 2.70 * 100, dh = (h.eg - 2.70) / 2.70 * 100;
   var ratio = (h.sec && p.sec) ? (h.sec / p.sec) : 5;
   v.innerHTML =
