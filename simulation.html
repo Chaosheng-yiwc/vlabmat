@@ -975,11 +975,16 @@ function showConcl(){
   }
   var html =
     '<b>收敛测试数据汇总</b>（均为你自己逐档提交计算的结果）' +
-    '<div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:4px">' +
+    '<div style="display:grid;grid-template-columns:auto auto 1fr;gap:18px;align-items:start;margin-top:4px">' +
     '<div><div style="font-size:12.5px;color:#0e3a6d"><b>测试一 · 截断能</b>（K = 5×5×3）</div>' + tbl('enc', ENCUTS, function(k){ return k + ' eV'; }) + '</div>' +
     '<div><div style="font-size:12.5px;color:#0e3a6d"><b>测试二 · K 点密度</b>（ENCUT = 500 eV）</div>' + tbl('km', KMESHES, kmeshLabel) + '</div>' +
-    '</div>' +
-    '<div class="hint" style="margin-top:6px">判读提示（只给方法，不含答案）：① 收敛看<b>相邻两档</b>的总能差 |ΔE|——它小到什么程度（对比 21 原子，想想每原子分到多少 meV）你才认为参数够用？② <b>耗时</b>也是选参数的重要依据——看它随参数增大的变化趋势，思考"精度收益"与"时间成本"如何权衡。③ 留意有没有哪一档的总能与其他档差别特别大——对照第②步的参数想一想可能的原因。④ 数据齐了以后，到上方「最终参数选择」提交你的结论。</div>';
+    '<div style="background:#f4f8fd;border:1px solid #dbe7f5;border-radius:9px;padding:8px 12px;font-size:12.3px;line-height:1.85;color:#33475e;align-self:stretch">' +
+    '<div style="font-size:12.5px;color:#0e3a6d;margin-bottom:3px"><b>🔍 读表指南</b>（判读方法 · 不含答案）</div>' +
+    '① 收敛看<b>相邻两档</b>的总能差 |ΔE|——它小到什么程度（对比 21 原子，想想每原子分到多少 meV）你才认为参数够用？<br>' +
+    '② <b>耗时</b>也是选参数的重要依据——看它随参数增大的变化趋势，思考"精度收益"与"时间成本"如何权衡。<br>' +
+    '③ 留意有没有哪一档的总能与其他档<b>差别特别大</b>——对照第②步的参数设置想一想可能的原因。<br>' +
+    '④ 数据齐了以后，到右上「最终参数选择」提交你的结论。</div>' +
+    '</div>';
   document.getElementById('conclBox').innerHTML = chem(html);
 }
 
