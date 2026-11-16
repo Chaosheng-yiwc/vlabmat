@@ -552,7 +552,7 @@ var PBE_TAIL = '两组测试均用 PBE 泛函。<b>每换一档参数，都要�
 function applyPlanLock(){
   var encut = document.getElementById('encut'), kmSel = document.getElementById('kmeshSel');
   var hint = document.getElementById('paramHint');
-  var kmode = (STATE.kmesh !== 5);   /* K 收敛系列：1×1×1~6×6×3；5×5×3 属截断能系列（生产全流程） */
+  var kmode = (STATE.kmesh !== 5);   /* K 收敛系列：1×1×1~6×6×3；5×5×3 属截断能系列（SCF 单点） */
   encut.disabled = kmode;
   kmSel.disabled = (!kmode && STATE.encut !== 500);
   if (kmode){
@@ -711,8 +711,8 @@ function submitReal(){
   realLog('  ENCUT = ' + STATE.encut + ' eV   Biaxial strain = ' + STATE.strain + ' %');
   realLog('  Functional: PBE (GGA, PAW_PBE)');
   realLog('  KPOINTS: ' + ((STATE.kmesh !== 5)
-      ? kmeshLabel(STATE.kmesh) + ' Γ 居中网格（SCF 收敛测试 · ENCUT = 500 eV）'
-      : '5×5×3 (SCF)  +  Γ-M-K-Γ-A 高对称路径（能带/光学 · 零权重）'));
+      ? kmeshLabel(STATE.kmesh) + ' Γ 居中网格（K 点收敛测试 · ENCUT = 500 eV）'
+      : '5×5×3 Γ 居中网格（截断能收敛测试 · ENCUT = ' + STATE.encut + ' eV）'));
   realLog('----------------------------------------------------------------------------------------------------');
   realLog('[提交] 正在将作业提交至 PBS 队列……');
   postRetry('/api/job_submit',
@@ -747,20 +747,12 @@ function fmtHMS(s){
 function playPipeline(res, done){
   var nat = res.natoms || 21;
   var r0 = res.result || {};
-  var kmode = (STATE.kmesh !== 5);   /* K 收敛系列：1×1×1~6×6×3；5×5×3 属截断能系列（生产全流程） */
-  var wall = (r0.elapsed != null && r0.elapsed > 0) ? r0.elapsed : (kmode ? 40 : 2820);   /* 集群实测耗时（秒） */
+  var kmode = (STATE.kmesh !== 5);   /* K 收敛系列：1×1×1~6×6×3；5×5×3 属截断能系列（SCF 单点） */
+  var wall = (r0.elapsed != null && r0.elapsed > 0) ? r0.elapsed : (kmode ? 40 : 45);   /* 集群实测耗时（秒） */
   function at(f){ return fmtHMS(wall * f); }
   var Efin = (r0.e0 != null) ? r0.e0 : -175.5;
   var S = [];
   function say(t, d){ S.push({t: t, d: d}); }
-  function ionic(arr, base){                 /* 结构优化离子步 */
-    for (var i = 0; i < arr.length; i++){
-      var E = Efin + base * Math.exp(-i * 1.12);
-      say('    ionic step ' + (i + 1) + '/' + arr.length + ':  E = ' + E.toFixed(6) +
-          ' eV   dE = ' + (i ? (base * (Math.exp(-i * 1.12) - Math.exp(-(i - 1) * 1.12))).toExponential(2) : '0.00E+00') +
-          ' eV   Fmax = ' + arr[i].toFixed(3) + ' eV/Å', 620);
-    }
-  }
   function dav(n, base){                     /* SCF 电子步 */
     for (var k = 1; k <= n; k++){
       var dE = base * Math.exp(-k * 1.15);
@@ -775,17 +767,11 @@ function playPipeline(res, done){
     dav(6, 0.35);
     say('    SCF 收敛：E0 = ' + Efin.toFixed(5) + ' eV   ΔE = 4.2E-06 < EDIFF = 1E-05　[累计 ' + at(0.92) + ']', 450);
   } else {
-    /* 截断能收敛测试：生产全流程 */
-    say('[1/4] PBE 结构优化（ISIF=3 · IBRION=2 · EDIFFG=-0.03 eV/Å）……', 500);
-    ionic([1.87, 0.96, 0.41, 0.17, 0.058, 0.021], 0.85);
-    say('    结构优化收敛：Fmax = 0.021 eV/Å < EDIFFG（CONTCAR 已写出）　[累计 ' + at(0.45) + ']', 500);
-    say('[2/4] SCF 自洽（ICHARG=2 · 读取 CONTCAR · 125 个不可约 k 点）……', 450);
-    dav(7, 0.31);
-    say('    SCF 收敛：E0 = ' + Efin.toFixed(5) + ' eV   ΔE = 4.2E-06 < EDIFF = 1E-05（CHGCAR 已写出）　[累计 ' + at(0.65) + ']', 450);
-    say('[3/4] 能带结构计算（ICHARG=11 · 复用 CHGCAR · 121 个路径 k 点）……', 500);
-    say('    本征值输出完成（EIGENVAL / vasprun.xml）　[累计 ' + at(0.75) + ']', 420);
-    say('[4/4] 光学吸收计算（LOPTICS=.TRUE. · NBANDS=64 · 空虚态跃迁 ε₂(ω) → α(λ)）……', 500);
-    say('    介电函数与吸收谱输出完成（100–1000 nm，Δλ = 5 nm）　[累计 ' + at(1) + ']', 420);
+    /* 截断能收敛测试：SCF 单点（读取已优化基准结构，只需总能量收敛） */
+    say('[1/2] 读取已优化基准结构（CONTCAR · ' + nat + ' 原子 · 结构固定）……', 400);
+    say('[2/2] SCF 自洽（ICHARG=2 · ENCUT = ' + STATE.encut + ' eV · KPOINTS: 5×5×3 Γ 居中）……', 450);
+    dav(6, 0.35);
+    say('    SCF 收敛：E0 = ' + Efin.toFixed(5) + ' eV   ΔE = 4.2E-06 < EDIFF = 1E-05　[累计 ' + at(0.92) + ']', 450);
   }
   var i = 0;
   (function next(){
@@ -822,14 +808,14 @@ function finishReal(r){
   STATE.computed = true;
   STATE.realDone = true;
   STATE.real = r;
-  var kmode = (STATE.kmesh !== 5);   /* K 收敛系列：1×1×1~6×6×3；5×5×3 属截断能系列（生产全流程） */
+  var kmode = (STATE.kmesh !== 5);   /* K 收敛系列：1×1×1~6×6×3；5×5×3 属截断能系列（SCF 单点） */
   var e0 = (r.e0 != null) ? r.e0 : null;
   var el = (r.elapsed != null) ? r.elapsed : null;
   if (kmode){
     CONV.put('km', STATE.kmesh, e0, el);
   } else {
     CONV.put('enc', STATE.encut, e0, el);
-    /* K 系列的第 5 档（5×5×3）= ENCUT 500 的生产全流程计算，两点共用同一次结果 */
+    /* K 系列的第 5 档（5×5×3）= ENCUT 500 的 SCF 单点计算，两点共用同一次结果 */
     if (STATE.encut === 500) CONV.put('km', 5, e0, el);
     REC.put(STATE.sys, STATE.strain, STATE.encut, STATE.func, r.eg, el);   /* 兼容三页共享计算记录 */
   }
