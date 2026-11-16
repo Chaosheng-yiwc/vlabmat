@@ -162,6 +162,11 @@
   .ai-drawer-bd{flex:1;min-height:0;background:#fff}
   .ai-drawer-bd iframe{display:block;width:100%;height:100%;border:0}
   @media (max-width:640px){.ai-drawer{width:100%;max-width:none}.ai-fab{top:auto;bottom:80px}}
+  /* 三要素折叠框（与 sim2 kexp 同款 ▲/▼） */
+  #triBox summary::-webkit-details-marker{display:none}
+  #triBox summary{cursor:pointer;font-weight:700}
+  #triBox summary::before{content:'▲ ';color:var(--blue);font-weight:700}
+  #triBox[open] summary::before{content:'▼ ';color:var(--blue);font-weight:700}
 </style>
 </head>
 <body>
@@ -249,13 +254,13 @@
     <div class="stp-card">
       <div class="stp-head"><span>④ 调控方案对比与判断</span><span class="dot" id="dot4">4</span></div>
       <div class="stp-body">
-        <div style="background:#eefaf1;border:1.5px solid #bfe3cd;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.2px;line-height:1.95;color:#14432a">
-          <b style="color:#0e5a32">📐 光催化全解水三要素</b>（方案对比的统一标尺）：<br>
+        <details id="triBox" style="background:#eefaf1;border:1.5px solid #bfe3cd;border-radius:9px;padding:6px 13px;margin-bottom:10px;font-size:13.2px;line-height:1.95;color:#14432a">
+          <summary style="color:#0e5a32">📐 光催化全解水三要素（方案对比的统一标尺）</summary>
           ① 材料必须是<b>半导体</b>：金属没有带隙，光生电子-空穴对瞬间复合，无法积累氧化还原能力；<br>
           ② <b>带隙 E<sub>g</sub> &gt; 1.23 eV</b>（OH<sup>−</sup>/O<sub>2</sub> 氧化电位与 H<sup>+</sup>/H<sub>2</sub> 还原电位之差）：带隙太小，载流子寿命低、电位差不足以驱动两个半反应；<br>
           ③ <b>价带顶能量低于 OH<sup>−</sup>/O<sub>2</sub> 氧化电位（−5.67 eV），导带底能量高于 H<sup>+</sup>/H<sub>2</sub> 还原电位（−4.44 eV）</b>——带边要"包住"水的氧化还原电位线；<br>
           ④ 补充判据：吸收光谱中<b>可见光吸收区域越大</b>，太阳光利用率越高。
-        </div>
+        </details>
         <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap">
           <span style="font-size:12.5px;color:var(--ink,#333)" title="水的氧化还原电位随 pH 线性下移 0.059 V/pH（能斯特方程）；带边位置 vs NHE 不随 pH 变，改变的是全解水判据">溶液 pH（水氧化还原电位校正）</span>
           <select id="phSel" disabled onchange="STATE.ph=parseInt(this.value,10);onPhChange()" title="完成第③步“提交计算”后开放" style="padding:4px 8px;border:1px solid #c3cfdd;border-radius:8px;background:#fff;font-size:13px">
@@ -490,6 +495,12 @@ var REC = (function(){
   return {
     put: function(sys, st, en, fn, eg){ if (eg == null || isNaN(eg)) return; m[key(sys, st, en, fn)] = {eg: eg, ts: Date.now()}; save(); },
     get: function(sys, st, en, fn){ var r = m[key(sys, st, en, fn)]; return r ? r.eg : null; },
+    hasAny: function(sys, st){                 /* 该「体系×应变」是否算过（任意 ENCUT/泛函） */
+      var pre = sys + '|' + st + '|';
+      var ks = Object.keys(m);
+      for (var i = 0; i < ks.length; i++){ if (ks[i].indexOf(pre) === 0) return true; }
+      return false;
+    },
     countDistinct: function(){
       var seen = {};
       Object.keys(m).forEach(function(k){ var p = k.split('|'); seen[p[0] + '|' + p[1]] = 1; });
@@ -908,25 +919,45 @@ function finishReal(r){
 }
 
 /* ================= ④ 调控方案对比与判断（第④层 · 30 分） ================= */
-/* 探索广度自动评分：按本人历次计算记录中不同「体系 × 应变」组合数计分（≥4 种满分） */
+/* 探索广度自动评分：按本人历次计算记录中不同「体系 × 应变」组合数计分（≥4 种满分 6 分） */
 function exploreScore(){
   var n = REC.countDistinct();
-  return [n >= 4 ? 8 : (n === 3 ? 6 : (n === 2 ? 4 : (n === 1 ? 2 : 0))), n];
+  return [n >= 4 ? 6 : (n === 3 ? 4 : (n === 2 ? 3 : (n === 1 ? 2 : 0))), n];
 }
 function refreshExplore(){
   var b = document.getElementById('exploreBox');
   if (!b) return;
   var n = REC.countDistinct();
   b.innerHTML = '📊 探索记录：你已完成 <b>' + n + '</b> 种不同「体系 × 应变」组合的计算' +
-    (n >= 4 ? '（≥ 4 种，探索广度满分 8 分 ✓）' : '，探索 <b>4 种及以上</b>可得满分 8 分——继续切换体系 / 应变计算') + '。';
+    (n >= 4 ? '（≥ 4 种，探索广度满分 6 分 ✓）' : '，探索 <b>4 种及以上</b>可得满分 6 分——继续切换体系 / 应变计算') + '。';
 }
+/* ④ 三部分判读的体系定义（应变 −4%~+4%，pH 档位与上方选择器一致） */
+var QUIZ_PARTS = [
+  { sys: 'pristine', name: '本征 g-C<sub>3</sub>N<sub>4</sub>',
+    ref: '参考讨论：本征 g-C₃N₄ 带隙偏大、可见光吸收有限；应变对带隙/带边的调控幅度小且需外场维持，通常 ε = 0 保持本征状态即可；pH 的选择以带边仍"包住"水的氧化还原电位线为准。' },
+  { sys: 'o_dop', name: 'O-掺杂 g-C<sub>3</sub>N<sub>4</sub>',
+    ref: '参考讨论：O-掺杂带隙适中、不引入禁带缺陷复合中心、带边对应变不敏感，通常 ε = 0 即为最优；pH 按带边与水线的余量选取，pH 越高两条水线同步下移，可平衡两侧过电位。' },
+  { sys: 'c_vac', name: 'C-空位 g-C<sub>3</sub>N<sub>4</sub>',
+    ref: '参考讨论：C-空位使带隙骤降并引入禁带缺陷能级（光生载流子复合中心），单靠应变难以完全恢复；如需使用，应选使带隙回升的应变方向并配合 pH 校验带边判据，综合评估其利弊。' }
+];
 function buildQuiz(){
   var box = document.getElementById('quizBox');
-  var gsel = '<select id="q1sel" class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px">' +
-    '<option value="">请选择</option><option>O-掺杂</option><option>应变工程</option><option>C-空位（缺陷）</option></select>';
+  var sopts = '<option value="">请选择</option>';
+  for (var s = -4; s <= 4; s++) sopts += '<option value="' + s + '">ε = ' + s + ' %</option>';
+  var popts = '<option value="">请选择</option>';
+  [0, 2, 4, 7, 10, 12, 14].forEach(function(p){ popts += '<option value="' + p + '">' + p + '</option>'; });
+  var selCss = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 6px 0 4px"';
+  var partHtml = QUIZ_PARTS.map(function(P, i){
+    return '<div style="background:#f6f9fd;border:1.5px solid #cfe0f2;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.2px;line-height:2.0;color:#1c2a3a">' +
+      '<b style="color:#0e3a6d">' + ['一', '二', '三'][i] + '、' + P.name + '：最优应变方案与 pH 值</b><br>' +
+      '最优应变方案 <select ' + selCss + ' id="p' + (i + 1) + 'strain">' + sopts + '</select>' +
+      '最优溶液 pH <select ' + selCss + ' id="p' + (i + 1) + 'ph">' + popts + '</select>' +
+      '<span id="p' + (i + 1) + 'note" style="font-size:12px;color:#7a8a9c"></span>' +
+      '</div>';
+  }).join('');
   box.innerHTML =
     '<div style="background:#eef4fb;border:1.5px solid #cfe0f2;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.5px;line-height:1.9;color:#1c2a3a">' +
-    '<b style="color:#0e3a6d">🎯 第④层目标检验：哪种调控最优？</b>（本层 30 分 · 三层合计 100 分）切换体系 / 应变完成多次计算，对照三要素比较后作答——结论须由你自己的计算得出，平台不预设答案。</div>' +
+    '<b style="color:#0e3a6d">🎯 第④层目标检验：三种体系各自的最优调控方案？</b>（本层 30 分 · 三层合计 100 分）分三部分，分别给出<b>本征、O-掺杂、C-空位</b> g-C<sub>3</sub>N<sub>4</sub> 的最优应变方案与溶液 pH——结论须由你自己的计算得出，平台不预设答案；所选应变方案应有你本人该「体系 × 应变」的计算数据支撑（未算过的方案请先到第③步补算验证）。</div>' +
     '<div id="exploreBox" style="background:#f6f9fd;border:1.5px solid #cfe0f2;border-radius:9px;padding:7px 12px;margin-bottom:10px;font-size:12.8px;color:#33415a"></div>' +
     '<div style="background:#fff8e8;border:1.5px solid #f0dfb2;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.2px;line-height:1.95;color:#4a3a12">' +
     '<b style="color:#7a5a10">💡 思考提示</b>（方案设计的统一标尺）：可以从以下几个方面考虑——<br>' +
@@ -934,67 +965,45 @@ function buildQuiz(){
     '2、选择合适的 pH 值改变 OH<sup>−</sup> 氧化电位和 H<sup>+</sup> 的还原电位；<br>' +
     '3、通过施加应变、掺杂、缺陷等复合方法调控带边能级；<br>' +
     '4、选择吸收光谱中可见光吸收最大的结构。</div>' +
-    '<label>Q1. 结合你自己的计算：为使 g-C<sub>3</sub>N<sub>4</sub> 保持可见光响应并提升全解水能力，三种调控手段中最值得采用的是' + gsel + '</label>' +
-    '<textarea class="sel" id="q1" rows="2" style="width:100%;resize:vertical;margin-top:4px" placeholder="说明理由：可从带隙是否适中、是否引入有害缺陷能级、带边是否包住水的氧化还原电位、是否需要外场维持等角度分析……"></textarea>' +
-    '<label style="margin-top:8px">Q2. 综合四层实验目标，写出你认为 g-C<sub>3</sub>N<sub>4</sub> 光催化性能的最佳调控方案</label>' +
-    '<textarea class="sel" id="q2" rows="3" style="width:100%;resize:vertical" placeholder="应包含：① 选用哪种调控手段及其参数（如 O 掺杂 / 应变幅度）；② 用什么泛函、截断能等参数保证结果可靠（第②层结论）；③ 预期的带隙、带边位置对照三要素逐条自检（半导体 / Eg > 1.23 eV / 带边包住水的氧化还原电位），可见光吸收是否改善。"></textarea>' +
+    partHtml +
     '<div style="margin-top:9px"><button class="go-btn" onclick="gradeQuiz()">✓ 提交判读</button> <span id="quizMsg"></span></div>';
   refreshExplore();
   STATE.answered = false;
 }
-/* 关键词分组命中数：命中几类（每组任一关键词出现记 1 类） */
-function hitGroups(t, groups){
-  t = t.toLowerCase();
-  var hit = 0;
-  for (var g = 0; g < groups.length; g++){
-    for (var i = 0; i < groups[g].length; i++){
-      if (t.indexOf(groups[g][i]) >= 0){ hit++; break; }
-    }
-  }
-  return hit;
-}
 function gradeQuiz(){
-  var q1sel = document.getElementById('q1sel').value;
-  var q1 = (document.getElementById('q1').value || '').trim();
-  var q2 = (document.getElementById('q2').value || '').trim();
   var msg = document.getElementById('quizMsg');
-  if (!q1sel || !q1 || !q2){
-    msg.innerHTML = '<span class="msg-no">请填完所有空再提交。</span>'; return;
+  var picks = [];
+  for (var i = 0; i < QUIZ_PARTS.length; i++){
+    var s = document.getElementById('p' + (i + 1) + 'strain').value;
+    var p = document.getElementById('p' + (i + 1) + 'ph').value;
+    if (s === '' || p === ''){
+      msg.innerHTML = '<span class="msg-no">请把三部分的应变方案与 pH 值都选完再提交。</span>'; return;
+    }
+    picks.push({ s: parseInt(s, 10), p: parseInt(p, 10) });
   }
   STATE.answered = true;
   var ex = exploreScore();
-  /* Q1 12 分：手段选择 + 理由（是否提到有害/有利机制） */
-  var q1OK = (q1sel === 'O-掺杂' || q1sel === '应变工程');
-  var q1why = hitGroups(q1, [['复合','缺陷能级','空位','有害','不利','失活'],
-                             ['带隙','带边','可见光','吸收','氧化还原','全解水','稳定']]);
-  /* Q2 10 分：方案三要素——手段、参数可靠性、活性判据 */
-  var q2hit = hitGroups(q2, [['o 掺杂','o掺杂','掺杂','应变','空位','缺陷'],
-                             ['hse','泛函','截断','encut','收敛','参数','scissor','剪刀'],
-                             ['带边','cbm','vbm','氧化还原','nhe','ph','全解水','光催化','活性',
-                              '1.23','半导体','载流子','电子-空穴','电子空穴','吸收']]);
-  var ref = '参考：Q1 推荐 O-掺杂或适度应变——C-空位使带隙骤降并在禁带引入缺陷能级（光生载流子复合中心），不利；O-掺杂带隙适中、带边可调且对应变不敏感，性能稳健；应变可连续调节带隙但需外场维持。判据上：带边越靠近 H⁺/H₂ 与 O₂/H₂O 电位（过电位越小）越好，可通过 pH 调整氧化还原电位、按可见光吸收最强的结构定型；' +
-    'Q2 示例方案——O-掺杂 g-C₃N₄（ε = 0）+ HSE06（ENCUT 500 eV）验证带边，按三要素自检：① 半导体 ✓；② Eg ≈ 2.5 eV > 1.23 eV，保持可见光响应（吸收边约 490 nm）✓；③ CBM 高于 H⁺/H₂、VBM 低于 O₂/H₂O，带边包住水的氧化还原电位 ✓。';
-  var res = [
-    [ex[0] >= 2, '📊 探索广度（已完成 ' + ex[1] + ' 种「体系 × 应变」组合：≥ 4 种满分）', ex[0]],
-    [q1OK && q1why >= 1, 'Q1 最佳调控手段判断（选 ' + q1sel + '；' +
-      (q1OK ? '手段合理' : '<b>C-空位引入复合中心，非最佳手段</b>') +
-      (q1why >= 1 ? '，理由充分' : '，建议在理由中说明带隙/缺陷能级/带边判据等机制') + '）', q1OK ? (q1why >= 1 ? 12 : 7) : 0],
-    [q2hit >= 3, 'Q2 最佳调控方案（命中 ' + q2hit + '/3 要素：调控手段、计算参数可靠性、活性判据）', q2hit >= 3 ? 10 : (q2hit === 2 ? 6 : 3)]
-  ];
-  var pts = 0, html = '';
-  res.forEach(function(r){
-    if (r[0]) pts += r[2];
-    html += '<div class="' + (r[0] ? 'ans-ok' : 'ans-no') + '">' + (r[0] ? '✓ ' : '✗ ') + r[1] + '</div>';
+  var pts = ex[0], html = '';
+  html += '<div class="ans-ok">📊 探索广度（已完成 ' + ex[1] + ' 种「体系 × 应变」组合，满分 6 分：≥ 4 种拿满）</div>';
+  QUIZ_PARTS.forEach(function(P, i){
+    var k = picks[i];
+    var sup = REC.hasAny(P.sys, k.s);
+    var sub = 3 + (sup ? 5 : 0);
+    pts += sub;
+    html += '<div class="' + (sup ? 'ans-ok' : 'ans-no') + '">' + (sup ? '✓ ' : '△ ') +
+      ['一', '二', '三'][i] + '、' + P.name + '：ε = ' + k.s + ' %，pH = ' + k.p +
+      (sup ? '（方案有你本人的计算数据支撑，8/8）'
+           : '（该应变组合你尚未计算，得 3/8——到第③步补算验证该方案后重新提交可拿满分）') + '</div>';
   });
-  html += '<div class="hint" style="margin-top:4px">' + chem(ref) + '</div>';
-  STATE.score = pts;                    // 本层得分（满分 30）
+  html += QUIZ_PARTS.map(function(P){ return '<div class="hint">' + chem(P.ref) + '</div>'; }).join('');
+  STATE.score = pts;                    // 本层得分（满分 30：探索 6 + 三部分各 8）
   SCORES.set('g3', pts);
   html += '<div style="margin-top:6px">第④层判读得分：<span class="score" style="font-size:16px">' + pts + ' / 30</span>' +
           '<span class="hint">（三层累计 ' + SCORES.total() + ' / 100）</span></div>';
   document.getElementById('quizMsg').innerHTML = html;
   markOK('dot4');
   document.getElementById('subBtn').disabled = false;
-  ILAB.mark('填空判读与实验结果核对', '调控手段对比与最佳方案设计判读赋分（含探索广度）', 420, Math.round(pts / 30 * 100));
+  ILAB.mark('填空判读与实验结果核对', '三体系最优方案判读赋分（含探索广度与数据支撑核查）', 420, Math.round(pts / 30 * 100));
 }
 
 /* ================= ⑤ 提交实验总结论（第④层 · 三层成绩合并） ================= */
@@ -1003,11 +1012,13 @@ function submitResult(){
   if (!user){ msg.innerHTML = '<span class="msg-no">未登录：请从实验流程页登录后再提交。</span>'; return; }
   if (!STATE.answered){ msg.innerHTML = '<span class="msg-no">请先完成第④步判读。</span>'; return; }
   var sys = SYS[STATE.sys];
+  var picksTxt = QUIZ_PARTS.map(function(P, i){
+    return P.name.replace(/<[^>]+>/g, '') + '：ε = ' + document.getElementById('p' + (i + 1) + 'strain').value +
+           ' %，pH = ' + document.getElementById('p' + (i + 1) + 'ph').value;
+  }).join('；');
   var content =
     '【3D虚拟仿真·第④层 复合调控寻优 · 实验总结论】\n' +
-    '最优调控手段：' + (document.getElementById('q1sel').value || '—') + '\n' +
-    '手段理由：' + (document.getElementById('q1').value || '').trim().slice(0, 300) + '\n' +
-    '最佳调控方案：' + (document.getElementById('q2').value || '').trim().slice(0, 500) + '\n' +
+    '最优方案判读：' + picksTxt + '\n' +
     '探索广度：共完成 ' + REC.countDistinct() + ' 种「体系 × 应变」组合的真实集群计算（VASP 6.3.1，PBS 队列，ENCUT 500 eV）\n' +
     '当前核算：' + sys.name + '，ε = ' + STATE.strain + ' %，' + STATE.func + ' → Eg = ' + STATE.Eg.toFixed(2) +
     ' eV，CBM/VBM = ' + nhe2ev(STATE.cbm).toFixed(2) + ' / ' + nhe2ev(STATE.vbm).toFixed(2) + ' eV（电子能量，真空参考）\n' +
