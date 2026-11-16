@@ -91,7 +91,7 @@
   #atomTblBox{max-height:180px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;margin-top:8px}
   .viewbar{display:flex;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line);
            background:#fbfdff;font-size:13px;flex-wrap:wrap}
-  .legend{display:flex;gap:12px;align-items:center;color:var(--sub);font-size:12.5px;margin-left:auto}
+  .legend{display:flex;gap:12px;align-items:center;color:var(--sub);font-size:12.5px;margin-left:auto;flex-wrap:wrap}
   .dot{display:inline-block;width:13px;height:13px;border-radius:50%;margin-right:4px;vertical-align:-2px;border:1px solid rgba(0,0,0,.15)}
   #view{flex:1;min-height:0;position:relative}
   #view canvas{display:block}
@@ -151,7 +151,7 @@
     <h2>🎯 实验目标（共四层）</h2>
     <div class="sub">AI 赋能 g-C<sub>3</sub>N<sub>4</sub> 光催化分解水制氢 · 当前进入 <b style="color:#0e3a6d">第①层 结构建模</b></div>
     <div class="goal-item"><span class="no">1</span>
-      <span><b>【第①层 · 本层】</b>完成 g-C<sub>3</sub>N<sub>4</sub> 的<b>三维结构建模</b>：搭建<b>晶胞与原子坐标</b>、生成 <b>3×3×1 超胞</b>，并完成 O 掺杂 / C 空位修饰，把结构提交给教师评阅。</span>
+      <span><b>【第①层 · 本层】</b>独立完成一个<b>三维晶体结构建模</b>：选定晶系与空间群（230 个任选）、输入<b>晶格常数</b>与<b>不对称单元原子坐标</b>，由对称性展开出完整晶胞（可扩超胞、做替换 / 空位修饰），提交给教师评阅。</span>
     </div>
     <div class="goal-item dim"><span class="no">2</span>
       <span>【第②层】通过截断能与 K 点密度两项收敛测试（总能 + 耗时，逐档亲手提交计算），学会选择能够准确计算 g-C<sub>3</sub>N<sub>4</sub> 电子结构的计算参数。</span>
@@ -173,69 +173,77 @@
     <div class="stp" id="stp1">
       <h3><span class="no">1</span>晶格常数与空间群</h3>
       <div class="row">
-        <label>a = b <input id="inA" type="number" step="0.001" min="3" max="6" placeholder="4.744"> Å</label>
-        <label>c <input id="inC" type="number" step="0.001" min="6" max="12" placeholder="9.193"> Å</label>
+        <span class="badge" id="sysBadge">空间群加载中…</span>
+        <span class="badge" id="opBadge"></span>
       </div>
       <div class="row">
-        <label>α = β = 90°，γ = <b>120°</b>（六方晶系，自动锁定）</label>
+        <label>a <input id="inA" type="number" step="0.001" min="0.3" placeholder="4.744"> Å</label>
+        <label>b <input id="inB" type="number" step="0.001" min="0.3" placeholder="4.744"> Å</label>
+        <label>c <input id="inC" type="number" step="0.001" min="0.3" placeholder="9.193"> Å</label>
+      </div>
+      <div class="row">
+        <label>α <input id="inAl" type="number" step="0.1" min="10" max="170" placeholder="90"> °</label>
+        <label>β <input id="inBe" type="number" step="0.1" min="10" max="170" placeholder="90"> °</label>
+        <label>γ <input id="inGa" type="number" step="0.1" min="10" max="170" placeholder="120"> °</label>
       </div>
       <div class="row">
         <label>空间群
-          <select id="inSG">
-            <option value="R-3m" selected>R-3m（No.166）— 层状 g-C<sub>3</sub>N<sub>4</sub></option>
-            <option value="P1">P1（No.1）— 无对称性</option>
-          </select>
+          <select id="inSG" disabled><option>正在加载 230 个空间群…</option></select>
         </label>
         <button id="btnLat" onclick="confirmLat()">确认晶格参数</button>
       </div>
-      <div class="hint" id="latHint">参考值：a ≈ 4.744 Å，c ≈ 9.193 Å（平台标准结构）。输入后点击确认，右侧实时绘出晶胞框。</div>
+      <div class="hint" id="latHint">选定空间群后，晶格参数按该晶系的对称性自动约束（灰框为锁定项）。晶格常数<b>不做对错检查</b>——本层考察建模操作本身，任意合法数值右侧均可实时显示，例如层状 g-C<sub>3</sub>N<sub>4</sub> 的参考值为 a ≈ 4.744 Å、c ≈ 9.193 Å。</div>
     </div>
 
     <div class="stp locked" id="stp2">
-      <h3><span class="no">2</span>添加原子坐标（分数坐标）</h3>
+      <h3><span class="no">2</span>不对称单元与对称性展开</h3>
       <div class="row">
         <label>元素
-          <select id="inEl"><option value="C">C（碳）</option><option value="N">N（氮）</option></select>
+          <select id="inEl"></select>
         </label>
         <label>x <input id="inX" type="number" step="0.001" min="0" max="1" style="width:70px"></label>
         <label>y <input id="inY" type="number" step="0.001" min="0" max="1" style="width:70px"></label>
         <label>z <input id="inZ" type="number" step="0.001" min="0" max="1" style="width:70px"></label>
-        <button id="btnAddAtom" onclick="addAtom()">添加原子</button>
+        <button id="btnAddAtom" onclick="addAtom()">添加并展开</button>
       </div>
       <div class="row">
-        <button class="ghost" id="btnImport" onclick="importRef()">导入平台标准结构（C<sub>9</sub>N<sub>12</sub> · 21 原子）</button>
+        <button class="ghost" onclick="fillDemoNaCl()">示例：NaCl（Fm-3m，2 个独立原子）</button>
+        <button class="ghost" onclick="clearAtoms()">清空原子</button>
       </div>
       <div id="atomTblBox"><table id="atomTbl"></table></div>
-      <div class="hint" id="atomHint">逐个输入分数坐标 (x, y, z ∈ [0,1)) 添加原子，右侧实时显示球棍模型；也可直接导入平台标准结构后继续。至少 5 个原子才能进入下一步。</div>
+      <div class="hint" id="atomHint">输入<b>不对称单元</b>（独立原子）的分数坐标 (x, y, z ∈ [0,1))，点击「添加并展开」，系统按所选空间群的对称操作自动生成晶胞内全部等效原子（与 spglib / qvasp -c2p 的对称展开同源）。右侧实时显示球棍模型；表格中 ★ 为你输入的原子，· 为对称生成的等效原子（删除 ★ 会连同其等效原子一起删除）。</div>
     </div>
 
     <div class="stp locked" id="stp3">
-      <h3><span class="no">3</span>去除对称性（P1）并扩超胞</h3>
+      <h3><span class="no">3</span>确认显式结构（P1）并扩超胞</h3>
       <div class="row">
-        <button class="ghost" id="btnP1" onclick="makeP1()">转为 P1（去除对称性）</button>
+        <button class="ghost" id="btnP1" onclick="makeP1()">确认 P1 显式结构</button>
         <button id="btnSC" onclick="makeSupercell()" disabled>扩 3×3×1 超胞</button>
       </div>
-      <div class="hint" id="scHint">空间群 R-3m 含 12 个对称操作，坐标由对称性关联；做掺杂/缺陷计算前先转 P1，让每个原子坐标显式独立，再扩 3×3×1 超胞（层内放大 3 倍，层间不变）。</div>
+      <div class="hint" id="scHint">对称展开后的原子坐标已经是显式的（P1，共 N 个原子，每个坐标独立）。做修饰或导出计算文件前点击确认，再沿 a、b 方向各扩 3 倍得到 3×3×1 超胞（c 方向不变）。</div>
     </div>
 
     <div class="stp locked" id="stp4">
-      <h3><span class="no">4</span>掺杂与缺陷（点选原子）</h3>
-      <div class="hint" id="dopHint0">在右侧模型中<b>单击</b>一个原子选中它：选 <b style="color:#2f6fce">N 原子</b>可替换为 <b style="color:#d24333">O</b>（O 掺杂）；选 <b style="color:#4a4a4a">C 原子</b>可删除形成 <b>C 空位</b>。与平台计算体系对应，每个超胞最多 1 个 O 替换、1 个 C 空位。</div>
+      <h3><span class="no">4</span>结构修饰（点选原子）</h3>
+      <div class="hint" id="dopHint0">在右侧模型中<b>单击</b>一个原子选中它，然后替换元素或删除成空位。修饰只改变第①层提交的建模结构本身，与第②③④层的平台计算体系无关。</div>
       <div class="selbox" id="selInfo" style="display:none"></div>
       <div class="row">
-        <button id="btnSubO" onclick="doSubO()" disabled>将选中的 N 替换为 O</button>
-        <button id="btnVac" onclick="doVacancy()" disabled>删除选中的 C（形成空位）</button>
+        <label>替换为
+          <select id="modEl"></select>
+        </label>
+        <button id="btnSubO" onclick="doReplace()" disabled>替换选中原子</button>
+        <button id="btnVac" onclick="doVacancy()" disabled>删除原子（形成空位）</button>
         <button class="ghost" id="btnUndo" onclick="undoOp()">撤销上一步</button>
-        <button class="ghost" id="btnResetDop" onclick="resetDop()">重置掺杂</button>
+        <button class="ghost" id="btnResetDop" onclick="resetDop()">重置修饰</button>
       </div>
       <div class="hint" id="dopHint"></div>
     </div>
 
     <div class="stp locked" id="stp5">
       <h3><span class="no">5</span>提交结构（教师打分）</h3>
-      <div class="sumbox" id="sumBox">（完成超胞后自动生成摘要）</div>
+      <div class="sumbox" id="sumBox">（确认超胞后自动生成摘要）</div>
       <div class="row" style="margin-top:9px">
-        <label style="flex:1;min-width:100%">我的建模思考（为什么要先转 P1 再扩超胞？掺杂位点和空位是怎么选的？）<br>
+        <label style="flex:1;min-width:100%">我的建模思考（选这个空间群和这些不对称原子的理由？展开后原子的位置是否符合预期？）<br>
         <textarea id="inThink" rows="3" style="width:100%;margin-top:5px"></textarea></label>
       </div>
       <div class="row">
@@ -251,15 +259,10 @@
   <div class="stage">
     <div class="viewbar">
       <button class="ghost" onclick="fitView(true)">重置视角</button>
-      <span class="legend">
-        <span><span class="dot" style="background:#585858"></span>C</span>
-        <span><span class="dot" style="background:#2f6fce"></span>N</span>
-        <span><span class="dot" style="background:#d24333"></span>O</span>
-        <span style="color:#9fb0c3">拖动旋转 · 滚轮缩放 · 单击原子选中</span>
-      </span>
+      <span class="legend" id="legend"></span>
     </div>
     <div id="view"><div id="tip"></div></div>
-    <div id="statLine">就绪 —— 请先在第 1 步输入晶格常数并确认。</div>
+    <div id="statLine">就绪 —— 请先在第 1 步选定空间群并确认晶格参数。</div>
   </div>
 </div>
 
@@ -270,54 +273,136 @@ try{ user = JSON.parse(localStorage.getItem('ai_lab_auth') || 'null'); }catch(e)
 document.getElementById('stuName').textContent = user ? (user.guest ? '访客（体验模式）' : user.name + '（' + user.sid + '）') : '游客（未登录，无法提交）';
 var TOKEN = user && user.token ? user.token : '';
 
-/* ================= 参考结构（与平台 /api/structure_builtin 一致） ================= */
-var REF = {
-  a: 4.7441, c: 9.1929,
-  atoms: [
-    ['C',0.49100,0.50900,0.33500],['C',0.01800,0.50900,0.33500],['C',0.49100,0.98200,0.33500],
-    ['C',0.15767,0.84233,0.66833],['C',0.68467,0.84233,0.66833],['C',0.15767,0.31533,0.66833],
-    ['C',0.82433,0.17567,0.00167],['C',0.35133,0.17567,0.00167],['C',0.82433,0.64867,0.00167],
-    ['N',0.50333,0.49667,0.00167],['N',0.99334,0.49667,0.00167],['N',0.50333,0.00666,0.00167],
-    ['N',0.17000,0.83000,0.33500],['N',0.66001,0.83000,0.33500],['N',0.17000,0.33999,0.33500],
-    ['N',0.83666,0.16334,0.66834],['N',0.32667,0.16334,0.66834],['N',0.83666,0.67333,0.66834],
-    ['N',0.00000,0.00000,0.00000],['N',0.66667,0.33333,0.33333],['N',0.33333,0.66667,0.66667]
-  ]
+/* ================= 元素表（共价半径 Å, Jmol 配色） ================= */
+var ELEMS = {
+  'H':[0.31,'#ffffff'],'Li':[1.28,'#cc80ff'],'Be':[0.96,'#c2ff00'],'B':[0.84,'#ffb5b5'],
+  'C':[0.76,'#585858'],'N':[0.71,'#2f6fce'],'O':[0.66,'#d24333'],'F':[0.57,'#90e050'],
+  'Na':[1.66,'#ab5cf2'],'Mg':[1.41,'#8aff00'],'Al':[1.21,'#bfa6a6'],'Si':[1.11,'#f0c8a0'],
+  'P':[1.07,'#ff8000'],'S':[1.05,'#ffd123'],'Cl':[1.02,'#1ff01f'],'K':[2.03,'#8f40d4'],
+  'Ca':[1.76,'#3dff00'],'Ti':[1.60,'#bfc2c7'],'V':[1.53,'#a6a6ab'],'Cr':[1.39,'#8a99c7'],
+  'Mn':[1.39,'#9c7ac7'],'Fe':[1.32,'#e06633'],'Co':[1.26,'#f090a0'],'Ni':[1.24,'#50d050'],
+  'Cu':[1.32,'#c88033'],'Zn':[1.22,'#7d80b0'],'Ga':[1.22,'#c28f8f'],'Ge':[1.20,'#668f8f'],
+  'As':[1.19,'#bd80e3'],'Se':[1.20,'#ffa100'],'Br':[1.20,'#a62929'],'Zr':[1.75,'#789090'],
+  'Ag':[1.45,'#c0c0c0'],'Sn':[1.39,'#668080'],'I':[1.39,'#940094'],'Ba':[2.26,'#00c900'],
+  'Pt':[1.36,'#d0d0d0'],'Au':[1.36,'#ffd123'],'Pb':[1.46,'#575961']
 };
+function atomColor(el){ return ELEMS[el] ? parseInt(ELEMS[el][1].slice(1),16) : 0x9aa5b1; }
+function atomRad(el){ return ELEMS[el] ? Math.max(0.35, ELEMS[el][0]*0.72) : 0.5; }
+
+var EL_LIST = ['C','N','O','H','B','F','Na','Mg','Al','Si','P','S','Cl','K','Ca','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Ga','Ge','As','Se','Br','Zr','Ag','Sn','I','Ba','Pt','Au','Pb'];
+(function fillEl(){
+  var el=document.getElementById('inEl'), mod=document.getElementById('modEl'), h='';
+  EL_LIST.forEach(function(e){ h+='<option value="'+e+'">'+e+'</option>'; });
+  el.innerHTML=h; mod.innerHTML=h;
+  document.getElementById('modEl').value='O';
+})();
+
+/* ================= 空间群数据（spglib get_symmetry_from_database 导出） ================= */
+var SGDATA=null, SGBYNO={};
+fetch('spg_ops.json').then(function(r){ return r.json(); }).then(function(d){
+  SGDATA=d;
+  d.groups.forEach(function(g){ SGBYNO[g.no]=g; });
+  fillSGSelect();
+}).catch(function(){
+  var sel=document.getElementById('inSG');
+  sel.innerHTML='<option value="166">R-3m（No.166）</option><option value="1">P1（No.1）</option>';
+  document.getElementById('sysBadge').textContent='空间群数据加载失败，仅内置 2 群';
+  sel.disabled=false;
+  applySysUI();
+});
+var SYS_CN={triclinic:'三斜',monoclinic:'单斜',orthorhombic:'正交',tetragonal:'四方',trigonal:'三方',hexagonal:'六方',cubic:'立方'};
+var SYS_ORDER=['triclinic','monoclinic','orthorhombic','tetragonal','trigonal','hexagonal','cubic'];
+function toSub(s){ return s.replace(/_(\d)/g, function(m,d){ return '₀₁₂₃₄₅₆₇₈₉'[+d]; }); }
+function fillSGSelect(){
+  var sel=document.getElementById('inSG'), h='';
+  SYS_ORDER.forEach(function(sys){
+    var gs=SGDATA.groups.filter(function(g){ return g.sys===sys; });
+    if(!gs.length) return;
+    h+='<optgroup label="'+SYS_CN[sys]+'晶系">';
+    gs.forEach(function(g){
+      h+='<option value="'+g.no+'"'+(g.no===166?' selected':'')+'>'+toSub(g.hm)+'（No.'+g.no+'）</option>';
+    });
+    h+='</optgroup>';
+  });
+  sel.innerHTML=h; sel.disabled=false;
+  applySysUI();
+}
 
 /* ================= 状态 ================= */
 var S = {
-  a:0, c:0, sg:'R-3m',
+  a:0,b:0,c:0, al:90,be:90,ga:120,
+  sgNo:166, sgHm:'R-3m', sys:'hexagonal', nops:0,
   latOK:false,
-  atoms:[],            /* {el, x, y, z, vac:false, manual:bool} */
+  atoms:[],            /* {el, x, y, z, vac:false, seedIdx} */
+  seeds:[],            /* 不对称单元 {el,x,y,z}（null=已删除） */
   p1:false, sc:false,
   sel:-1,
-  ops:[],              /* {t:'O'|'V', idx, prevEl} */
+  ops:[],              /* {t:'R'|'V', idx, prevEl} */
   log:[]               /* 文字操作记录（用于提交摘要） */
 };
 
-function latVecs(sup){
-  var m = sup ? 3 : 1;
-  var a = S.a * m, c = S.c;
-  return [ new THREE.Vector3(a,0,0),
-           new THREE.Vector3(-a/2, a*Math.sqrt(3)/2, 0),
-           new THREE.Vector3(0,0,c) ];
+/* ---------- 通用晶胞基矢（标准下三角） ---------- */
+function cellVecs(mult){
+  var m = mult ? 3 : 1;
+  var a=S.a*m, b=S.b*m, c=S.c;
+  var D=Math.PI/180, ca=Math.cos(S.al*D), cb=Math.cos(S.be*D), cg=Math.cos(S.ga*D), sg=Math.sin(S.ga*D);
+  var v1=[a,0,0];
+  var v2=[b*cg, b*sg, 0];
+  var cx=cb, cy=(ca-cb*cg)/sg;
+  var cz=Math.sqrt(Math.max(0, 1-cx*cx-cy*cy));
+  var v3=[c*cx, c*cy, c*cz];
+  return [v1,v2,v3];
+}
+function cellVolume(mult){
+  var V=cellVecs(mult);
+  function det3(A){
+    return A[0][0]*(A[1][1]*A[2][2]-A[1][2]*A[2][1])
+         - A[0][1]*(A[1][0]*A[2][2]-A[1][2]*A[2][0])
+         + A[0][2]*(A[1][0]*A[2][1]-A[1][1]*A[2][0]);
+  }
+  return det3(V);
 }
 function frac2cart(f){
-  var V = latVecs(S.sc);
+  var V=cellVecs(S.sc);
   return new THREE.Vector3(
-    f.x*V[0].x + f.y*V[1].x,
-    f.x*V[0].y + f.y*V[1].y,
-    f.z*V[2].z );
+    f.x*V[0][0] + f.y*V[1][0] + f.z*V[2][0],
+    f.x*V[0][1] + f.y*V[1][1] + f.z*V[2][1],
+    f.x*V[0][2] + f.y*V[1][2] + f.z*V[2][2] );
 }
 function formula(){
-  var c=0,n=0,o=0;
-  S.atoms.forEach(function(a){ if(a.vac) return; if(a.el==='C')c++; else if(a.el==='N')n++; else if(a.el==='O')o++; });
+  var cnt={}, order=[];
+  S.atoms.forEach(function(a){ if(a.vac) return;
+    if(!(a.el in cnt)){ cnt[a.el]=0; order.push(a.el); }
+    cnt[a.el]++;
+  });
   var s='';
-  function seg(k,v){ return v>0 ? k+(v>1?('<sub>'+v+'</sub>'):'') : ''; }
-  s+=seg('C',c)+seg('N',n)+seg('O',o);
+  order.forEach(function(k){ s+=k+(cnt[k]>1?('<sub>'+cnt[k]+'</sub>'):''); });
   return s||'—';
 }
 function countEl(el){ var k=0; S.atoms.forEach(function(a){ if(!a.vac && a.el===el) k++; }); return k; }
+
+/* ================= 对称展开（spglib 同源数据） ================= */
+function expandSeed(el, x, y, z){
+  var g=SGBYNO[S.sgNo];
+  if(!g) return [];
+  var out=[];
+  for(var i=0;i<g.rot.length;i++){
+    var R=g.rot[i], T=g.tr[i];
+    var nx=(R[0]*x+R[1]*y+R[2]*z+T[0]/SGDATA.den)%1;
+    var ny=(R[3]*x+R[4]*y+R[5]*z+T[1]/SGDATA.den)%1;
+    var nz=(R[6]*x+R[7]*y+R[8]*z+T[2]/SGDATA.den)%1;
+    if(nx<0)nx+=1; if(ny<0)ny+=1; if(nz<0)nz+=1;
+    var dup=false;
+    for(var j=0;j<out.length && !dup;j++){
+      var p=out[j];
+      var dx=Math.abs(nx-p.x), dy=Math.abs(ny-p.y), dz=Math.abs(nz-p.z);
+      dx=Math.min(dx,1-dx); dy=Math.min(dy,1-dy); dz=Math.min(dz,1-dz);
+      if(dx<1e-3 && dy<1e-3 && dz<1e-3) dup=true;
+    }
+    if(!dup) out.push({el:el,x:nx,y:ny,z:nz, origin:i===0});
+  }
+  return out;
+}
 
 /* ================= Three.js 场景 ================= */
 var view=document.getElementById('view'), tip=document.getElementById('tip');
@@ -335,8 +420,6 @@ var dl2=new THREE.DirectionalLight(0xdde8ff,0.35); dl2.position.set(-12,-8,-10);
 var cellGroup=new THREE.Group(), atomGroup=new THREE.Group(), bondGroup=new THREE.Group();
 scene.add(cellGroup); scene.add(bondGroup); scene.add(atomGroup);
 
-var RADIUS={C:0.55,N:0.54,O:0.62};
-var COLOR={C:0x585858,N:0x2f6fce,O:0xd24333};
 var sphereGeo=new THREE.SphereGeometry(1,22,16);
 var bondGeo=new THREE.CylinderGeometry(1,1,1,8);
 var bondMat=new THREE.MeshPhongMaterial({color:0x9fb0c3});
@@ -345,13 +428,12 @@ var cellMat=new THREE.LineBasicMaterial({color:0x39659b});
 function drawCell(){
   while(cellGroup.children.length) cellGroup.remove(cellGroup.children[0]);
   if(!S.latOK) return;
-  var V=latVecs(S.sc), pts=[];
+  var V=cellVecs(S.sc), pts=[];
   for(var i=0;i<8;i++){
-    var p=new THREE.Vector3(
-      (i&1?V[0].x:0)+(i&2?V[1].x:0),
-      (i&1?V[0].y:0)+(i&2?V[1].y:0),
-      (i&4?V[2].z:0));
-    pts.push(p);
+    pts.push(new THREE.Vector3(
+      (i&1?V[0][0]:0)+(i&2?V[1][0]:0)+(i&4?V[2][0]:0),
+      (i&1?V[0][1]:0)+(i&2?V[1][1]:0)+(i&4?V[2][1]:0),
+      (i&1?V[0][2]:0)+(i&2?V[1][2]:0)+(i&4?V[2][2]:0)));
   }
   var edges=[[0,1],[0,2],[1,3],[2,3],[0,4],[1,5],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]];
   edges.forEach(function(e){
@@ -365,6 +447,7 @@ function rebuildAtoms(fit){
   while(atomGroup.children.length) atomGroup.remove(atomGroup.children[0]);
   while(bondGroup.children.length) bondGroup.remove(bondGroup.children[0]);
   atomMeshes=[];
+  updateLegend();
   if(!S.latOK || !S.atoms.length){ stat(); return; }
   /* 键连：最小镜像约定，截断 1.8 Å */
   var n=S.atoms.length, f=S.atoms, bonds=[];
@@ -389,15 +472,25 @@ function rebuildAtoms(fit){
   });
   S.atoms.forEach(function(a,i){
     if(a.vac) return;
-    var m=new THREE.Mesh(sphereGeo,new THREE.MeshPhongMaterial({color:COLOR[a.el],shininess:36}));
+    var m=new THREE.Mesh(sphereGeo,new THREE.MeshPhongMaterial({color:atomColor(a.el),shininess:36}));
     m.position.copy(frac2cart(a));
-    m.scale.setScalar(RADIUS[a.el]);
+    m.scale.setScalar(atomRad(a.el));
     m.userData.idx=i;
     atomGroup.add(m); atomMeshes.push(m);
   });
-  if(S.sel>=0 && (S.atoms[S.sel] && (S.atoms[S.sel].vac || S.sel>=S.atoms.length))) S.sel=-1, updateSelBox();
+  if(S.sel>=0 && (!S.atoms[S.sel] || S.atoms[S.sel].vac)) S.sel=-1, updateSelBox();
   stat();
   if(fit) fitView(false);
+}
+function updateLegend(){
+  var set={}, order=[];
+  S.atoms.forEach(function(a){ if(!a.vac && !(a.el in set)){ set[a.el]=1; order.push(a.el); } });
+  var h='';
+  order.forEach(function(el){
+    h+='<span><span class="dot" style="background:'+ELEMS[el][1]+'"></span>'+el+'</span>';
+  });
+  h+='<span style="color:#9fb0c3">拖动旋转 · 滚轮缩放 · 单击原子选中</span>';
+  document.getElementById('legend').innerHTML=h;
 }
 
 var savedCenter=null, savedDist=0;
@@ -461,52 +554,126 @@ function paintSel(){
     if(m.material.emissive) m.material.emissive.setHex(0x000000);
   });
   if(S.sel>=0){
-    var a=S.atoms[S.sel];
     atomMeshes.forEach(function(m){
-      if(m.userData.idx===S.sel && a && !a.vac) m.material.emissive.setHex(0x8a6d1a);
+      if(m.userData.idx===S.sel && S.atoms[S.sel] && !S.atoms[S.sel].vac) m.material.emissive.setHex(0x8a6d1a);
     });
   }
 }
 
 /* ================= 状态栏 / 门控 ================= */
+function latStr(){
+  return 'a = '+S.a.toFixed(3)+' Å，b = '+S.b.toFixed(3)+' Å，c = '+S.c.toFixed(3)+' Å，'
+       +'α = '+S.al.toFixed(1)+'°，β = '+S.be.toFixed(1)+'°，γ = '+S.ga.toFixed(1)+'°';
+}
 function stat(){
   var nb=bondGroup.children.length;
+  var sg=SGBYNO[S.sgNo];
   document.getElementById('statLine').innerHTML =
-    (!S.latOK) ? '就绪 —— 请先在第 1 步输入晶格常数并确认。'
-    : (!S.atoms.length) ? '晶胞框已绘出（a = '+S.a.toFixed(3)+' Å，c = '+S.c.toFixed(3)+' Å，γ = 120°）—— 请在第 2 步添加原子。'
-    : '晶格 a = '+S.a.toFixed(3)+' Å，c = '+S.c.toFixed(3)+' Å · 原子数 <b>'+countVisible()+'</b> · 化学式 <b>'+formula()+'</b> · 键连 <b>'+nb+'</b> 根'
-      +(S.sc?' · <b>3×3×1 超胞</b>':'')+(S.p1?' · <b>P1 显式</b>':' · <b>R-3m</b>');
+    (!S.latOK) ? '就绪 —— 请先在第 1 步选定空间群并确认晶格参数。'
+    : (!S.atoms.length) ? '晶胞框已绘出（'+latStr()+'）—— 请在第 2 步添加不对称单元原子。'
+    : '晶格 '+latStr()+' · 原子数 <b>'+countVisible()+'</b> · 化学式 <b>'+formula()+'</b> · 键连 <b>'+nb+'</b> 根'
+      +(S.sc?' · <b>3×3×1 超胞</b>':'')
+      +(S.p1?' · <b>P1 显式</b>':' · <b>'+toSub(sg?sg.hm:'')+'（No.'+S.sgNo+'，'+S.nops+' 个对称操作）</b>');
 }
 function countVisible(){ var k=0; S.atoms.forEach(function(a){ if(!a.vac)k++; }); return k; }
+function vacCount(){ var k=0; S.atoms.forEach(function(a){ if(a.vac)k++; }); return k; }
 
 function gate(){
   document.getElementById('stp2').classList.toggle('locked', !S.latOK);
-  document.getElementById('stp3').classList.toggle('locked', S.atoms.length<5);
+  document.getElementById('stp3').classList.toggle('locked', !S.atoms.length);
   document.getElementById('stp4').classList.toggle('locked', !S.sc);
   document.getElementById('stp5').classList.toggle('locked', !S.sc);
   document.getElementById('btnSC').disabled = !S.p1;
 }
 
-/* ================= 第 1 步 ================= */
+/* ================= 第 1 步：晶系约束 + 确认 ================= */
+var SYS_PLACEHOLDER={
+  triclinic:  {a:'4.0',   b:'5.0',   c:'6.0',   al:'80',  be:'95',  ga:'110'},
+  monoclinic: {a:'5.0',   b:'6.0',   c:'5.0',   al:'90',  be:'101', ga:'90'},
+  orthorhombic:{a:'4.0',  b:'5.0',   c:'6.0',   al:'90',  be:'90',  ga:'90'},
+  tetragonal: {a:'4.0',   b:'4.0',   c:'6.0',   al:'90',  be:'90',  ga:'90'},
+  trigonal:   {a:'4.744', b:'4.744', c:'9.193', al:'90',  be:'90',  ga:'120'},
+  hexagonal:  {a:'4.744', b:'4.744', c:'9.193', al:'90',  be:'90',  ga:'120'},
+  cubic:      {a:'5.64',  b:'5.64',  c:'5.64',  al:'90',  be:'90',  ga:'90'}
+};
+function applySysUI(){
+  var sel=document.getElementById('inSG');
+  var g=SGBYNO[sel.value] || SGBYNO[166];
+  if(!g){ return; }
+  if(S.atoms.length && !confirm('切换空间群后，此前按旧空间群展开的原子将全部清空，继续？')){
+    sel.value=S.sgNo; return;
+  }
+  S.sgNo=g.no; S.sgHm=g.hm; S.sys=g.sys; S.nops=g.nops;
+  document.getElementById('sysBadge').textContent=SYS_CN[g.sys]+'晶系 · '+toSub(g.hm)+'（No.'+g.no+'）';
+  document.getElementById('opBadge').textContent='对称操作 × '+g.nops;
+  /* 按晶系锁定：free=可编辑，值=锁定值 */
+  var L='free';
+  var plan={ // [a自由, b模式('free'|'=a'|'=ac'), c模式, alpha, beta, gamma]  角度：'free'|数值
+    triclinic:  [1,'free','free','free','free','free'],
+    monoclinic: [1,'free','free',90,'free',90],
+    orthorhombic:[1,'free','free',90,90,90],
+    tetragonal: [1,'=a','free',90,90,90],
+    trigonal:   [1,'=a','free',90,90,120],
+    hexagonal:  [1,'=a','free',90,90,120],
+    cubic:      [1,'=a','=ac',90,90,90]
+  }[g.sys];
+  function cfg(id, mode, phKey){
+    var e=document.getElementById(id), ph=SYS_PLACEHOLDER[g.sys][phKey];
+    if(mode==='free'){ e.disabled=false; if(!e.value) e.placeholder=ph; return; }
+    e.disabled=true;
+    if(mode==='=a'||mode==='=ac'){ e.value=''; e.placeholder=mode; }
+    else { e.value=mode; }
+  }
+  cfg('inA','free','a');
+  cfg('inB',plan[1],'b');
+  cfg('inC',plan[2],'c');
+  cfg('inAl',plan[3],'al'); cfg('inBe',plan[4],'be'); cfg('inGa',plan[5],'ga');
+  /* 切换空间群 → 旧展开原子失效 */
+  if(S.atoms.length){
+    clearAtoms(true);
+    document.getElementById('atomHint').className='hint';
+    document.getElementById('atomHint').textContent='已切换空间群，此前按旧空间群展开的原子已清空，请重新添加不对称单元。';
+  }
+}
+document.getElementById('inSG').addEventListener('change', applySysUI);
+
 function confirmLat(){
   var a=parseFloat(document.getElementById('inA').value),
-      c=parseFloat(document.getElementById('inC').value);
+      b=parseFloat(document.getElementById('inB').value),
+      c=parseFloat(document.getElementById('inC').value),
+      al=parseFloat(document.getElementById('inAl').value),
+      be=parseFloat(document.getElementById('inBe').value),
+      ga=parseFloat(document.getElementById('inGa').value);
   var h=document.getElementById('latHint');
-  if(!(a>3.5 && a<5.5) || !(c>8.0 && c<10.8)){
-    h.className='hint err'; h.textContent='晶格常数超出合理范围：g-C₃N₄ 层状结构 a 应在 3.5–5.5 Å、c 应在 8.0–10.8 Å（层状堆垛 c/a ≈ 1.94）。请检查后重新输入。';
-    return;
+  var g=SGBYNO[S.sgNo];
+  /* b、c 联动 */
+  if(g){
+    if(g.sys==='tetragonal'||g.sys==='trigonal'||g.sys==='hexagonal') b=a;
+    if(g.sys==='cubic'){ b=a; c=a; }
+    if(g.sys!=='triclinic' && g.sys!=='monoclinic'){ al=90; be=90; ga=(g.sys==='trigonal'||g.sys==='hexagonal')?120:90; }
+    if(g.sys==='monoclinic'){ al=90; ga=90; }
   }
-  if(Math.abs(c/a-1.94)>0.35){
-    h.className='hint err'; h.textContent='c/a = '+(c/a).toFixed(2)+'，偏离层状 g-C₃N₄ 的典型值 1.94 较远，请核对（可能是把层内/层间方向弄反了）。';
-    return;
+  if(!(a>0) || !(b>0) || !(c>0)){
+    h.className='hint err'; h.textContent='晶格常数 a、b、c 必须为正数，请检查输入。'; return;
   }
-  S.a=a; S.c=c; S.sg=document.getElementById('inSG').value; S.latOK=true;
-  S.log.push('输入晶格常数 a = b = '+a.toFixed(4)+' Å，c = '+c.toFixed(4)+' Å，γ = 120°，空间群 '+S.sg);
-  h.className='hint ok'; h.innerHTML='晶格确认 ✓ 右侧已绘出晶胞框（体积 '+(a*a*Math.sin(120*Math.PI/180)*c).toFixed(1)+' Å³）。b = a，六方晶系自动锁定。';
+  if(!(al>0&&al<180) || !(be>0&&be<180) || !(ga>0&&ga<180)){
+    h.className='hint err'; h.textContent='晶格角 α、β、γ 必须在 0–180° 之间（不含端点），请检查输入。'; return;
+  }
+  var D=Math.PI/180, ca=Math.cos(al*D), cb=Math.cos(be*D), cg=Math.cos(ga*D);
+  var t=1-ca*ca-cb*cb-cg*cg+2*ca*cb*cg;
+  if(t<=0){
+    h.className='hint err'; h.textContent='这组角度（α='+al+'°，β='+be+'°，γ='+ga+'°）无法构成合法的三维晶胞（体积公式根号内 ≤ 0），请检查。'; return;
+  }
+  S.a=a; S.b=b; S.c=c; S.al=al; S.be=be; S.ga=ga; S.latOK=true;
+  document.getElementById('inB').value=b; document.getElementById('inC').value=c;
+  document.getElementById('inAl').value=al; document.getElementById('inBe').value=be; document.getElementById('inGa').value=ga;
+  S.log.push('选定空间群 '+toSub(g?g.hm:'')+'（No.'+S.sgNo+'，'+S.nops+' 个对称操作），输入晶格常数：'+latStr());
+  h.className='hint ok';
+  h.innerHTML='晶格确认 ✓ 晶胞体积 '+cellVolume(false).toFixed(1)+' Å³，右侧已绘出晶胞框。晶格常数不做对错判断，建模结果由你提交的结构本身呈现。';
   drawCell(); fitView(false); gate(); stat();
 }
 
-/* ================= 第 2 步 ================= */
+/* ================= 第 2 步：不对称单元 → 对称展开 ================= */
 function addAtom(){
   var el=document.getElementById('inEl').value,
       x=parseFloat(document.getElementById('inX').value),
@@ -516,30 +683,68 @@ function addAtom(){
   if(isNaN(x)||isNaN(y)||isNaN(z)||x<0||x>=1||y<0||y>=1||z<0||z>=1){
     h.className='hint err'; h.textContent='分数坐标必须落在 [0,1) 区间内，请检查 x、y、z。'; return;
   }
-  S.atoms.push({el:el,x:x,y:y,z:z,vac:false,manual:true});
+  var imgs=expandSeed(el,x,y,z);
+  var si=S.seeds.length;
+  S.seeds.push({el:el,x:x,y:y,z:z});
+  imgs.forEach(function(p){
+    S.atoms.push({el:p.el,x:p.x,y:p.y,z:p.z,vac:false,seedIdx:si,origin:!!p.origin});
+  });
   rebuildAtoms(false);
-  h.className='hint ok'; h.innerHTML='已添加 '+el+' 原子（当前 '+countVisible()+' 个原子）。模型实时更新 ✓';
+  h.className='hint ok';
+  h.innerHTML='已添加 '+el+'（'+x.toFixed(3)+', '+y.toFixed(3)+', '+z.toFixed(3)+'）：按 '+toSub(S.sgHm)+'（No.'+S.sgNo+'）的 '+S.nops+' 个对称操作展开出 <b>'+imgs.length+'</b> 个等效原子（多重性 '+imgs.length+'）。当前晶胞共 '+countVisible()+' 个原子 ✓';
+  document.getElementById('inX').value=''; document.getElementById('inY').value=''; document.getElementById('inZ').value='';
   renderAtomTbl(); gate();
 }
-function importRef(){
-  if(S.atoms.length && !confirm('导入标准结构将覆盖当前已添加的 '+S.atoms.length+' 个原子，继续？')) return;
-  S.atoms = REF.atoms.map(function(r){ return {el:r[0],x:r[1],y:r[2],z:r[3],vac:false,manual:false}; });
-  rebuildAtoms(true);
+function delOrbit(si){
+  var n0=S.atoms.length;
+  S.atoms=S.atoms.filter(function(a){ return a.seedIdx!==si; });
+  S.seeds[si]=null;
+  S.log.push('删除不对称原子 #'+(si+1)+' 及其 '+(n0-S.atoms.length-1)+' 个对称等效原子');
+  rebuildAtoms(false); renderAtomTbl(); gate();
+}
+function clearAtoms(silent){
+  S.atoms=[]; S.seeds=[]; S.sel=-1;
+  if(!silent){
+    S.log.push('清空全部原子');
+    document.getElementById('atomHint').className='hint';
+    document.getElementById('atomHint').textContent='已清空全部原子，可重新添加不对称单元。';
+  }
+  rebuildAtoms(false); renderAtomTbl(); gate();
+}
+function fillDemoNaCl(){
+  var ready = S.latOK && S.sys==='cubic' && Math.abs(S.a-5.64)<0.001;
+  if(!ready){
+    if(S.atoms.length && !confirm('示例将重置当前晶格与原子，继续？')) return;
+    clearAtoms(true);
+    document.getElementById('inSG').value='225';
+    applySysUI();
+    document.getElementById('inA').value=5.64;
+    confirmLat();
+    if(!S.latOK) return;
+  }
+  addSeedDirect('Na',0,0,0);
+  addSeedDirect('Cl',0.5,0.5,0.5);
   document.getElementById('atomHint').className='hint ok';
-  document.getElementById('atomHint').innerHTML='已导入平台标准结构 C<sub>9</sub>N<sub>12</sub>（21 原子，与平台所有计算体系同源）✓ 每个原子都可在表中查看，进入第 3 步。';
+  document.getElementById('atomHint').innerHTML='示例完成：NaCl，空间群 Fm-3m（No.225），a = 5.64 Å。只输入了 <b>2 个独立原子</b>——Na (0,0,0) 与 Cl (½,½,½)，对称展开得到 4+4 = <b>8 个原子</b>（多重性各 4）✓ 可在此基础上修改，也可清空后从零开始建模自己的结构。';
   renderAtomTbl(); gate();
 }
-function delAtom(i){
-  if(S.atoms[i].manual){ S.atoms.splice(i,1); rebuildAtoms(false); renderAtomTbl(); gate(); }
+function addSeedDirect(el,x,y,z){
+  var imgs=expandSeed(el,x,y,z);
+  var si=S.seeds.length;
+  S.seeds.push({el:el,x:x,y:y,z:z});
+  imgs.forEach(function(p){ S.atoms.push({el:p.el,x:p.x,y:p.y,z:p.z,vac:false,seedIdx:si,origin:!!p.origin}); });
+  rebuildAtoms(false);
 }
 function renderAtomTbl(){
   var t=document.getElementById('atomTbl'), rows='';
   if(!S.atoms.length){ t.innerHTML='<tr><td style="color:#9fb0c3">（尚无原子）</td></tr>'; return; }
-  rows='<tr><th>#</th><th>元素</th><th>x</th><th>y</th><th>z</th><th></th></tr>';
+  rows='<tr><th>#</th><th>元素</th><th>x</th><th>y</th><th>z</th><th>来源</th><th></th></tr>';
   S.atoms.forEach(function(a,i){
-    rows+='<tr><td>'+(i+1)+'</td><td><b style="color:'+('#'+COLOR[a.el].toString(16).padStart(6,'0'))+'">'+a.el+'</b></td>'
+    var c='#9aa5b1'; if(ELEMS[a.el]) c=ELEMS[a.el][1];
+    rows+='<tr><td>'+(i+1)+'</td><td><b style="color:'+c+'">'+a.el+'</b></td>'
       +'<td class="num">'+a.x.toFixed(3)+'</td><td class="num">'+a.y.toFixed(3)+'</td><td class="num">'+a.z.toFixed(3)+'</td>'
-      +'<td>'+(a.manual?'<span class="del" onclick="delAtom('+i+')">✕</span>':'')+'</td></tr>';
+      +'<td>'+(a.origin?'★ 输入':'· 对称')+'</td>'
+      +'<td>'+(a.origin&&!S.sc?'<span class="del" onclick="delOrbit('+a.seedIdx+')">✕</span>':'')+'</td></tr>';
   });
   t.innerHTML=rows;
 }
@@ -549,8 +754,8 @@ renderAtomTbl();
 function makeP1(){
   S.p1=true;
   document.getElementById('scHint').className='hint ok';
-  document.getElementById('scHint').innerHTML='已转 <b>P1</b>：对称操作 12（R-3m）→ 1（P1），全部原子坐标显式独立 ✓ 现在可以扩超胞。';
-  S.log.push('转为 P1 显式结构（对称操作 12 → 1）');
+  document.getElementById('scHint').innerHTML='已确认为 <b>P1 显式结构</b>：'+countVisible()+' 个原子坐标全部独立显式（由 '+toSub(S.sgHm)+' 的 '+S.nops+' 个对称操作展开而来）✓ 现在可以扩超胞。';
+  S.log.push('确认 P1 显式结构（'+countVisible()+' 个显式原子）');
   gate(); stat();
 }
 function makeSupercell(){
@@ -558,66 +763,64 @@ function makeSupercell(){
   var n0=S.atoms.length, sup=[];
   S.atoms.forEach(function(a){
     for(var i=0;i<3;i++) for(var j=0;j<3;j++){
-      sup.push({el:a.el, x:(a.x+i)/3, y:(a.y+j)/3, z:a.z, vac:false, manual:false});
+      sup.push({el:a.el, x:(a.x+i)/3, y:(a.y+j)/3, z:a.z, vac:false, seedIdx:a.seedIdx, origin:!!a.origin && i===0 && j===0});
     }
   });
   S.atoms=sup; S.sc=true; S.sel=-1;
   drawCell(); rebuildAtoms(true);
-  S.log.push('扩 3×3×1 超胞：'+n0+' 原子 → '+sup.length+' 原子（层内晶格常数放大 3 倍，层间不变）');
+  S.log.push('扩 3×3×1 超胞：'+n0+' 原子 → '+sup.length+' 原子（沿 a、b 方向各扩 3 倍，c 方向不变）');
   document.getElementById('scHint').className='hint ok';
-  document.getElementById('scHint').innerHTML='超胞完成 ✓ 共 <b>'+sup.length+'</b> 个原子，化学式 <b>'+formula()+'</b>。进入第 4 步点选原子做掺杂/缺陷。';
+  document.getElementById('scHint').innerHTML='超胞完成 ✓ 共 <b>'+sup.length+'</b> 个原子，化学式 <b>'+formula()+'</b>。进入第 4 步点选原子做修饰。';
   gate(); renderAtomTbl();
 }
 
-/* ================= 第 4 步 ================= */
+/* ================= 第 4 步：通用修饰 ================= */
 function updateSelBox(){
   var box=document.getElementById('selInfo'),
-      bO=document.getElementById('btnSubO'), bV=document.getElementById('btnVac');
+      bR=document.getElementById('btnSubO'), bV=document.getElementById('btnVac');
   if(S.sel<0 || !S.atoms[S.sel] || S.atoms[S.sel].vac){
-    box.style.display='none'; bO.disabled=true; bV.disabled=true;
-    if(S.sc && S.sel<0){ /* noop */ }
+    box.style.display='none'; bR.disabled=true; bV.disabled=true;
     return;
   }
   var a=S.atoms[S.sel];
+  var mod=document.getElementById('modEl').value;
   box.style.display='block';
-  box.innerHTML='已选中 <b style="color:'+('#'+COLOR[a.el].toString(16).padStart(6,'0'))+'">'+a.el+'</b> 原子 #'+(S.sel+1)
+  box.innerHTML='已选中 <b style="color:'+(ELEMS[a.el]?ELEMS[a.el][1]:'#9aa5b1')+'">'+a.el+'</b> 原子 #'+(S.sel+1)
     +' · 分数坐标 ('+a.x.toFixed(3)+', '+a.y.toFixed(3)+', '+a.z.toFixed(3)+')'
-    +(a.el==='N'?' —— 可替换为 O':'')
-    +(a.el==='C'?' —— 可删除形成 C 空位':'')
-    +(a.el==='O'?' —— 已是 O 掺杂原子':'');
-  bO.disabled = (a.el!=='N') || countEl('O')>=1;
-  bV.disabled = (a.el!=='C') || vacCount()>=1;
-  bO.title=bO.disabled?'与平台单点掺杂体系对应，每个超胞最多 1 个 O':'';
-  bV.title=bV.disabled?'与平台单缺陷体系对应，每个超胞最多 1 个 C 空位':'';
+    +(a.el===mod?' —— 目标元素与当前相同，请先在左侧换一个元素':'');
+  bR.disabled = (a.el===mod);
+  bV.disabled = false;
 }
-function vacCount(){ var k=0; S.atoms.forEach(function(a){ if(a.vac)k++; }); return k; }
-function doSubO(){
+document.getElementById('modEl').addEventListener('change', updateSelBox);
+function doReplace(){
   if(S.sel<0) return;
-  var a=S.atoms[S.sel]; if(a.el!=='N') return;
-  S.ops.push({t:'O',idx:S.sel,prevEl:'N'});
-  a.el='O';
-  S.log.push('N → O 替换：#'+(S.sel+1)+' ('+a.x.toFixed(3)+', '+a.y.toFixed(3)+', '+a.z.toFixed(3)+') —— O 掺杂');
-  afterDop('O 掺杂完成 ✓ 红色球即替换后的 O 原子。');
+  var a=S.atoms[S.sel];
+  var to=document.getElementById('modEl').value;
+  if(a.el===to) return;
+  S.ops.push({t:'R',idx:S.sel,prevEl:a.el});
+  a.el=to;
+  S.log.push('元素替换：#'+(S.sel+1)+' ('+a.x.toFixed(3)+', '+a.y.toFixed(3)+', '+a.z.toFixed(3)+') '+(S.ops[S.ops.length-1].prevEl)+' → '+to);
+  afterDop('替换完成 ✓ 当前化学式 <b>'+formula()+'</b>，原子数 <b>'+countVisible()+'</b>。');
 }
 function doVacancy(){
   if(S.sel<0) return;
-  var a=S.atoms[S.sel]; if(a.el!=='C') return;
-  S.ops.push({t:'V',idx:S.sel,prevEl:'C'});
+  var a=S.atoms[S.sel]; if(a.vac) return;
+  S.ops.push({t:'V',idx:S.sel,prevEl:a.el});
   a.vac=true;
-  S.log.push('C 空位：删除 C #'+(S.sel+1)+' ('+a.x.toFixed(3)+', '+a.y.toFixed(3)+', '+a.z.toFixed(3)+')');
-  afterDop('C 空位已形成 ✓ 该位置不再显示原子，周边键连自动断开。');
+  S.log.push('形成空位：删除 #'+(S.sel+1)+' ('+a.x.toFixed(3)+', '+a.y.toFixed(3)+', '+a.z.toFixed(3)+') 的 '+S.ops[S.ops.length-1].prevEl+' 原子');
+  afterDop('空位已形成 ✓ 该位置不再显示原子，周边键连自动断开。当前化学式 <b>'+formula()+'</b>，原子数 <b>'+countVisible()+'</b>。');
 }
 function afterDop(msg){
   rebuildAtoms(false);
   document.getElementById('dopHint').className='hint ok';
-  document.getElementById('dopHint').innerHTML=msg+' 当前化学式 <b>'+formula()+'</b>，原子数 <b>'+countVisible()+'</b>。';
+  document.getElementById('dopHint').innerHTML=msg;
   paintSel(); updateSelBox(); gate();
 }
 function undoOp(){
   var op=S.ops.pop();
   if(!op){ document.getElementById('dopHint').className='hint'; document.getElementById('dopHint').textContent='没有可撤销的操作。'; return; }
   var a=S.atoms[op.idx];
-  if(op.t==='O'){ a.el=op.prevEl; }
+  if(op.t==='R'){ a.el=op.prevEl; }
   else { a.vac=false; }
   rebuildAtoms(false); paintSel(); updateSelBox(); gate();
   document.getElementById('dopHint').className='hint';
@@ -626,48 +829,52 @@ function undoOp(){
 function resetDop(){
   S.ops.forEach(function(op){
     var a=S.atoms[op.idx];
-    if(op.t==='O') a.el=op.prevEl; else a.vac=false;
+    if(op.t==='R') a.el=op.prevEl; else a.vac=false;
   });
   S.ops=[];
   rebuildAtoms(false); paintSel(); updateSelBox(); gate();
   document.getElementById('dopHint').className='hint';
-  document.getElementById('dopHint').textContent='已恢复为未掺杂超胞。';
+  document.getElementById('dopHint').textContent='已恢复为未修饰结构。';
 }
 
 /* ================= 第 5 步：摘要 / POSCAR / CIF / 提交 ================= */
 function poscarText(){
-  var V=latVecs(true), vis=[];
+  var V=cellVecs(S.sc), vis=[];
   S.atoms.forEach(function(a){ if(!a.vac) vis.push(a); });
   var els=[],cnt=[];
   vis.forEach(function(a){
     var i=els.indexOf(a.el);
     if(i<0){ els.push(a.el); cnt.push(1); } else cnt[i]++;
   });
-  var L='g-C3N4 supercell built in simulation1 (P1, 3x3x1)\n1.0\n'
-    +V.map(function(v){ return '  '+v.x.toFixed(6)+'  '+v.y.toFixed(6)+'  '+v.z.toFixed(6); }).join('\n')+'\n'
+  var L='crystal model built in simulation1 (P1'+(S.sc?', 3x3x1 supercell':'')+')\n1.0\n'
+    +V.map(function(v){ return '  '+v[0].toFixed(6)+'  '+v[1].toFixed(6)+'  '+v[2].toFixed(6); }).join('\n')+'\n'
     +'  '+els.join('  ')+'\n  '+cnt.join('  ')+'\nDirect\n';
   vis.forEach(function(a){ L+='  '+a.x.toFixed(6)+'  '+a.y.toFixed(6)+'  '+a.z.toFixed(6)+'\n'; });
   return L;
 }
 function cifText(){
   var vis=[]; S.atoms.forEach(function(a){ if(!a.vac) vis.push(a); });
-  var a=(S.a*3).toFixed(5);
-  var L='data_global\n_chemical_name_common "g-C3N4 supercell (simulation1)"\n'
-    +'_cell_length_a '+a+'\n_cell_length_b '+a+'\n_cell_length_c '+S.c.toFixed(5)+'\n'
-    +'_cell_angle_alpha 90\n_cell_angle_beta 90\n_cell_angle_gamma 120\n'
+  var m=S.sc?3:1;
+  var L='data_global\n_chemical_name_common "crystal model (simulation1)"\n'
+    +'_cell_length_a '+(S.a*m).toFixed(5)+'\n_cell_length_b '+(S.b*m).toFixed(5)+'\n_cell_length_c '+S.c.toFixed(5)+'\n'
+    +'_cell_angle_alpha '+S.al.toFixed(2)+'\n_cell_angle_beta '+S.be.toFixed(2)+'\n_cell_angle_gamma '+S.ga.toFixed(2)+'\n'
+    +'_symmetry_space_group_name_H-M "P 1"\n'
     +'loop_\n_atom_site_label\n_atom_site_type_symbol\n_atom_site_fract_x\n_atom_site_fract_y\n_atom_site_fract_z\n';
-  var cnt={C:0,N:0,O:0};
-  vis.forEach(function(x,i){
+  var cnt={};
+  vis.forEach(function(x){
     cnt[x.el]=(cnt[x.el]||0)+1;
     L+=x.el+(cnt[x.el])+' '+x.el+' '+x.x.toFixed(6)+' '+x.y.toFixed(6)+' '+x.z.toFixed(6)+'\n';
   });
   return L;
 }
 function refreshSum(){
-  var ops=S.log.length? S.log.map(function(l,i){ return '  '+l; }).join('\n') : '  （无）';
+  var seeds=S.seeds.filter(function(s){ return s; });
+  var ops=S.log.length? S.log.map(function(l){ return '  '+l; }).join('\n') : '  （无）';
   document.getElementById('sumBox').innerHTML=
-    '晶格：a = b = '+S.a.toFixed(4)+' Å，c = '+S.c.toFixed(4)+' Å，γ = 120°，空间群 '+(S.p1?'P1':'R-3m')+'\n'
-    +'结构：3×3×1 超胞 · 化学式 '+formula()+' · 原子数 '+countVisible()+(vacCount()?('（含 '+vacCount()+' 个 C 空位）'):'')+'\n'
+    '晶格：'+latStr()+'\n'
+    +'空间群：'+toSub(S.sgHm)+'（No.'+S.sgNo+'，'+S.nops+' 个对称操作）'+(S.p1?' → P1 显式':'')+'\n'
+    +'不对称单元：'+(seeds.length? seeds.map(function(s){ return s.el+'('+s.x.toFixed(2)+','+s.y.toFixed(2)+','+s.z.toFixed(2)+')'; }).join('  ') : '（无）')+'\n'
+    +'结构：'+(S.sc?'3×3×1 超胞':'单胞')+' · 化学式 '+formula()+' · 原子数 '+countVisible()+(vacCount()?('（含 '+vacCount()+' 个空位）'):'')+'\n'
     +'操作记录：\n'+ops;
 }
 function downloadCif(){
@@ -675,7 +882,7 @@ function downloadCif(){
   var blob=new Blob([cifText()],{type:'text/plain'});
   var el=document.createElement('a');
   el.href=URL.createObjectURL(blob);
-  el.download='gC3N4_supercell_simulation1.cif';
+  el.download='crystal_model_simulation1.cif';
   el.click(); URL.revokeObjectURL(el.href);
 }
 
@@ -691,20 +898,23 @@ function submitStruct(){
     msg.className='hint err'; msg.textContent='未登录无法提交（访客模式请先返回首页用「访客体验」进入，或使用学生账号登录）。'; return;
   }
   var think=document.getElementById('inThink').value.trim();
+  var seeds=S.seeds.filter(function(s){ return s; });
+  var seedStr=seeds.length? seeds.map(function(s){ return s.el+' ('+s.x.toFixed(3)+', '+s.y.toFixed(3)+', '+s.z.toFixed(3)+')'; }).join('；') : '（无）';
   var content='【① 结构建模 · 结构提交】\n'
     +'学生：'+(user.guest?'访客':user.name)+'（'+user.sid+'）\n'
     +'提交时间：'+new Date().toLocaleString('zh-CN')+'\n\n'
-    +'一、晶胞参数\n  a = b = '+S.a.toFixed(4)+' Å，c = '+S.c.toFixed(4)+' Å，α=β=90°，γ=120°，空间群 '+(S.p1?'P1（显式）':'R-3m（No.166）')+'\n\n'
-    +'二、建模步骤\n'+(S.log.length?S.log.map(function(l,i){return '  '+l;}).join('\n'):'  （无）')+'\n\n'
-    +'三、最终结构\n  3×3×1 超胞 · 化学式 '+formula()+' · 显式原子数 '+countVisible()
-    +(vacCount()?('（含 '+vacCount()+' 个 C 空位）'):'')+'\n\n'
-    +(think?('四、我的思考\n  '+think.replace(/\n/g,'\n  ')+'\n\n'):'')
-    +'五、POSCAR（最终结构）\n'+poscarText();
+    +'一、晶胞参数\n  '+latStr()+'\n  空间群：'+toSub(S.sgHm)+'（No.'+S.sgNo+'，'+S.nops+' 个对称操作）'+(S.p1?' → 已确认 P1 显式':'')+'\n\n'
+    +'二、不对称单元（学生输入的独立原子）\n  '+seedStr+'\n\n'
+    +'三、建模步骤\n'+(S.log.length?S.log.map(function(l){return '  '+l;}).join('\n'):'  （无）')+'\n\n'
+    +'四、最终结构\n  '+(S.sc?'3×3×1 超胞':'单胞')+' · 化学式 '+formula().replace(/<\/?sub>/g,'')+' · 显式原子数 '+countVisible()
+    +(vacCount()?('（含 '+vacCount()+' 个空位）'):'')+'\n\n'
+    +(think?('五、我的思考\n  '+think.replace(/\n/g,'\n  ')+'\n\n'):'')
+    +'六、POSCAR（最终结构）\n'+poscarText();
   document.getElementById('btnSubmit').disabled=true;
   msg.className='hint'; msg.textContent='正在提交…';
   fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({token:TOKEN,kind:'结构建模',step:'① 结构建模',
-      title:'g-C3N4 结构建模：超胞 + O 掺杂 + C 空位（'+formula().replace(/<\/?sub>/g,'')+'）',
+      title:'晶体结构建模：'+formula().replace(/<\/?sub>/g,'')+'（'+toSub(S.sgHm)+' · No.'+S.sgNo+'）',
       content:content})})
     .then(function(r){return r.json();})
     .then(function(res){
