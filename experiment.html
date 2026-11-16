@@ -232,7 +232,7 @@
     <span>学生：<b id="stuName">—</b></span>
     <span>用时 <b id="timer">00:00</b></span>
     <span>进度 <b id="prog">0 / 6</b></span>
-    <a class="quit jump" href="simulation.html">🔬 3D 仿真实验台</a>
+    <a class="quit jump" href="simulation1.html">🔬 3D 仿真实验台</a>
     <a class="quit jump2" href="report.html">📄 报告提交页</a>
     <a class="quit jump" href="kb.html" target="_blank" rel="noopener">📚 拓展阅读</a>
     <a class="quit" href="lab.html">返回首页</a>
@@ -327,7 +327,7 @@ TOKEN = user && user.token ? user.token : '';
 document.getElementById('stuName').textContent = user ? (user.guest ? '访客（体验模式）' : user.name + '（' + user.sid + '）') : '—';
 
 /* ---------- 实验空间（ilab-x）步骤埋点 ----------
-   与 simulation.html 内的 ILAB 共用同一 localStorage 轨迹键 ilab_track_<sid>，
+   与 simulation2.html 内的 ILAB 共用同一 localStorage 轨迹键 ilab_track_<sid>，
    这样本页完成的第 1–4 步（预习测评/任务认领/调研/方案设计）真实证据，
    会被仿真台最终回传时一并带上；未埋点的步骤由云函数按完成度赋分。
    score 一律按百分制（后端据此折算该步满分）。 */

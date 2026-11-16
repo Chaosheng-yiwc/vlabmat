@@ -41,7 +41,7 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D虚拟仿真实验台 · 第③层 复合调控寻优</title>
+<title>3D虚拟仿真实验台 · 第③层 结果分析与光催化判据</title>
 <style>
   :root{--ink:#1a2332;--sub:#5a6b80;--line:#dfe6ee;--bg:#f3f6fa;--blue:#1a5dab;--blue-d:#12447e;
         --gold:#c9a227;--green:#2e8b57;--red:#c0392b;--card:#fff}
@@ -60,7 +60,7 @@
   .topbar .meta b{color:#ffd97a}
   .quit{color:#ffd97a;text-decoration:none;font-size:13px}
   .jump{background:var(--gold);color:#3a2c00;padding:4px 12px;border-radius:6px;font-weight:700}
-  /* 三层导航：当前层高亮为白底 */
+  /* 四层导航：当前层高亮为白底 */
   .jump.cur{background:#fff;color:#0e3a6d;cursor:default}
   .layout{flex:1;display:flex;min-height:0}
   /* 左侧控制台 */
@@ -167,13 +167,13 @@
 <body>
 
 <div class="topbar">
-  <div class="t">🔬 3D 虚拟仿真实验台 · 第③层 复合调控寻优</div>
+  <div class="t">🔬 3D 虚拟仿真实验台 · 第③层 结果分析与光催化判据</div>
   <div class="meta">
     <span style="display:flex;gap:6px">
-      <a class="jump" href="simulation0.html">⓪ 结构建模</a>
-      <a class="jump" href="simulation.html">① 计算方法</a>
-      <a class="jump" href="simulation2.html">② 结果分析</a>
-      <a class="jump cur" href="simulation3.html" title="当前层">③ 复合调控</a>
+      <a class="jump" href="simulation1.html">① 结构建模</a>
+      <a class="jump" href="simulation2.html">② 计算方法</a>
+      <a class="jump cur" href="simulation3.html" title="当前层">③ 结果分析</a>
+      <a class="jump" href="simulation4.html">④ 复合调控</a>
     </span>
     <span>学生：<b id="stuName">游客</b></span>
     <a class="quit jump" href="experiment.html">📖 研究资料调研</a>
@@ -199,35 +199,53 @@
     </div>
 
     <div class="stp-card">
-      <div class="stp-head"><span>① 选择研究体系与应变</span><span class="dot" id="dot1">1</span></div>
+      <div class="stp-head"><span>① 确认研究体系</span><span class="dot ok" id="dot1">✓</span></div>
       <div class="stp-body">
-        <div class="sys-cards" id="sysCards">
-          <div class="sys-card on" data-sys="pristine">本征 g-C<sub>3</sub>N<sub>4</sub><small>基准参照</small></div>
-          <div class="sys-card" data-sys="o_dop">O-掺杂<small>N位O替代</small></div>
-          <div class="sys-card" data-sys="c_vac">C-空位<small>缺陷工程</small></div>
-        </div>
-        <div style="margin-top:9px">
-          <label style="font-size:12.5px;color:var(--sub)">双轴应变 ε = <b id="strainV" style="color:var(--blue-d)">0</b> %（-4 压缩 ↔ +4 拉伸）</label>
-          <input type="range" id="strain" min="-4" max="4" step="1" value="0" style="width:100%">
-        </div>
-        <div class="hint">本层聚焦<b>复合调控寻优</b>：切换体系与应变、结合第①层确定的可靠参数（ENCUT 500）完成多次计算，按三要素对比找出最佳调控手段。</div>
+        <b>本征 g-C<sub>3</sub>N<sub>4</sub></b>（ε = 0，R3m 体相原胞 · 21 原子）
+        <div class="hint">本层聚焦<b>计算结果的分析方法</b>：统一采用本征体系 ε=0 基准构型。学会读能带结构、吸收光谱与带边位置图，并对照<b>光催化三要素</b>判读材料优劣（第④步）。</div>
       </div>
     </div>
 
     <div class="stp-card">
-      <div class="stp-head"><span>② 设置计算参数</span><span class="dot" id="dot2">2</span></div>
+      <div class="stp-head"><span>② 选择计算方法</span><span class="dot" id="dot2">2</span></div>
       <div class="stp-body">
         <label style="font-size:12.5px;color:var(--sub)">平面波截断能 ENCUT</label>
         <select class="sel" id="encut">
-          <option value="500" selected>500 eV（第①层收敛测试选定）</option>
+          <option value="500" selected>500 eV（第②层收敛测试选定）</option>
         </select>
-        <label style="font-size:12.5px;color:var(--sub);display:block;margin-top:7px">交换关联泛函（决定能带计算方法）</label>
+        <div class="hint">收敛判据回顾：相邻两档截断能之间带隙变化 &lt; 0.01 eV 即视为收敛。第②层数据 400→450 变化约 0.009 eV（尚有可见变化），450→500 仅 0.001 eV、500→550 仅 0.0001 eV（已收敛），故取 500 eV 在收敛平台上留出安全裕度。</div>
+        <label style="font-size:12.5px;color:var(--sub);display:block;margin-top:7px">交换关联泛函</label>
         <select class="sel" id="func">
           <option value="PBE" selected>PBE（GGA 半局域泛函）</option>
           <option value="HSE06">HSE06（杂化泛函）</option>
         </select>
         <div class="hint" id="funcHint"></div>
-        <div class="hint">提示：K 网格内部固定 5×5×3（Γ 居中，已通过收敛测试）。泛函与体系、应变可自由组合提交计算，探索记录自动登记，第④步判读以你自己的计算结果为准。</div>
+        <div class="hint">提示：两种泛函都可以提交计算。哪种更适合定性分析、哪种更适合定量分析，请用你自己的计算结果与实验测量带隙对比后，在第④步判读题中回答。</div>
+        <div class="hint" style="background:#f3f0fb;border:1px solid #ddd4f0">
+          <b style="color:#4a3a80">❓ 设问：第②层已经用 PBE 选定了参数，为什么第③层还要提供 HSE06？两种泛函算出的带隙差多少？</b>
+          ——请不要预习答案：分别用 PBE 与 HSE06 在第③步各提交一次计算（本征 ε=0），下表会由<b>你自己的计算结果</b>逐格生成，算完两种泛函后对比解读才会出现。
+          <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:12.5px">
+            <tr style="background:#e9e3f6;color:#3a2d66">
+              <th style="padding:4px 6px;text-align:left">计算方法</th>
+              <th style="padding:4px 6px;text-align:center">带隙 E<sub>g</sub>（你的计算）</th>
+              <th style="padding:4px 6px;text-align:center">与实验值 2.70 eV 的偏差</th>
+              <th style="padding:4px 6px;text-align:center">计算耗时（你本次运行）</th>
+            </tr>
+            <tr style="border-top:1px solid #ddd4f0">
+              <td style="padding:4px 6px">PBE（GGA 半局域）</td>
+              <td id="fnEgPBE" style="padding:4px 6px;text-align:center">—</td>
+              <td id="fnDevPBE" style="padding:4px 6px;text-align:center">—</td>
+              <td id="fnTmPBE" style="padding:4px 6px;text-align:center">—</td>
+            </tr>
+            <tr style="border-top:1px solid #ddd4f0">
+              <td style="padding:4px 6px">HSE06（25% 精确交换）</td>
+              <td id="fnEgHSE06" style="padding:4px 6px;text-align:center">—</td>
+              <td id="fnDevHSE06" style="padding:4px 6px;text-align:center">—</td>
+              <td id="fnTmHSE06" style="padding:4px 6px;text-align:center">—</td>
+            </tr>
+          </table>
+          <div id="fnVerdict" style="margin-top:6px;line-height:1.75"></div>
+        </div>
       </div>
     </div>
 
@@ -252,14 +270,14 @@
     </div>
 
     <div class="stp-card">
-      <div class="stp-head"><span>④ 调控方案对比与判断</span><span class="dot" id="dot4">4</span></div>
+      <div class="stp-head"><span>④ 结果分析与光催化三要素判读</span><span class="dot" id="dot4">4</span></div>
       <div class="stp-body">
         <div style="background:#eefaf1;border:1.5px solid #bfe3cd;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.2px;line-height:1.95;color:#14432a">
-          <b style="color:#0e5a32">📐 光催化全解水三要素</b>（方案对比的统一标尺）：<br>
+          <b style="color:#0e5a32">📐 光催化全解水三要素</b>（读谱与判题的统一标尺）：<br>
           ① 材料必须是<b>半导体</b>：金属没有带隙，光生电子-空穴对瞬间复合，无法积累氧化还原能力；<br>
           ② <b>带隙 E<sub>g</sub> &gt; 1.23 eV</b>（OH<sup>−</sup>/O<sub>2</sub> 氧化电位与 H<sup>+</sup>/H<sub>2</sub> 还原电位之差）：带隙太小，载流子寿命低、电位差不足以驱动两个半反应；<br>
           ③ <b>价带顶能量低于 OH<sup>−</sup>/O<sub>2</sub> 氧化电位（−5.67 eV），导带底能量高于 H<sup>+</sup>/H<sub>2</sub> 还原电位（−4.44 eV）</b>——带边要"包住"水的氧化还原电位线；<br>
-          ④ 补充判据：吸收光谱中<b>可见光吸收区域越大</b>，太阳光利用率越高。
+          ④ 补充判据：吸收光谱中<b>可见光吸收区域越大</b>，太阳光利用率越高（吸收边 λ ≈ 1240/E<sub>g</sub>，E<sub>g</sub> 越大吸收边越蓝移）。
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap">
           <span style="font-size:12.5px;color:var(--ink,#333)" title="水的氧化还原电位随 pH 线性下移 0.059 V/pH（能斯特方程）；带边位置 vs NHE 不随 pH 变，改变的是全解水判据">溶液 pH（水氧化还原电位校正）</span>
@@ -281,9 +299,9 @@
     </div>
 
     <div class="stp-card">
-      <div class="stp-head"><span>⑤ 提交实验总结论</span><span class="dot" id="dot5">5</span></div>
+      <div class="stp-head"><span>⑤ 提交本层实验结论</span><span class="dot" id="dot5">5</span></div>
       <div class="stp-body">
-        <button class="go-btn" id="subBtn" onclick="submitResult()" disabled>📤 提交实验总结论（三层成绩合并同步）</button>
+        <button class="go-btn" id="subBtn" onclick="submitResult()" disabled>📤 提交本层实验记录（同步成绩）</button>
         <div id="subMsg" style="margin-top:6px"></div>
       </div>
     </div>
@@ -338,19 +356,22 @@
   </div>
 </div>
 
-<!-- 实验目标弹窗：进入仿真台必读，点击「收到任务」后关闭（三层目标，当前层高亮） -->
+<!-- 实验目标弹窗：进入仿真台必读，点击「收到任务」后关闭（四层目标，当前层高亮） -->
 <div class="goal-mask" id="goalMask">
   <div class="goal-card">
-    <h2>🎯 实验目标（共三层）</h2>
-    <div class="sub">AI 赋能 g-C<sub>3</sub>N<sub>4</sub> 光催化分解水制氢 · 当前进入 <b style="color:#0e3a6d">第③层 复合调控寻优</b></div>
+    <h2>🎯 实验目标（共四层）</h2>
+    <div class="sub">AI 赋能 g-C<sub>3</sub>N<sub>4</sub> 光催化分解水制氢 · 当前进入 <b style="color:#0e3a6d">第③层 结果分析与光催化判据</b></div>
     <div class="goal-item dim"><span class="no">1</span>
-      <span>【第①层】通过计算模拟和实验结果比较，学会选择能够<b>准确计算</b> g-C<sub>3</sub>N<sub>4</sub> 光催化材料<b>电子结构</b>的<b>泛函、截断能</b>等计算参数。</span>
+      <span>【第①层】完成 g-C<sub>3</sub>N<sub>4</sub> 的<b>三维结构建模</b>：搭建晶胞与原子坐标、生成 3×3×1 超胞，并完成 O 掺杂 / C 空位修饰，把结构提交给教师评阅。</span>
     </div>
     <div class="goal-item dim"><span class="no">2</span>
-      <span>【第②层】理解 g-C<sub>3</sub>N<sub>4</sub> 计算结果的分析方法，理解光催化材料须满足的三个条件，明白 g-C<sub>3</sub>N<sub>4</sub> 带隙偏大、可见光吸收不足是需要优化的方向。</span>
+      <span>【第②层】通过计算模拟和实验结果比较，学会选择能够<b>准确计算</b> g-C<sub>3</sub>N<sub>4</sub> 光催化材料<b>电子结构</b>的<b>泛函、截断能</b>等计算参数。</span>
     </div>
     <div class="goal-item"><span class="no">3</span>
-      <span><b>【第③层 · 本层】</b>通过<b>结构应变、O 掺杂、C 缺陷</b>等复合调控计算，找到<b>最佳的 g-C<sub>3</sub>N<sub>4</sub> 光催化性能调控手段</b>。</span>
+      <span><b>【第③层 · 本层】</b>理解 g-C<sub>3</sub>N<sub>4</sub> 计算结果的<b>分析方法</b>，理解光催化材料须满足的<b>三个条件</b>，明白 g-C<sub>3</sub>N<sub>4</sub> 带隙偏大、可见光吸收不足是<b>需要优化的方向</b>。</span>
+    </div>
+    <div class="goal-item dim"><span class="no">4</span>
+      <span>【第④层】通过结构应变、O 掺杂、C 缺陷等复合调控计算，找到最佳的 g-C<sub>3</sub>N<sub>4</sub> 光催化性能调控手段。</span>
     </div>
     <button class="goal-btn" onclick="goalAck()">✓ 收到任务，开始实验</button>
   </div>
@@ -470,7 +491,7 @@ var STATE = {
   defect: false, score: null, realDone: false, real: null, structOK: false
 };
 /* ================= 三层成绩与计算记录（localStorage，三页共享） =================
-   SCORES：三层判读得分 g1(40)+g2(30)+g3(30)=100，第③层提交时合并回传实验空间；
+   SCORES：三层判读得分 g1(40)+g2(30)+g3(30)=100，第④层提交时合并回传实验空间；
    REC：历次真实计算登记（键 sys|strain|encut|func → Eg），供收敛记录表与探索广度自动评分。 */
 var SCORES = (function(){
   var KEY = 'ai_lab_sim3_scores';
@@ -554,36 +575,13 @@ function onPhChange(){
   ILAB.mark('带边位置与水分解判据分析（pH 调节）', '调节 pH 并判读带边是否包住水的氧化还原电位', 240);
   if (STATE.realDone) showConcl();
 }
-/* ================= 计算计划锁定（第③层：复合调控寻优，ENCUT 固定 500） =================
-   PBE：三体系 × 应变 ±4% 全系列开放；HSE06：本征全系列 + O-掺杂全系列已入库，C-空位补算中。
-   超出计划的参数组合后端同样会拒绝（双保险），前端直接锁定避免无效提交。 */
+/* ================= 计算计划锁定（第③层：本征 ε=0 结果分析，ENCUT 固定 500） ================= */
 function planAvailable(sys, strain, encut, func){
-  if (func === 'PBE') return encut === 500;
-  if (encut !== 500) return false;
-  if (sys === 'pristine') return true;
-  if (sys === 'o_dop') return true;      /* HSE06：O-掺杂 ε=−4~+4 全系列已入库 */
-  return false;
+  return (sys === 'pristine' && strain === 0 && encut === 500 && (func === 'PBE' || func === 'HSE06'));
 }
 function applyPlanLock(){
-  var isMod = (STATE.sys !== 'pristine');
-  var func = document.getElementById('func');
   var hint = document.getElementById('funcHint');
-  /* HSE06 放开范围：本征全系列 + O-掺杂 ε=−3/0/+1/+2（已入库）；其余掺杂组合锁 PBE */
-  var hseOK = (STATE.sys === 'pristine')
-           || (STATE.sys === 'o_dop' && (STATE.strain === -3 || STATE.strain === 0 || STATE.strain === 1 || STATE.strain === 2));
-  Array.prototype.forEach.call(func.options, function(o){ o.disabled = !hseOK && o.value !== 'PBE'; });
-  if (STATE.func === 'HSE06' && !hseOK){ func.value = 'PBE'; STATE.func = 'PBE'; }
-  var method = 'PBE 流水：结构优化 → SCF → 非自洽能带（ICHARG=11）→ 光学谱；HSE06 流水：PBE SCF 波函数初猜 + 一次杂化自洽同时完成 SCF 与能带。';
-  if (isMod){
-    var hseTxt = (STATE.sys === 'o_dop')
-      ? 'HSE06 已入库：ε = −3 / 0 / +1 / +2（ENCUT 500），其余应变集群补算中，入库后开放。'
-      : 'HSE06 对照数据集群补算中，入库后开放。';
-    hint.innerHTML = method + '当前体系（' + chem(SYS[STATE.sys].name) + '）计划：<b>PBE · ENCUT 500 eV · 应变 ε = −4% ~ +4% 全系列</b>；' + hseTxt;
-    hint.style.color = '#8a6d1a';
-  } else {
-    hint.innerHTML = method + '本征体系：PBE / HSE06 应变 ε = −4% ~ +4% 全系列已入库（ENCUT 500）。';
-    hint.style.color = '';
-  }
+  hint.innerHTML = 'PBE 流水：结构优化 → SCF → 非自洽能带（ICHARG=11）→ 光学吸收（LOPTICS）四步；HSE06 流水：PBE 波函数初猜 + 一次杂化自洽同时完成 SCF 与能带。本层 ENCUT 固定 500 eV（第②层收敛测试选定：≥450 eV 后带隙变化 &lt; 0.002 eV），两种泛函均可提交，第④步判读以你本次计算结果为准。';
 }
 
 /* 各体系显示名称（计算结果一律来自集群真实计算，经 PRECALC 结果库返回）。
@@ -647,31 +645,7 @@ function hideStruct(){
   document.querySelector('.legend').style.display = 'none';
 }
 
-/* ================= ①② 体系与参数选择（第③层：复合调控全开放） ================= */
-document.querySelectorAll('.sys-card').forEach(function(c){
-  c.onclick = function(){
-    document.querySelectorAll('.sys-card').forEach(function(x){ x.classList.remove('on'); });
-    c.classList.add('on');
-    STATE.sys = c.dataset.sys;
-    applyPlanLock();   // 掺杂/缺陷体系锁定为计算计划内的参数组合
-    STATE.computed = false;
-    STATE.realDone = false; STATE.real = null;
-    document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
-    document.getElementById('quizBox').innerHTML = '<div class="hint">完成第③步计算后作答。</div>';
-    document.getElementById('subBtn').disabled = true;
-    document.getElementById('conclBox').innerHTML = '<b>结论面板：</b>完成计算后此处显示带隙、带边位置与可见光活性评估。';
-    updateModel(); clearCharts();
-  };
-});
-document.getElementById('strain').oninput = function(){
-  STATE.strain = parseInt(this.value);
-  document.getElementById('strainV').textContent = this.value;
-  STATE.computed = false;
-  STATE.realDone = false; STATE.real = null;
-  document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
-  updateModel();
-  applyPlanLock();
-};
+/* ================= ①② 参数选择（第②层：体系固定为本征 ε=0） ================= */
 document.getElementById('encut').onchange = function(){
   STATE.encut = parseInt(this.value);
   STATE.computed = false;
@@ -687,6 +661,51 @@ document.getElementById('func').onchange = function(){
   applyPlanLock();
 };
 applyPlanLock();   // 初始提示与控件状态同步
+
+/* ================= PBE vs HSE06 对比表（由学生自己的计算结果生成，不预制数据） ================= */
+var FUNCRES_KEY = 'ai_lab_sim2_funcres';
+function loadFnRes(){
+  try { return JSON.parse(localStorage.getItem(FUNCRES_KEY) || '{}') || {}; } catch(e){ return {}; }
+}
+function saveFnRes(o){ try { localStorage.setItem(FUNCRES_KEY, JSON.stringify(o)); } catch(e){} }
+function fmtPct(d){
+  return (d > 0 ? '+' : '−') + Math.abs(d).toFixed(0) + '%';
+}
+function devTxt(eg){
+  var d = (eg - 2.70) / 2.70 * 100;
+  return fmtPct(d) + (Math.abs(d) <= 15 ? '（接近实验）' : (d < 0 ? '（低估）' : '（偏高）'));
+}
+function renderFnTbl(){
+  var o = loadFnRes();
+  ['PBE', 'HSE06'].forEach(function(f){
+    var r = o[f], egCell = document.getElementById('fnEg' + f);
+    if (!egCell) return;
+    if (r && r.eg != null && !isNaN(r.eg)){
+      egCell.innerHTML = r.eg.toFixed(2) + ' eV';
+      document.getElementById('fnDev' + f).innerHTML = devTxt(r.eg);
+      document.getElementById('fnTm' + f).innerHTML = Math.round(r.sec / 60) + ' min';
+    } else {
+      egCell.innerHTML = '<span style="color:#9aa7b6">待计算</span>';
+      document.getElementById('fnDev' + f).innerHTML = '—';
+      document.getElementById('fnTm' + f).innerHTML = '—';
+    }
+  });
+  var v = document.getElementById('fnVerdict');
+  if (!v) return;
+  var p = o.PBE, h = o.HSE06;
+  var both = p && p.eg != null && !isNaN(p.eg) && h && h.eg != null && !isNaN(h.eg);
+  if (!both){
+    v.innerHTML = '<span style="color:#6b5a9e">⏳ 两行都填上你自己的计算结果后，这里才会给出对比解读——请到第③步把另一种泛函也算完。</span>';
+    return;
+  }
+  var dp = (p.eg - 2.70) / 2.70 * 100, dh = (h.eg - 2.70) / 2.70 * 100;
+  var ratio = (h.sec && p.sec) ? (h.sec / p.sec) : 5;
+  v.innerHTML =
+    '答案就在你算出的表里：<b>HSE06 计算值（' + h.eg.toFixed(2) + ' eV）明显更接近实验带隙（≈ 2.7 eV，偏差仅 ' + fmtPct(dh) + '）</b>，' +
+    '而 PBE 因半局域交换关联的<b>自相互作用误差</b>把带隙低估了（' + fmtPct(dp) + '）——定性看"是不是半导体、带边在哪"PBE 够用，定量谈带隙就必须上杂化泛函。' +
+    '但精度是有代价的：HSE06 要对每个 k 点做精确交换对角化（Fock 矩阵），<b>你本次 HSE06 的耗时约为 PBE 的 ' + ratio.toFixed(1) + ' 倍</b>。';
+}
+renderFnTbl();   // 恢复历史计算结果（localStorage）
 
 function markOK(id, text){ var d = document.getElementById(id); d.className = 'dot ok'; d.textContent = '✓'; }
 
@@ -734,7 +753,7 @@ function submitReal(){
   if (!planAvailable(STATE.sys, STATE.strain, STATE.encut, STATE.func)){
     realLog('[计算] ✗ 参数组合（体系=' + SYS[STATE.sys].name + '、应变=' + STATE.strain + '%、ENCUT=' + STATE.encut + '、泛函=' + STATE.func + '）暂无计算数据——' +
       (STATE.func === 'HSE06'
-        ? 'HSE06 已入库组合：本征 ε = −4 ~ +4 全系列；O-掺杂 ε = −4 ~ +4 全系列（均 ENCUT 500）；其余组合正在集群补算，可先选用 PBE 完成实验。'
+        ? 'HSE06 已入库组合：本征 ε = −4 ~ +4 全系列；O-掺杂 ε = −3 / 0 / +1 / +2（均 ENCUT 500）；其余组合正在集群补算，可先选用 PBE 完成实验。'
         : '请按实验指导书调整参数后重新提交。'));
     return;
   }
@@ -892,7 +911,13 @@ function finishReal(r){
   }
   STATE.defect = (STATE.sys === 'c_vac');
   REC.put(STATE.sys, STATE.strain, STATE.encut, STATE.func, r.eg);   // 登记到三层共享计算记录
-  refreshExplore();   // 探索广度计数实时刷新
+  /* 登记到 PBE vs HSE06 对比表（仅本征 ε=0 · 500 eV 的结果参与对比，由学生计算生成） */
+  if (STATE.sys === 'pristine' && STATE.strain === 0 && STATE.encut === 500 && r.eg != null){
+    var fr = loadFnRes();
+    fr[STATE.func] = {eg: r.eg, sec: wallSeconds()};
+    saveFnRes(fr);
+    renderFnTbl();
+  }
   markOK('dot3'); markOK('dot4');
   setPhase4Lock(false);   // 计算完成，开放④区 pH 选择
   ILAB.close('提交第一性原理计算并监控作业');
@@ -933,39 +958,21 @@ function finishReal(r){
   btn.textContent = '↻ 重新计算（改参数/体系后需重算）';
 }
 
-/* ================= ④ 调控方案对比与判断（第③层 · 30 分） ================= */
-/* 探索广度自动评分：按本人历次计算记录中不同「体系 × 应变」组合数计分（≥4 种满分） */
-function exploreScore(){
-  var n = REC.countDistinct();
-  return [n >= 4 ? 8 : (n === 3 ? 6 : (n === 2 ? 4 : (n === 1 ? 2 : 0))), n];
-}
-function refreshExplore(){
-  var b = document.getElementById('exploreBox');
-  if (!b) return;
-  var n = REC.countDistinct();
-  b.innerHTML = '📊 探索记录：你已完成 <b>' + n + '</b> 种不同「体系 × 应变」组合的计算' +
-    (n >= 4 ? '（≥ 4 种，探索广度满分 8 分 ✓）' : '，探索 <b>4 种及以上</b>可得满分 8 分——继续切换体系 / 应变计算') + '。';
-}
+/* ================= ④ 结果分析与光催化三要素判读（第③层 · 30 分） ================= */
+var FILL_TOL = 0.20;   // 数值填空容差
 function buildQuiz(){
   var box = document.getElementById('quizBox');
-  var gsel = '<select id="q1sel" class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px">' +
-    '<option value="">请选择</option><option>O-掺杂</option><option>应变工程</option><option>C-空位（缺陷）</option></select>';
+  var inp = 'class="sel" style="display:inline-block;width:120px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="填数值"';
   box.innerHTML =
     '<div style="background:#eef4fb;border:1.5px solid #cfe0f2;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.5px;line-height:1.9;color:#1c2a3a">' +
-    '<b style="color:#0e3a6d">🎯 第③层目标检验：哪种调控最优？</b>（本层 30 分 · 三层合计 100 分）切换体系 / 应变完成多次计算，对照三要素比较后作答——结论须由你自己的计算得出，平台不预设答案。</div>' +
-    '<div id="exploreBox" style="background:#f6f9fd;border:1.5px solid #cfe0f2;border-radius:9px;padding:7px 12px;margin-bottom:10px;font-size:12.8px;color:#33415a"></div>' +
-    '<div style="background:#fff8e8;border:1.5px solid #f0dfb2;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.2px;line-height:1.95;color:#4a3a12">' +
-    '<b style="color:#7a5a10">💡 思考提示</b>（方案设计的统一标尺）：可以从以下几个方面考虑——<br>' +
-    '1、带边能级满足 OH<sup>−</sup> 氧化电位和 H<sup>+</sup> 的还原电位，越靠近越好；<br>' +
-    '2、选择合适的 pH 值改变 OH<sup>−</sup> 氧化电位和 H<sup>+</sup> 的还原电位；<br>' +
-    '3、通过施加应变、掺杂、缺陷等复合方法调控带边能级；<br>' +
-    '4、选择吸收光谱中可见光吸收最大的结构。</div>' +
-    '<label>Q1. 结合你自己的计算：为使 g-C<sub>3</sub>N<sub>4</sub> 保持可见光响应并提升全解水能力，三种调控手段中最值得采用的是' + gsel + '</label>' +
-    '<textarea class="sel" id="q1" rows="2" style="width:100%;resize:vertical;margin-top:4px" placeholder="说明理由：可从带隙是否适中、是否引入有害缺陷能级、带边是否包住水的氧化还原电位、是否需要外场维持等角度分析……"></textarea>' +
-    '<label style="margin-top:8px">Q2. 综合三层实验目标，写出你认为 g-C<sub>3</sub>N<sub>4</sub> 光催化性能的最佳调控方案</label>' +
-    '<textarea class="sel" id="q2" rows="3" style="width:100%;resize:vertical" placeholder="应包含：① 选用哪种调控手段及其参数（如 O 掺杂 / 应变幅度）；② 用什么泛函、截断能等参数保证结果可靠（第①层结论）；③ 预期的带隙、带边位置对照三要素逐条自检（半导体 / Eg > 1.23 eV / 带边包住水的氧化还原电位），可见光吸收是否改善。"></textarea>' +
+    '<b style="color:#0e3a6d">🎯 第③层目标检验：你会读计算结果吗？</b>（本层 30 分 · 三层合计 100 分）对照上方三要素与三张结果图作答，数值以你<b>本次提交计算</b>的结果为准（保留两位小数，容差 0.20 eV）。</div>' +
+    '<div style="font-size:15px;font-weight:700;color:#0e3a6d;margin:4px 0 6px">🧭 结果判读（对照带边位置图）</div>' +
+    '<label>Q1. 导带底（CBM）能量为 <input ' + inp + ' id="q1"> eV（带边图上方，导带的下边界；三要素③：须高于 H<sup>+</sup>/H<sub>2</sub> 的 −4.44 eV 方可还原水产氢）</label>' +
+    '<label>Q2. 价带顶（VBM）能量为 <input ' + inp + ' id="q2"> eV（带边图下方，价带的上边界；三要素③：须低于 OH<sup>−</sup>/O<sub>2</sub> 的 −5.67 eV 方可氧化水产氧）</label>' +
+    '<label>Q3. 带隙 E<sub>g</sub> 为 <input ' + inp + ' id="q3"> eV（三要素②：须大于 1.23 eV；同时对照吸收光谱看可见光吸收范围）</label>' +
+    '<label style="margin-top:8px">Q4. 对照光催化三要素（半导体 / E<sub>g</sub> &gt; 1.23 eV / 带边包住水的氧化还原电位）与可见光吸收：本征 g-C<sub>3</sub>N<sub>4</sub> 已满足哪几条？最需要优化的是什么？为什么？</label>' +
+    '<textarea class="sel" id="q4" rows="4" style="width:100%;resize:vertical" placeholder="提示：先逐条对照三要素判断是否满足，再结合吸收光谱中可见光吸收区域的大小，指出带隙偏大 / 可见光吸收不足的优化方向（可从吸收边波长、调控手段等角度说明）……"></textarea>' +
     '<div style="margin-top:9px"><button class="go-btn" onclick="gradeQuiz()">✓ 提交判读</button> <span id="quizMsg"></span></div>';
-  refreshExplore();
   STATE.answered = false;
 }
 /* 关键词分组命中数：命中几类（每组任一关键词出现记 1 类） */
@@ -980,32 +987,28 @@ function hitGroups(t, groups){
   return hit;
 }
 function gradeQuiz(){
-  var q1sel = document.getElementById('q1sel').value;
-  var q1 = (document.getElementById('q1').value || '').trim();
-  var q2 = (document.getElementById('q2').value || '').trim();
+  var q1 = parseFloat(document.getElementById('q1').value);
+  var q2 = parseFloat(document.getElementById('q2').value);
+  var q3 = parseFloat(document.getElementById('q3').value);
+  var q4 = (document.getElementById('q4').value || '').trim();
   var msg = document.getElementById('quizMsg');
-  if (!q1sel || !q1 || !q2){
+  if (isNaN(q1) || isNaN(q2) || isNaN(q3) || !q4){
     msg.innerHTML = '<span class="msg-no">请填完所有空再提交。</span>'; return;
   }
   STATE.answered = true;
-  var ex = exploreScore();
-  /* Q1 12 分：手段选择 + 理由（是否提到有害/有利机制） */
-  var q1OK = (q1sel === 'O-掺杂' || q1sel === '应变工程');
-  var q1why = hitGroups(q1, [['复合','缺陷能级','空位','有害','不利','失活'],
-                             ['带隙','带边','可见光','吸收','氧化还原','全解水','稳定']]);
-  /* Q2 10 分：方案三要素——手段、参数可靠性、活性判据 */
-  var q2hit = hitGroups(q2, [['o 掺杂','o掺杂','掺杂','应变','空位','缺陷'],
-                             ['hse','泛函','截断','encut','收敛','参数','scissor','剪刀'],
-                             ['带边','cbm','vbm','氧化还原','nhe','ph','全解水','光催化','活性',
-                              '1.23','半导体','载流子','电子-空穴','电子空穴','吸收']]);
-  var ref = '参考：Q1 推荐 O-掺杂或适度应变——C-空位使带隙骤降并在禁带引入缺陷能级（光生载流子复合中心），不利；O-掺杂带隙适中、带边可调且对应变不敏感，性能稳健；应变可连续调节带隙但需外场维持。判据上：带边越靠近 H⁺/H₂ 与 O₂/H₂O 电位（过电位越小）越好，可通过 pH 调整氧化还原电位、按可见光吸收最强的结构定型；' +
-    'Q2 示例方案——O-掺杂 g-C₃N₄（ε = 0）+ HSE06（ENCUT 500 eV）验证带边，按三要素自检：① 半导体 ✓；② Eg ≈ 2.5 eV > 1.23 eV，保持可见光响应（吸收边约 490 nm）✓；③ CBM 高于 H⁺/H₂、VBM 低于 O₂/H₂O，带边包住水的氧化还原电位 ✓。';
+  /* Q4：三要素逐条对照 + 优化方向，按类别命中判分 */
+  var q4hit = hitGroups(q4, [
+    /* 类别1：正确指出已满足项（半导体 / Eg>1.23 / 带边包住） */
+    ['半导体','1.23','带边','包住','氧化还原','满足'],
+    /* 类别2：正确指出不足与优化方向（带隙偏大 → 可见光吸收不足 → 调控减小带隙/拓宽吸收） */
+    ['带隙','可见光','吸收','蓝移','460','490','减小','缩小','窄','拓宽','调控','改性','掺杂','应变','缺陷','优化']
+  ]);
+  var ref = '参考：本征 g-C₃N₄ 是半导体 ✓；实验带隙约 2.7 eV > 1.23 eV ✓（PBE 计算值因低估带隙需注意）；带边大体包住水的氧化还原电位 ✓——三要素基本满足，但带隙偏大使吸收边蓝移（λ ≈ 1240/Eg ≈ 460 nm，仅吸收紫外和少部分蓝紫光），<b>可见光利用率不足是最需要优化的方向</b>：需要通过掺杂、缺陷、应变等调控适度减小带隙、把吸收边向长波方向拓展，同时保持带边仍包住水的氧化还原电位。';
   var res = [
-    [ex[0] >= 2, '📊 探索广度（已完成 ' + ex[1] + ' 种「体系 × 应变」组合：≥ 4 种满分）', ex[0]],
-    [q1OK && q1why >= 1, 'Q1 最佳调控手段判断（选 ' + q1sel + '；' +
-      (q1OK ? '手段合理' : '<b>C-空位引入复合中心，非最佳手段</b>') +
-      (q1why >= 1 ? '，理由充分' : '，建议在理由中说明带隙/缺陷能级/带边判据等机制') + '）', q1OK ? (q1why >= 1 ? 12 : 7) : 0],
-    [q2hit >= 3, 'Q2 最佳调控方案（命中 ' + q2hit + '/3 要素：调控手段、计算参数可靠性、活性判据）', q2hit >= 3 ? 10 : (q2hit === 2 ? 6 : 3)]
+    [Math.abs(q1 - nhe2ev(STATE.cbm)) <= FILL_TOL, 'Q1 导带底：正确 ' + nhe2ev(STATE.cbm).toFixed(2) + ' eV（电子能量；= ' + STATE.cbm.toFixed(2) + ' V vs NHE，能量高于 H⁺/H₂，光生电子可还原产氢）', 8],
+    [Math.abs(q2 - nhe2ev(STATE.vbm)) <= FILL_TOL, 'Q2 价带顶：正确 ' + nhe2ev(STATE.vbm).toFixed(2) + ' eV（电子能量；= ' + STATE.vbm.toFixed(2) + ' V vs NHE，能量低于 O₂/H₂O，光生空穴可氧化产氧）', 8],
+    [Math.abs(q3 - STATE.Eg) <= FILL_TOL, 'Q3 带隙：正确 ' + STATE.Eg.toFixed(2) + ' eV（真实 ' + STATE.func + ' 计算；对应吸收边 ~' + (1239.8 / STATE.Eg).toFixed(0) + ' nm）', 8],
+    [q4hit >= 1, 'Q4 三要素对照与优化方向分析（命中 ' + q4hit + '/2 类：已满足项判断、不足与优化方向' + (q4hit >= 2 ? '' : '，两类都答到可得满分') + '）', q4hit >= 2 ? 6 : 3]
   ];
   var pts = 0, html = '';
   res.forEach(function(r){
@@ -1014,45 +1017,47 @@ function gradeQuiz(){
   });
   html += '<div class="hint" style="margin-top:4px">' + chem(ref) + '</div>';
   STATE.score = pts;                    // 本层得分（满分 30）
-  SCORES.set('g3', pts);
+  SCORES.set('g2', pts);
   html += '<div style="margin-top:6px">第③层判读得分：<span class="score" style="font-size:16px">' + pts + ' / 30</span>' +
           '<span class="hint">（三层累计 ' + SCORES.total() + ' / 100）</span></div>';
   document.getElementById('quizMsg').innerHTML = html;
   markOK('dot4');
   document.getElementById('subBtn').disabled = false;
-  ILAB.mark('填空判读与实验结果核对', '调控手段对比与最佳方案设计判读赋分（含探索广度）', 420, Math.round(pts / 30 * 100));
+  ILAB.mark('填空判读与实验结果核对', '带边/带隙判读与光催化三要素对照分析正确率赋分', 420, Math.round(pts / 30 * 100));
 }
 
-/* ================= ⑤ 提交实验总结论（第③层 · 三层成绩合并） ================= */
+/* ================= ⑤ 提交本层结论（第③层） ================= */
 function submitResult(){
   var msg = document.getElementById('subMsg');
   if (!user){ msg.innerHTML = '<span class="msg-no">未登录：请从实验流程页登录后再提交。</span>'; return; }
   if (!STATE.answered){ msg.innerHTML = '<span class="msg-no">请先完成第④步判读。</span>'; return; }
-  var sys = SYS[STATE.sys];
+  var rl = redoxLevels();
+  var straddle = (STATE.cbm < rl.red && STATE.vbm > rl.ox);
   var content =
-    '【3D虚拟仿真·第③层 复合调控寻优 · 实验总结论】\n' +
-    '最优调控手段：' + (document.getElementById('q1sel').value || '—') + '\n' +
-    '手段理由：' + (document.getElementById('q1').value || '').trim().slice(0, 300) + '\n' +
-    '最佳调控方案：' + (document.getElementById('q2').value || '').trim().slice(0, 500) + '\n' +
-    '探索广度：共完成 ' + REC.countDistinct() + ' 种「体系 × 应变」组合的真实集群计算（VASP 6.3.1，PBS 队列，ENCUT 500 eV）\n' +
-    '当前核算：' + sys.name + '，ε = ' + STATE.strain + ' %，' + STATE.func + ' → Eg = ' + STATE.Eg.toFixed(2) +
-    ' eV，CBM/VBM = ' + nhe2ev(STATE.cbm).toFixed(2) + ' / ' + nhe2ev(STATE.vbm).toFixed(2) + ' eV（电子能量，真空参考）\n' +
-    '三层得分：第①层 ' + SCORES.s.g1 + ' / 40，第②层 ' + SCORES.s.g2 + ' / 30，第③层 ' + STATE.score + ' / 30，合计 ' + SCORES.total() + ' / 100';
+    '【3D虚拟仿真·第③层 结果分析与光催化判据】\n' +
+    '体系：本征 g-C₃N₄（ε = 0，R3m 体相原胞 21 原子）\n' +
+    '计算来源：真实集群计算（VASP 6.3.1/' + STATE.func + '，PBS 队列），ENCUT = ' + STATE.encut + ' eV，K 网格 Γ 居中 5×5×3\n' +
+    '结果判读：Eg = ' + STATE.Eg.toFixed(2) + ' eV（' + STATE.func + '），CBM = ' + nhe2ev(STATE.cbm).toFixed(2) +
+    ' eV，VBM = ' + nhe2ev(STATE.vbm).toFixed(2) + ' eV（电子能量，真空参考；对应电位 ' + STATE.cbm.toFixed(2) + ' / ' + STATE.vbm.toFixed(2) + ' V vs NHE，pH = ' + rl.ph + '）\n' +
+    '三要素对照：半导体 ✓；Eg = ' + STATE.Eg.toFixed(2) + ' eV > 1.23 eV ✓；带边' +
+    (straddle ? '包住' : '未包住') + '水的氧化还原电位；吸收边 ~' + (1239.8 / STATE.Eg).toFixed(0) + ' nm，可见光吸收不足 → 需优化\n' +
+    '学生分析：' + (document.getElementById('q4').value || '').trim().slice(0, 300) + '\n' +
+    '本层得分：' + STATE.score + ' / 30（三层累计 ' + SCORES.total() + ' / 100）';
   fetch('/api/submit', {method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({token: user.token, kind: '阶段性成果', step: '3D虚拟仿真实验台·第③层',
-      title: '复合调控寻优（' + sys.name + '，ε=' + STATE.strain + '%）', content: content})})
+      title: '结果分析与光催化判据（本征 g-C₃N₄，' + STATE.func + '）', content: content})})
   .then(function(r){ return r.json(); })
   .then(function(res){
-    msg.innerHTML = res.ok ? '<span class="msg-ok">✓ 实验总结论已提交，教师端可在后台查收。</span>'
+    msg.innerHTML = res.ok ? '<span class="msg-ok">✓ 第③层记录已提交，教师端可在后台查收。</span>'
                            : '<span class="msg-no">' + (res.msg || '提交失败') + '</span>';
     if (res.ok){
       ILAB.mark('提交实验结论并生成评分', '实验结论提交成功（教师端可查收）', 180);
-      /* 实验空间（ilab-x）数据回传：三层合并总分 */
+      /* 实验空间（ilab-x）数据回传：三层累计分 */
       ILAB.upload(SCORES.total(), 1, null, function(il){
-        if (il && il.ok) msg.innerHTML += '<div class="hint" style="color:var(--green)">✓ 三层合并成绩（' + SCORES.total() + ' / 100）已同步至实验空间。</div>';
+        if (il && il.ok) msg.innerHTML += '<div class="hint" style="color:var(--green)">✓ 累计成绩已同步至实验空间。</div>';
         else msg.innerHTML += '<div class="hint" style="color:var(--red)">⚠ 实验空间同步失败：' + ((il && il.msg) || '未知原因') + '</div>';
       });
-      msg.innerHTML += '<div class="hint">三层实验全部完成 ✓ 可前往 <a href="report.html"><b>报告提交页</b></a> 撰写实验报告。</div>';
+      msg.innerHTML += '<div class="hint">本层完成 ✓ 从顶部导航进入 <a href="simulation4.html"><b>第④层 · 复合调控寻优</b></a> 继续实验。</div>';
     }
   })
   .catch(function(){ msg.innerHTML = '<span class="msg-no">服务器连接失败</span>'; });
