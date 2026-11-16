@@ -100,9 +100,6 @@
   #tip{position:absolute;pointer-events:none;background:rgba(14,58,109,.92);color:#fff;font-size:12px;
        padding:4px 9px;border-radius:6px;display:none;z-index:5;white-space:nowrap}
   .selbox{background:#fff8e6;border:1px solid #ecd9a0;border-radius:8px;padding:9px 11px;font-size:13px;margin-top:8px;line-height:1.7}
-  .sumbox{background:#f6f9fc;border:1px solid var(--line);border-radius:8px;padding:10px 12px;
-          font-size:12.8px;line-height:1.9;margin-top:8px;font-family:Consolas,"Microsoft YaHei",monospace;
-          max-height:200px;overflow-y:auto;white-space:pre-wrap}
   .locked{opacity:.5;pointer-events:none}
   .badge{display:inline-block;background:#eef4fb;color:var(--blue-d);border-radius:6px;
          padding:2px 9px;font-size:12px;font-weight:700;margin-right:6px}
@@ -151,7 +148,7 @@
     <h2>🎯 实验目标（共四层）</h2>
     <div class="sub">AI 赋能 g-C<sub>3</sub>N<sub>4</sub> 光催化分解水制氢 · 当前进入 <b style="color:#0e3a6d">第①层 结构建模</b></div>
     <div class="goal-item"><span class="no">1</span>
-      <span><b>【第①层 · 本层】</b>独立完成一个<b>三维晶体结构建模</b>：选定晶系与空间群（230 个任选）、输入<b>晶格常数</b>与<b>不对称单元原子坐标</b>，由对称性展开出完整晶胞（可扩超胞、做替换 / 空位修饰），提交给教师评阅。</span>
+      <span><b>【第①层 · 本层】</b>独立完成 g-C<sub>3</sub>N<sub>4</sub> 的<b>三维结构建模</b>：选定空间群、输入晶格常数，由不对称单元经对称性展开出原胞；再分别构建 <b>O 掺杂</b>与 <b>C 空位</b>的 3×3×1 超胞结构，提交给教师评阅。</span>
     </div>
     <div class="goal-item dim"><span class="no">2</span>
       <span>【第②层】通过截断能与 K 点密度两项收敛测试（总能 + 耗时，逐档亲手提交计算），学会选择能够准确计算 g-C<sub>3</sub>N<sub>4</sub> 电子结构的计算参数。</span>
@@ -171,86 +168,98 @@
   <div class="panel">
 
     <div class="stp" id="stp1">
-      <h3><span class="no">1</span>晶格常数与空间群</h3>
+      <h3><span class="no">1</span>构建 g-C<sub>3</sub>N<sub>4</sub> 原胞结构</h3>
+
+      <div class="row" style="margin-top:2px">
+        <label>空间群
+          <select id="inSG" disabled><option>正在加载 230 个空间群…</option></select>
+        </label>
+      </div>
       <div class="row">
         <span class="badge" id="sysBadge">空间群加载中…</span>
         <span class="badge" id="opBadge"></span>
       </div>
+
       <div class="row">
-        <label>a <input id="inA" type="number" step="0.001" min="0.3" placeholder="4.744"> Å</label>
-        <label>b <input id="inB" type="number" step="0.001" min="0.3" placeholder="4.744"> Å</label>
-        <label>c <input id="inC" type="number" step="0.001" min="0.3" placeholder="9.193"> Å</label>
+        <label><i>a</i> <input id="inA" type="number" step="0.001" min="0.3" placeholder="4.744"> Å</label>
+        <label><i>b</i> <input id="inB" type="number" step="0.001" min="0.3" placeholder="4.744"> Å</label>
+        <label><i>c</i> <input id="inC" type="number" step="0.001" min="0.3" placeholder="9.193"> Å</label>
       </div>
       <div class="row">
-        <label>α <input id="inAl" type="number" step="0.1" min="10" max="170" placeholder="90"> °</label>
-        <label>β <input id="inBe" type="number" step="0.1" min="10" max="170" placeholder="90"> °</label>
-        <label>γ <input id="inGa" type="number" step="0.1" min="10" max="170" placeholder="120"> °</label>
-      </div>
-      <div class="row">
-        <label>空间群
-          <select id="inSG" disabled><option>正在加载 230 个空间群…</option></select>
-        </label>
+        <label><i>α</i> <input id="inAl" type="number" step="0.1" min="10" max="170" placeholder="90"> °</label>
+        <label><i>β</i> <input id="inBe" type="number" step="0.1" min="10" max="170" placeholder="90"> °</label>
+        <label><i>γ</i> <input id="inGa" type="number" step="0.1" min="10" max="170" placeholder="120"> °</label>
         <button id="btnLat" onclick="confirmLat()">确认晶格参数</button>
       </div>
-      <div class="hint" id="latHint">选定空间群后，晶格参数按该晶系的对称性自动约束（灰框为锁定项）。晶格常数<b>不做对错检查</b>——本层考察建模操作本身，任意合法数值右侧均可实时显示，例如层状 g-C<sub>3</sub>N<sub>4</sub> 的参考值为 a ≈ 4.744 Å、c ≈ 9.193 Å。</div>
+      <div class="hint" id="latHint"><b>先选空间群，再填晶格常数</b>：选定空间群后，晶格参数按该晶系的对称性自动约束（灰框为锁定项）。晶格常数<b>不做对错检查</b>——本层考察建模操作本身，任意合法数值右侧均可实时显示。层状 g-C<sub>3</sub>N<sub>4</sub> 的参考值：<i>a</i> ≈ 4.744 Å、<i>c</i> ≈ 9.193 Å（平台计算结构）或 <i>a</i> ≈ 4.782 Å、<i>c</i> ≈ 9.974 Å（教学 CIF）。</div>
+
+      <div id="atomBlock" class="locked" style="margin-top:10px;border-top:1px dashed var(--line);padding-top:8px">
+        <div class="row">
+          <label>元素
+            <select id="inEl"></select>
+          </label>
+          <label><i>x</i> <input id="inX" type="number" step="0.001" style="width:70px" placeholder="任意值"></label>
+          <label><i>y</i> <input id="inY" type="number" step="0.001" style="width:70px" placeholder="任意值"></label>
+          <label><i>z</i> <input id="inZ" type="number" step="0.001" style="width:70px" placeholder="任意值"></label>
+          <button id="btnAddAtom" onclick="addAtom()">添加并展开</button>
+        </div>
+        <div class="row">
+          <button class="ghost" onclick="fillDemoNaCl()">示例：NaCl（Fm-3m，2 个独立原子）</button>
+          <button class="ghost" onclick="clearAtoms()">清空原子</button>
+        </div>
+        <div id="atomTblBox"><table id="atomTbl"></table></div>
+        <div class="hint" id="atomHint">输入<b>不对称单元</b>（独立原子）的分数坐标，点击「添加并展开」，系统按所选空间群的对称操作自动生成晶胞内全部等效原子（与 spglib / qvasp -c2p 的对称展开同源）。<b>坐标允许任意数值</b>：1.1、2.1、−0.1 都可以填，提交时自动归一化到 [0,1)——1.1 → 0.1、2.1 → 0.1、−0.1 → 0.9。右侧实时显示球棍模型；表格中 ★ 为你输入的原子，· 为对称生成的等效原子（删除 ★ 会连同其等效原子一起删除）。</div>
+
+        <div class="row" style="margin-top:10px">
+          <label style="flex:1;min-width:100%">我的建模思考（选这个空间群和这些不对称原子的理由？展开后原子的位置是否符合预期？）<br>
+          <textarea id="inThink1" rows="2" style="width:100%;margin-top:5px"></textarea></label>
+        </div>
+        <div class="row">
+          <button class="gold" id="btnSubmitPrim" onclick="submitPart('prim')" disabled>提交原胞结构给老师</button>
+          <button class="ghost" id="btnCifPrim" onclick="downloadCif('prim')" disabled>下载 CIF 文件</button>
+        </div>
+        <div class="hint" id="msgPrim">原胞建好后即可提交，教师将在管理端「提交与打分」中查看并打分。</div>
+      </div>
     </div>
 
-    <div class="stp locked" id="stp2">
-      <h3><span class="no">2</span>不对称单元与对称性展开</h3>
+    <div class="stp locked" id="stpDop">
+      <h3><span class="no">2</span>构建 O 掺杂结构（N → O）</h3>
+      <div class="hint" id="dopHint0">基于第 1 部分建好的 g-C<sub>3</sub>N<sub>4</sub> 原胞：<b>扩 3×3×1 超胞</b>后，随机选一个 <b>N 原子替换为 O</b>（桥连 N 与环 N 都可能被选中，这正是要观察的）。修饰只影响本部分提交的结构，与第②③④层的平台计算体系无关。</div>
       <div class="row">
-        <label>元素
-          <select id="inEl"></select>
-        </label>
-        <label>x <input id="inX" type="number" step="0.001" min="0" max="1" style="width:70px"></label>
-        <label>y <input id="inY" type="number" step="0.001" min="0" max="1" style="width:70px"></label>
-        <label>z <input id="inZ" type="number" step="0.001" min="0" max="1" style="width:70px"></label>
-        <button id="btnAddAtom" onclick="addAtom()">添加并展开</button>
+        <button id="btnScDop" onclick="makeSup('dop')">扩 3×3×1 超胞</button>
+        <button class="ghost" id="btnDopO" onclick="randomDop()" disabled>🎲 随机替换一个 N → O</button>
+        <button class="ghost" id="btnDopReset" onclick="resetMod('dop')" disabled>还原未修饰</button>
+      </div>
+      <div class="hint" id="dopHint">尚未扩超胞。原胞修改后需回到本部分重新扩超胞。</div>
+      <div class="row" style="margin-top:10px">
+        <label style="flex:1;min-width:100%">我的建模思考（O 出现在哪个 N 位？桥连位与环位的 O 对结构的影响有何预期？）<br>
+        <textarea id="inThink2" rows="2" style="width:100%;margin-top:5px"></textarea></label>
       </div>
       <div class="row">
-        <button class="ghost" onclick="fillDemoNaCl()">示例：NaCl（Fm-3m，2 个独立原子）</button>
-        <button class="ghost" onclick="clearAtoms()">清空原子</button>
+        <button class="gold" id="btnSubmitDop" onclick="submitPart('dop')" disabled>提交 O 掺杂结构给老师</button>
+        <button class="ghost" id="btnCifDop" onclick="downloadCif('dop')" disabled>下载 CIF 文件</button>
       </div>
-      <div id="atomTblBox"><table id="atomTbl"></table></div>
-      <div class="hint" id="atomHint">输入<b>不对称单元</b>（独立原子）的分数坐标 (x, y, z ∈ [0,1))，点击「添加并展开」，系统按所选空间群的对称操作自动生成晶胞内全部等效原子（与 spglib / qvasp -c2p 的对称展开同源）。右侧实时显示球棍模型；表格中 ★ 为你输入的原子，· 为对称生成的等效原子（删除 ★ 会连同其等效原子一起删除）。</div>
+      <div class="hint" id="msgDop">完成 N → O 替换后即可提交。</div>
     </div>
 
-    <div class="stp locked" id="stp3">
-      <h3><span class="no">3</span>确认显式结构（P1）并扩超胞</h3>
+    <div class="stp locked" id="stpVac">
+      <h3><span class="no">3</span>构建 C 缺陷结构（C 空位）</h3>
+      <div class="hint" id="vacHint0">同样基于第 1 部分建好的原胞：扩 3×3×1 超胞后，<b>随机删除一个 C 原子形成空位</b>。修饰只影响本部分提交的结构，与第②③④层的平台计算体系无关。</div>
       <div class="row">
-        <button class="ghost" id="btnP1" onclick="makeP1()">确认 P1 显式结构</button>
-        <button id="btnSC" onclick="makeSupercell()" disabled>扩 3×3×1 超胞</button>
+        <button id="btnScVac" onclick="makeSup('vac')">扩 3×3×1 超胞</button>
+        <button class="ghost" id="btnVacC" onclick="randomVac()" disabled>🎲 随机删除一个 C（形成空位）</button>
+        <button class="ghost" id="btnVacReset" onclick="resetMod('vac')" disabled>还原未修饰</button>
       </div>
-      <div class="hint" id="scHint">对称展开后的原子坐标已经是显式的（P1，共 N 个原子，每个坐标独立）。做修饰或导出计算文件前点击确认，再沿 a、b 方向各扩 3 倍得到 3×3×1 超胞（c 方向不变）。</div>
-    </div>
-
-    <div class="stp locked" id="stp4">
-      <h3><span class="no">4</span>结构修饰（点选原子）</h3>
-      <div class="hint" id="dopHint0">在右侧模型中<b>单击</b>一个原子选中它，然后替换元素或删除成空位。修饰只改变第①层提交的建模结构本身，与第②③④层的平台计算体系无关。</div>
-      <div class="selbox" id="selInfo" style="display:none"></div>
-      <div class="row">
-        <label>替换为
-          <select id="modEl"></select>
-        </label>
-        <button id="btnSubO" onclick="doReplace()" disabled>替换选中原子</button>
-        <button id="btnVac" onclick="doVacancy()" disabled>删除原子（形成空位）</button>
-        <button class="ghost" id="btnUndo" onclick="undoOp()">撤销上一步</button>
-        <button class="ghost" id="btnResetDop" onclick="resetDop()">重置修饰</button>
-      </div>
-      <div class="hint" id="dopHint"></div>
-    </div>
-
-    <div class="stp locked" id="stp5">
-      <h3><span class="no">5</span>提交结构（教师打分）</h3>
-      <div class="sumbox" id="sumBox">（确认超胞后自动生成摘要）</div>
-      <div class="row" style="margin-top:9px">
-        <label style="flex:1;min-width:100%">我的建模思考（选这个空间群和这些不对称原子的理由？展开后原子的位置是否符合预期？）<br>
-        <textarea id="inThink" rows="3" style="width:100%;margin-top:5px"></textarea></label>
+      <div class="hint" id="vacHint">尚未扩超胞。原胞修改后需回到本部分重新扩超胞。</div>
+      <div class="row" style="margin-top:10px">
+        <label style="flex:1;min-width:100%">我的建模思考（C 空位后周围三个 N 的悬挂键如何观察？空位会带来什么结构变化？）<br>
+        <textarea id="inThink3" rows="2" style="width:100%;margin-top:5px"></textarea></label>
       </div>
       <div class="row">
-        <button class="gold" id="btnSubmit" onclick="submitStruct()">提交结构给老师</button>
-        <button class="ghost" id="btnCif" onclick="downloadCif()">下载 CIF 文件</button>
+        <button class="gold" id="btnSubmitVac" onclick="submitPart('vac')" disabled>提交 C 缺陷结构给老师</button>
+        <button class="ghost" id="btnCifVac" onclick="downloadCif('vac')" disabled>下载 CIF 文件</button>
       </div>
-      <div class="hint" id="subMsg">提交后教师将在管理端「提交与打分」中查看你的结构并打分。</div>
+      <div class="hint" id="msgVac">完成 C 空位后即可提交。</div>
     </div>
 
   </div>
@@ -262,7 +271,7 @@
       <span class="legend" id="legend"></span>
     </div>
     <div id="view"><div id="tip"></div></div>
-    <div id="statLine">就绪 —— 请先在第 1 步选定空间群并确认晶格参数。</div>
+    <div id="statLine">就绪 —— 请先在第 1 部分选定空间群并确认晶格参数。</div>
   </div>
 </div>
 
@@ -291,10 +300,9 @@ function atomRad(el){ return ELEMS[el] ? Math.max(0.35, ELEMS[el][0]*0.72) : 0.5
 
 var EL_LIST = ['C','N','O','H','B','F','Na','Mg','Al','Si','P','S','Cl','K','Ca','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Ga','Ge','As','Se','Br','Zr','Ag','Sn','I','Ba','Pt','Au','Pb'];
 (function fillEl(){
-  var el=document.getElementById('inEl'), mod=document.getElementById('modEl'), h='';
+  var el=document.getElementById('inEl'), h='';
   EL_LIST.forEach(function(e){ h+='<option value="'+e+'">'+e+'</option>'; });
-  el.innerHTML=h; mod.innerHTML=h;
-  document.getElementById('modEl').value='O';
+  el.innerHTML=h;
 })();
 
 /* ================= 空间群数据（spglib get_symmetry_from_database 导出） ================= */
@@ -333,17 +341,30 @@ var S = {
   a:0,b:0,c:0, al:90,be:90,ga:120,
   sgNo:166, sgHm:'R-3m', sys:'hexagonal', nops:0,
   latOK:false,
-  atoms:[],            /* {el, x, y, z, vac:false, seedIdx} */
+  atoms:[],            /* 原胞原子 {el,x,y,z,vac,seedIdx,origin} */
   seeds:[],            /* 不对称单元 {el,x,y,z}（null=已删除） */
-  p1:false, sc:false,
+  primVer:0,           /* 原胞版本号：原胞一变，超胞即失效 */
+  dop:{sup:null, ver:-1, opIdx:-1},   /* O 掺杂超胞 */
+  vac:{sup:null, ver:-1, opIdx:-1},   /* C 空位超胞 */
+  view:'prim',         /* 当前右侧显示：prim | dop | vac */
   sel:-1,
-  ops:[],              /* {t:'R'|'V', idx, prevEl} */
-  log:[]               /* 文字操作记录（用于提交摘要） */
+  log:[]               /* 原胞建模记录（提交摘要用） */
 };
+
+function viewAtoms(){
+  if(S.view==='dop') return S.dop.sup;
+  if(S.view==='vac') return S.vac.sup;
+  return S.atoms;
+}
+function viewMult(){ return S.view==='prim' ? 1 : 3; }
+function viewName(){
+  return S.view==='prim' ? 'g-C<sub>3</sub>N<sub>4</sub> 原胞'
+       : S.view==='dop' ? 'O 掺杂 3×3×1 超胞' : 'C 空位 3×3×1 超胞';
+}
 
 /* ---------- 通用晶胞基矢（标准下三角） ---------- */
 function cellVecs(mult){
-  var m = mult ? 3 : 1;
+  var m = (mult===3) ? 3 : 1;
   var a=S.a*m, b=S.b*m, c=S.c;
   var D=Math.PI/180, ca=Math.cos(S.al*D), cb=Math.cos(S.be*D), cg=Math.cos(S.ga*D), sg=Math.sin(S.ga*D);
   var v1=[a,0,0];
@@ -363,15 +384,15 @@ function cellVolume(mult){
   return det3(V);
 }
 function frac2cart(f){
-  var V=cellVecs(S.sc);
+  var V=cellVecs(viewMult());
   return new THREE.Vector3(
     f.x*V[0][0] + f.y*V[1][0] + f.z*V[2][0],
     f.x*V[0][1] + f.y*V[1][1] + f.z*V[2][1],
     f.x*V[0][2] + f.y*V[1][2] + f.z*V[2][2] );
 }
-function formula(){
-  var cnt={}, order=[];
-  S.atoms.forEach(function(a){ if(a.vac) return;
+function formula(list){
+  var f = list || viewAtoms(), cnt={}, order=[];
+  (f||[]).forEach(function(a){ if(a.vac) return;
     if(!(a.el in cnt)){ cnt[a.el]=0; order.push(a.el); }
     cnt[a.el]++;
   });
@@ -379,7 +400,8 @@ function formula(){
   order.forEach(function(k){ s+=k+(cnt[k]>1?('<sub>'+cnt[k]+'</sub>'):''); });
   return s||'—';
 }
-function countEl(el){ var k=0; S.atoms.forEach(function(a){ if(!a.vac && a.el===el) k++; }); return k; }
+function countVisible(list){ var f=list||viewAtoms(), k=0; (f||[]).forEach(function(a){ if(!a.vac)k++; }); return k; }
+function vacCount(list){ var f=list||viewAtoms(), k=0; (f||[]).forEach(function(a){ if(a.vac)k++; }); return k; }
 
 /* ================= 对称展开（spglib 同源数据） ================= */
 function expandSeed(el, x, y, z){
@@ -428,7 +450,7 @@ var cellMat=new THREE.LineBasicMaterial({color:0x39659b});
 function drawCell(){
   while(cellGroup.children.length) cellGroup.remove(cellGroup.children[0]);
   if(!S.latOK) return;
-  var V=cellVecs(S.sc), pts=[];
+  var V=cellVecs(viewMult()), pts=[];
   for(var i=0;i<8;i++){
     pts.push(new THREE.Vector3(
       (i&1?V[0][0]:0)+(i&2?V[1][0]:0)+(i&4?V[2][0]:0),
@@ -448,12 +470,14 @@ function rebuildAtoms(fit){
   while(bondGroup.children.length) bondGroup.remove(bondGroup.children[0]);
   atomMeshes=[];
   updateLegend();
-  if(!S.latOK || !S.atoms.length){ stat(); return; }
-  /* 键连：最小镜像约定，截断 1.8 Å */
-  var n=S.atoms.length, f=S.atoms, bonds=[];
+  var f=viewAtoms();
+  if(!S.latOK || !f || !f.length){ stat(); return; }
+  /* 键连：最小镜像约定，截断 1.8 Å。
+     dv = f[j] - f[i] 的最小镜像 → 键从原子 i 指向原子 j 的等效像，方向不能取反 */
+  var n=f.length, bonds=[];
   for(var i=0;i<n;i++) for(var j=i+1;j<n;j++){
     if(f[i].vac||f[j].vac) continue;
-    var dx=f[i].x-f[j].x, dy=f[i].y-f[j].y, dz=f[i].z-f[j].z;
+    var dx=f[j].x-f[i].x, dy=f[j].y-f[i].y, dz=f[j].z-f[i].z;
     dx-=Math.round(dx); dy-=Math.round(dy); dz-=Math.round(dz);
     var d=frac2cart({x:dx,y:dy,z:dz}).length();
     if(d>0.3 && d<1.8) bonds.push([i,{x:dx,y:dy,z:dz}]);
@@ -470,7 +494,7 @@ function rebuildAtoms(fit){
     m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dv.clone().normalize());
     bondGroup.add(m);
   });
-  S.atoms.forEach(function(a,i){
+  f.forEach(function(a,i){
     if(a.vac) return;
     var m=new THREE.Mesh(sphereGeo,new THREE.MeshPhongMaterial({color:atomColor(a.el),shininess:36}));
     m.position.copy(frac2cart(a));
@@ -478,18 +502,19 @@ function rebuildAtoms(fit){
     m.userData.idx=i;
     atomGroup.add(m); atomMeshes.push(m);
   });
-  if(S.sel>=0 && (!S.atoms[S.sel] || S.atoms[S.sel].vac)) S.sel=-1, updateSelBox();
+  if(S.sel>=0 && (!f[S.sel] || f[S.sel].vac)) S.sel=-1;
+  paintSel();
   stat();
   if(fit) fitView(false);
 }
 function updateLegend(){
-  var set={}, order=[];
-  S.atoms.forEach(function(a){ if(!a.vac && !(a.el in set)){ set[a.el]=1; order.push(a.el); } });
+  var f=viewAtoms()||[], set={}, order=[];
+  f.forEach(function(a){ if(!a.vac && !(a.el in set)){ set[a.el]=1; order.push(a.el); } });
   var h='';
   order.forEach(function(el){
     h+='<span><span class="dot" style="background:'+ELEMS[el][1]+'"></span>'+el+'</span>';
   });
-  h+='<span style="color:#9fb0c3">拖动旋转 · 滚轮缩放 · 单击原子选中</span>';
+  h+='<span style="color:#9fb0c3">拖动旋转 · 滚轮缩放 · 单击原子查看</span>';
   document.getElementById('legend').innerHTML=h;
 }
 
@@ -517,7 +542,7 @@ function resize(){
 window.addEventListener('resize',resize);
 setTimeout(resize,60);
 
-/* 悬停提示 + 点选 */
+/* 悬停提示 + 点选查看 */
 var ray=new THREE.Raycaster(), mouse=new THREE.Vector2(), downPos=null;
 function pick(ev){
   var r=renderer.domElement.getBoundingClientRect();
@@ -528,10 +553,11 @@ function pick(ev){
   return hit.length ? hit[0].object.userData.idx : -1;
 }
 renderer.domElement.addEventListener('mousemove',function(ev){
-  if(!atomMeshes.length){ tip.style.display='none'; return; }
+  var f=viewAtoms();
+  if(!f || !atomMeshes.length){ tip.style.display='none'; return; }
   var i=pick(ev);
   if(i>=0){
-    var a=S.atoms[i];
+    var a=f[i];
     tip.textContent=a.el+' · #'+(i+1)+' · ('+a.x.toFixed(3)+', '+a.y.toFixed(3)+', '+a.z.toFixed(3)+')';
     tip.style.left=(ev.clientX-view.getBoundingClientRect().left+14)+'px';
     tip.style.top=(ev.clientY-view.getBoundingClientRect().top+10)+'px';
@@ -544,20 +570,17 @@ renderer.domElement.addEventListener('mouseup',function(ev){
   if(!downPos) return;
   var moved=Math.abs(ev.clientX-downPos[0])+Math.abs(ev.clientY-downPos[1]);
   downPos=null;
-  if(moved>6 || !S.sc) { if(!S.sc){ S.sel=-1; updateSelBox(); } return; }
+  if(moved>6) return;
   var i=pick(ev);
   S.sel = (i===S.sel) ? -1 : i;
-  paintSel(); updateSelBox();
+  paintSel();
 });
 function paintSel(){
+  var f=viewAtoms()||[];
   atomMeshes.forEach(function(m){
     if(m.material.emissive) m.material.emissive.setHex(0x000000);
+    if(S.sel>=0 && m.userData.idx===S.sel && f[S.sel] && !f[S.sel].vac) m.material.emissive.setHex(0x8a6d1a);
   });
-  if(S.sel>=0){
-    atomMeshes.forEach(function(m){
-      if(m.userData.idx===S.sel && S.atoms[S.sel] && !S.atoms[S.sel].vac) m.material.emissive.setHex(0x8a6d1a);
-    });
-  }
 }
 
 /* ================= 状态栏 / 门控 ================= */
@@ -568,25 +591,30 @@ function latStr(){
 function stat(){
   var nb=bondGroup.children.length;
   var sg=SGBYNO[S.sgNo];
+  var f=viewAtoms();
   document.getElementById('statLine').innerHTML =
-    (!S.latOK) ? '就绪 —— 请先在第 1 步选定空间群并确认晶格参数。'
-    : (!S.atoms.length) ? '晶胞框已绘出（'+latStr()+'）—— 请在第 2 步添加不对称单元原子。'
-    : '晶格 '+latStr()+' · 原子数 <b>'+countVisible()+'</b> · 化学式 <b>'+formula()+'</b> · 键连 <b>'+nb+'</b> 根'
-      +(S.sc?' · <b>3×3×1 超胞</b>':'')
-      +(S.p1?' · <b>P1 显式</b>':' · <b>'+toSub(sg?sg.hm:'')+'（No.'+S.sgNo+'，'+S.nops+' 个对称操作）</b>');
+    (!S.latOK) ? '就绪 —— 请先在第 1 部分选定空间群并确认晶格参数。'
+    : (!f || !f.length) ? '晶胞框已绘出（'+latStr()+'）—— 请在第 1 部分添加不对称单元原子。'
+    : '当前显示 <b>'+viewName()+'</b> · 原子数 <b>'+countVisible()+'</b> · 化学式 <b>'+formula()+'</b> · 键连 <b>'+nb+'</b> 根 · '
+      +'晶格 '+latStr()+' · '+toSub(sg?sg.hm:'')+'（No.'+S.sgNo+'，'+S.nops+' 个对称操作）';
 }
-function countVisible(){ var k=0; S.atoms.forEach(function(a){ if(!a.vac)k++; }); return k; }
-function vacCount(){ var k=0; S.atoms.forEach(function(a){ if(a.vac)k++; }); return k; }
 
 function gate(){
-  document.getElementById('stp2').classList.toggle('locked', !S.latOK);
-  document.getElementById('stp3').classList.toggle('locked', !S.atoms.length);
-  document.getElementById('stp4').classList.toggle('locked', !S.sc);
-  document.getElementById('stp5').classList.toggle('locked', !S.sc);
-  document.getElementById('btnSC').disabled = !S.p1;
+  document.getElementById('atomBlock').classList.toggle('locked', !S.latOK);
+  document.getElementById('stpDop').classList.toggle('locked', !S.atoms.length);
+  document.getElementById('stpVac').classList.toggle('locked', !S.atoms.length);
+  document.getElementById('btnSubmitPrim').disabled = !S.atoms.length;
+  document.getElementById('btnCifPrim').disabled = !S.atoms.length;
+  ['dop','vac'].forEach(function(k){
+    var P=S[k], fresh = P.sup && P.ver===S.primVer;
+    document.getElementById('btn'+(k==='dop'?'DopO':'VacC')).disabled = !fresh;
+    document.getElementById('btn'+(k==='dop'?'DopReset':'VacReset')).disabled = !fresh;
+    document.getElementById('btnSubmit'+(k==='dop'?'Dop':'Vac')).disabled = !(fresh && P.opIdx>=0);
+    document.getElementById('btnCif'+(k==='dop'?'Dop':'Vac')).disabled = !fresh;
+  });
 }
 
-/* ================= 第 1 步：晶系约束 + 确认 ================= */
+/* ================= 第 1 部分：空间群 + 晶格 + 不对称单元 ================= */
 var SYS_PLACEHOLDER={
   triclinic:  {a:'4.0',   b:'5.0',   c:'6.0',   al:'80',  be:'95',  ga:'110'},
   monoclinic: {a:'5.0',   b:'6.0',   c:'5.0',   al:'90',  be:'101', ga:'90'},
@@ -607,7 +635,6 @@ function applySysUI(){
   document.getElementById('sysBadge').textContent=SYS_CN[g.sys]+'晶系 · '+toSub(g.hm)+'（No.'+g.no+'）';
   document.getElementById('opBadge').textContent='对称操作 × '+g.nops;
   /* 按晶系锁定：free=可编辑，值=锁定值 */
-  var L='free';
   var plan={ // [a自由, b模式('free'|'=a'|'=ac'), c模式, alpha, beta, gamma]  角度：'free'|数值
     triclinic:  [1,'free','free','free','free','free'],
     monoclinic: [1,'free','free',90,'free',90],
@@ -654,53 +681,83 @@ function confirmLat(){
     if(g.sys==='monoclinic'){ al=90; ga=90; }
   }
   if(!(a>0) || !(b>0) || !(c>0)){
-    h.className='hint err'; h.textContent='晶格常数 a、b、c 必须为正数，请检查输入。'; return;
+    h.className='hint err'; h.innerHTML='<i>a</i>、<i>b</i>、<i>c</i> 必须为正数，请检查输入。'; return;
   }
   if(!(al>0&&al<180) || !(be>0&&be<180) || !(ga>0&&ga<180)){
-    h.className='hint err'; h.textContent='晶格角 α、β、γ 必须在 0–180° 之间（不含端点），请检查输入。'; return;
+    h.className='hint err'; h.innerHTML='晶格角 <i>α</i>、<i>β</i>、<i>γ</i> 必须在 0–180° 之间（不含端点），请检查输入。'; return;
   }
   var D=Math.PI/180, ca=Math.cos(al*D), cb=Math.cos(be*D), cg=Math.cos(ga*D);
   var t=1-ca*ca-cb*cb-cg*cg+2*ca*cb*cg;
   if(t<=0){
-    h.className='hint err'; h.textContent='这组角度（α='+al+'°，β='+be+'°，γ='+ga+'°）无法构成合法的三维晶胞（体积公式根号内 ≤ 0），请检查。'; return;
+    h.className='hint err'; h.innerHTML='这组角度（<i>α</i>='+al+'°，<i>β</i>='+be+'°，<i>γ</i>='+ga+'°）无法构成合法的三维晶胞（体积公式根号内 ≤ 0），请检查。'; return;
   }
+  var wasOK=S.latOK;
   S.a=a; S.b=b; S.c=c; S.al=al; S.be=be; S.ga=ga; S.latOK=true;
   document.getElementById('inB').value=b; document.getElementById('inC').value=c;
   document.getElementById('inAl').value=al; document.getElementById('inBe').value=be; document.getElementById('inGa').value=ga;
-  S.log.push('选定空间群 '+toSub(g?g.hm:'')+'（No.'+S.sgNo+'，'+S.nops+' 个对称操作），输入晶格常数：'+latStr());
+  if(S.atoms.length){
+    S.log.push('修改晶格参数为：'+latStr());
+    invalidatePrim();
+  } else if(wasOK){
+    S.log.push('修改晶格参数为：'+latStr());
+  }
+  if(!S.log.length || S.log[S.log.length-1].indexOf('选定空间群')<0)
+    S.log.push('选定空间群 '+toSub(g?g.hm:'')+'（No.'+S.sgNo+'，'+S.nops+' 个对称操作），输入晶格常数：'+latStr());
   h.className='hint ok';
-  h.innerHTML='晶格确认 ✓ 晶胞体积 '+cellVolume(false).toFixed(1)+' Å³，右侧已绘出晶胞框。晶格常数不做对错判断，建模结果由你提交的结构本身呈现。';
+  h.innerHTML='晶格确认 ✓ 晶胞体积 '+cellVolume(1).toFixed(1)+' Å³，右侧已绘出晶胞框。晶格常数不做对错判断，建模结果由你提交的结构本身呈现。';
   drawCell(); fitView(false); gate(); stat();
 }
 
-/* ================= 第 2 步：不对称单元 → 对称展开 ================= */
+/* 原胞一旦变化，两个超胞分支即失效 */
+function invalidatePrim(){
+  S.primVer++;
+  S.dop.sup=null; S.dop.ver=-1; S.dop.opIdx=-1;
+  S.vac.sup=null; S.vac.ver=-1; S.vac.opIdx=-1;
+  if(S.view!=='prim'){ S.view='prim'; S.sel=-1; drawCell(); rebuildAtoms(false); }
+  gate();
+}
+
+function wrap01(v){
+  var w = v - Math.floor(v);
+  if(w < 1e-9 || w > 1-1e-9) w = 0;
+  return w;
+}
+
 function addAtom(){
   var el=document.getElementById('inEl').value,
-      x=parseFloat(document.getElementById('inX').value),
-      y=parseFloat(document.getElementById('inY').value),
-      z=parseFloat(document.getElementById('inZ').value);
+      xr=document.getElementById('inX').value,
+      yr=document.getElementById('inY').value,
+      zr=document.getElementById('inZ').value;
   var h=document.getElementById('atomHint');
-  if(isNaN(x)||isNaN(y)||isNaN(z)||x<0||x>=1||y<0||y>=1||z<0||z>=1){
-    h.className='hint err'; h.textContent='分数坐标必须落在 [0,1) 区间内，请检查 x、y、z。'; return;
+  if(xr===''||yr===''||zr===''){
+    h.className='hint err'; h.textContent='请填写 x、y、z 三个分数坐标（允许任意数值，如 1.1、−0.1，会自动归一化）。'; return;
   }
-  var imgs=expandSeed(el,x,y,z);
+  var x=parseFloat(xr), y=parseFloat(yr), z=parseFloat(zr);
+  if(isNaN(x)||isNaN(y)||isNaN(z)){
+    h.className='hint err'; h.textContent='x、y、z 必须是数字，请检查输入。'; return;
+  }
+  var wx=wrap01(x), wy=wrap01(y), wz=wrap01(z);
+  var imgs=expandSeed(el,wx,wy,wz);
   var si=S.seeds.length;
-  S.seeds.push({el:el,x:x,y:y,z:z});
+  S.seeds.push({el:el,x:wx,y:wy,z:wz});
   imgs.forEach(function(p){
     S.atoms.push({el:p.el,x:p.x,y:p.y,z:p.z,vac:false,seedIdx:si,origin:!!p.origin});
   });
+  S.view='prim'; S.sel=-1;
+  invalidatePrim();
   rebuildAtoms(false);
   h.className='hint ok';
-  h.innerHTML='已添加 '+el+'（'+x.toFixed(3)+', '+y.toFixed(3)+', '+z.toFixed(3)+'）：按 '+toSub(S.sgHm)+'（No.'+S.sgNo+'）的 '+S.nops+' 个对称操作展开出 <b>'+imgs.length+'</b> 个等效原子（多重性 '+imgs.length+'）。当前晶胞共 '+countVisible()+' 个原子 ✓';
+  var norm=(x!==wx||y!==wy||z!==wz)?('（输入 '+xr+', '+yr+', '+zr+' 已归一化为 '+wx.toFixed(3)+', '+wy.toFixed(3)+', '+wz.toFixed(3)+'）'):'';
+  h.innerHTML='已添加 '+el+'（'+wx.toFixed(3)+', '+wy.toFixed(3)+', '+wz.toFixed(3)+'）'+norm+'：按 '+toSub(S.sgHm)+'（No.'+S.sgNo+'）的 '+S.nops+' 个对称操作展开出 <b>'+imgs.length+'</b> 个等效原子（多重性 '+imgs.length+'）。当前原胞共 '+countVisible(S.atoms)+' 个原子 ✓';
   document.getElementById('inX').value=''; document.getElementById('inY').value=''; document.getElementById('inZ').value='';
-  renderAtomTbl(); gate();
+  renderAtomTbl(); gate(); stat();
 }
 function delOrbit(si){
   var n0=S.atoms.length;
   S.atoms=S.atoms.filter(function(a){ return a.seedIdx!==si; });
   S.seeds[si]=null;
   S.log.push('删除不对称原子 #'+(si+1)+' 及其 '+(n0-S.atoms.length-1)+' 个对称等效原子');
-  rebuildAtoms(false); renderAtomTbl(); gate();
+  invalidatePrim(); rebuildAtoms(false); renderAtomTbl(); gate();
 }
 function clearAtoms(silent){
   S.atoms=[]; S.seeds=[]; S.sel=-1;
@@ -709,7 +766,7 @@ function clearAtoms(silent){
     document.getElementById('atomHint').className='hint';
     document.getElementById('atomHint').textContent='已清空全部原子，可重新添加不对称单元。';
   }
-  rebuildAtoms(false); renderAtomTbl(); gate();
+  invalidatePrim(); rebuildAtoms(false); renderAtomTbl(); gate();
 }
 function fillDemoNaCl(){
   var ready = S.latOK && S.sys==='cubic' && Math.abs(S.a-5.64)<0.001;
@@ -725,7 +782,7 @@ function fillDemoNaCl(){
   addSeedDirect('Na',0,0,0);
   addSeedDirect('Cl',0.5,0.5,0.5);
   document.getElementById('atomHint').className='hint ok';
-  document.getElementById('atomHint').innerHTML='示例完成：NaCl，空间群 Fm-3m（No.225），a = 5.64 Å。只输入了 <b>2 个独立原子</b>——Na (0,0,0) 与 Cl (½,½,½)，对称展开得到 4+4 = <b>8 个原子</b>（多重性各 4）✓ 可在此基础上修改，也可清空后从零开始建模自己的结构。';
+  document.getElementById('atomHint').innerHTML='示例完成：NaCl，空间群 Fm-3m（No.225），<i>a</i> = 5.64 Å。只输入了 <b>2 个独立原子</b>——Na (0,0,0) 与 Cl (½,½,½)，对称展开得到 4+4 = <b>8 个原子</b>（多重性各 4）✓ 可在此基础上修改，也可清空后从零开始建模自己的结构。';
   renderAtomTbl(); gate();
 }
 function addSeedDirect(el,x,y,z){
@@ -733,128 +790,115 @@ function addSeedDirect(el,x,y,z){
   var si=S.seeds.length;
   S.seeds.push({el:el,x:x,y:y,z:z});
   imgs.forEach(function(p){ S.atoms.push({el:p.el,x:p.x,y:p.y,z:p.z,vac:false,seedIdx:si,origin:!!p.origin}); });
-  rebuildAtoms(false);
+  invalidatePrim(); rebuildAtoms(false);
 }
 function renderAtomTbl(){
   var t=document.getElementById('atomTbl'), rows='';
   if(!S.atoms.length){ t.innerHTML='<tr><td style="color:#9fb0c3">（尚无原子）</td></tr>'; return; }
-  rows='<tr><th>#</th><th>元素</th><th>x</th><th>y</th><th>z</th><th>来源</th><th></th></tr>';
+  rows='<tr><th>#</th><th>元素</th><th><i>x</i></th><th><i>y</i></th><th><i>z</i></th><th>来源</th><th></th></tr>';
   S.atoms.forEach(function(a,i){
     var c='#9aa5b1'; if(ELEMS[a.el]) c=ELEMS[a.el][1];
     rows+='<tr><td>'+(i+1)+'</td><td><b style="color:'+c+'">'+a.el+'</b></td>'
       +'<td class="num">'+a.x.toFixed(3)+'</td><td class="num">'+a.y.toFixed(3)+'</td><td class="num">'+a.z.toFixed(3)+'</td>'
       +'<td>'+(a.origin?'★ 输入':'· 对称')+'</td>'
-      +'<td>'+(a.origin&&!S.sc?'<span class="del" onclick="delOrbit('+a.seedIdx+')">✕</span>':'')+'</td></tr>';
+      +'<td>'+(a.origin?'<span class="del" onclick="delOrbit('+a.seedIdx+')">✕</span>':'')+'</td></tr>';
   });
   t.innerHTML=rows;
 }
 renderAtomTbl();
 
-/* ================= 第 3 步 ================= */
-function makeP1(){
-  S.p1=true;
-  document.getElementById('scHint').className='hint ok';
-  document.getElementById('scHint').innerHTML='已确认为 <b>P1 显式结构</b>：'+countVisible()+' 个原子坐标全部独立显式（由 '+toSub(S.sgHm)+' 的 '+S.nops+' 个对称操作展开而来）✓ 现在可以扩超胞。';
-  S.log.push('确认 P1 显式结构（'+countVisible()+' 个显式原子）');
-  gate(); stat();
-}
-function makeSupercell(){
-  if(!S.p1) return;
-  var n0=S.atoms.length, sup=[];
+/* ================= 第 2/3 部分：超胞 + 随机修饰 ================= */
+function buildSup(){
+  var sup=[];
   S.atoms.forEach(function(a){
     for(var i=0;i<3;i++) for(var j=0;j<3;j++){
-      sup.push({el:a.el, x:(a.x+i)/3, y:(a.y+j)/3, z:a.z, vac:false, seedIdx:a.seedIdx, origin:!!a.origin && i===0 && j===0});
+      sup.push({el:a.el, x:(a.x+i)/3, y:(a.y+j)/3, z:a.z, vac:false});
     }
   });
-  S.atoms=sup; S.sc=true; S.sel=-1;
+  return sup;
+}
+function makeSup(key){
+  if(!S.atoms.length) return;
+  var P=S[key];
+  P.sup=buildSup(); P.ver=S.primVer; P.opIdx=-1;
+  S.view=key; S.sel=-1;
   drawCell(); rebuildAtoms(true);
-  S.log.push('扩 3×3×1 超胞：'+n0+' 原子 → '+sup.length+' 原子（沿 a、b 方向各扩 3 倍，c 方向不变）');
-  document.getElementById('scHint').className='hint ok';
-  document.getElementById('scHint').innerHTML='超胞完成 ✓ 共 <b>'+sup.length+'</b> 个原子，化学式 <b>'+formula()+'</b>。进入第 4 步点选原子做修饰。';
-  gate(); renderAtomTbl();
+  var h=document.getElementById(key==='dop'?'dopHint':'vacHint');
+  h.className='hint ok';
+  h.innerHTML='超胞完成 ✓ 共 <b>'+P.sup.length+'</b> 个原子，化学式 <b>'+formula(P.sup)+'</b>。点击上方随机修饰按钮继续。';
+  gate();
 }
-
-/* ================= 第 4 步：通用修饰 ================= */
-function updateSelBox(){
-  var box=document.getElementById('selInfo'),
-      bR=document.getElementById('btnSubO'), bV=document.getElementById('btnVac');
-  if(S.sel<0 || !S.atoms[S.sel] || S.atoms[S.sel].vac){
-    box.style.display='none'; bR.disabled=true; bV.disabled=true;
-    return;
+function randomDop(){
+  var P=S.dop;
+  if(!P.sup || P.ver!==S.primVer) return;
+  /* 每次点击都从"未修饰超胞"重新随机，保证可反复尝试 */
+  P.sup=buildSup(); P.opIdx=-1;
+  var idxs=[];
+  P.sup.forEach(function(a,i){ if(a.el==='N'&&!a.vac) idxs.push(i); });
+  if(!idxs.length){
+    var h=document.getElementById('dopHint');
+    h.className='hint err'; h.textContent='超胞中没有 N 原子，无法做 N → O 替换。'; return;
   }
-  var a=S.atoms[S.sel];
-  var mod=document.getElementById('modEl').value;
-  box.style.display='block';
-  box.innerHTML='已选中 <b style="color:'+(ELEMS[a.el]?ELEMS[a.el][1]:'#9aa5b1')+'">'+a.el+'</b> 原子 #'+(S.sel+1)
-    +' · 分数坐标 ('+a.x.toFixed(3)+', '+a.y.toFixed(3)+', '+a.z.toFixed(3)+')'
-    +(a.el===mod?' —— 目标元素与当前相同，请先在左侧换一个元素':'');
-  bR.disabled = (a.el===mod);
-  bV.disabled = false;
-}
-document.getElementById('modEl').addEventListener('change', updateSelBox);
-function doReplace(){
-  if(S.sel<0) return;
-  var a=S.atoms[S.sel];
-  var to=document.getElementById('modEl').value;
-  if(a.el===to) return;
-  S.ops.push({t:'R',idx:S.sel,prevEl:a.el});
-  a.el=to;
-  S.log.push('元素替换：#'+(S.sel+1)+' ('+a.x.toFixed(3)+', '+a.y.toFixed(3)+', '+a.z.toFixed(3)+') '+(S.ops[S.ops.length-1].prevEl)+' → '+to);
-  afterDop('替换完成 ✓ 当前化学式 <b>'+formula()+'</b>，原子数 <b>'+countVisible()+'</b>。');
-}
-function doVacancy(){
-  if(S.sel<0) return;
-  var a=S.atoms[S.sel]; if(a.vac) return;
-  S.ops.push({t:'V',idx:S.sel,prevEl:a.el});
-  a.vac=true;
-  S.log.push('形成空位：删除 #'+(S.sel+1)+' ('+a.x.toFixed(3)+', '+a.y.toFixed(3)+', '+a.z.toFixed(3)+') 的 '+S.ops[S.ops.length-1].prevEl+' 原子');
-  afterDop('空位已形成 ✓ 该位置不再显示原子，周边键连自动断开。当前化学式 <b>'+formula()+'</b>，原子数 <b>'+countVisible()+'</b>。');
-}
-function afterDop(msg){
+  var idx=idxs[Math.floor(Math.random()*idxs.length)];
+  var a=P.sup[idx];
+  a.el='O'; P.opIdx=idx;
+  S.view='dop'; S.sel=-1;
   rebuildAtoms(false);
-  document.getElementById('dopHint').className='hint ok';
-  document.getElementById('dopHint').innerHTML=msg;
-  paintSel(); updateSelBox(); gate();
+  var h=document.getElementById('dopHint');
+  h.className='hint ok';
+  h.innerHTML='已随机选中 N 原子 <b>#'+(idx+1)+'</b>（分数坐标 '+a.x.toFixed(3)+', '+a.y.toFixed(3)+', '+a.z.toFixed(3)+'）替换为 <b style="color:#d24333">O</b> ✓ 当前化学式 <b>'+formula(P.sup)+'</b>。再次点击可重新随机选位；满意后提交。';
+  gate(); stat();
 }
-function undoOp(){
-  var op=S.ops.pop();
-  if(!op){ document.getElementById('dopHint').className='hint'; document.getElementById('dopHint').textContent='没有可撤销的操作。'; return; }
-  var a=S.atoms[op.idx];
-  if(op.t==='R'){ a.el=op.prevEl; }
-  else { a.vac=false; }
-  rebuildAtoms(false); paintSel(); updateSelBox(); gate();
-  document.getElementById('dopHint').className='hint';
-  document.getElementById('dopHint').textContent='已撤销上一步操作。';
+function randomVac(){
+  var P=S.vac;
+  if(!P.sup || P.ver!==S.primVer) return;
+  P.sup=buildSup(); P.opIdx=-1;
+  var idxs=[];
+  P.sup.forEach(function(a,i){ if(a.el==='C'&&!a.vac) idxs.push(i); });
+  if(!idxs.length){
+    var h=document.getElementById('vacHint');
+    h.className='hint err'; h.textContent='超胞中没有 C 原子，无法形成 C 空位。'; return;
+  }
+  var idx=idxs[Math.floor(Math.random()*idxs.length)];
+  var a=P.sup[idx];
+  a.vac=true; P.opIdx=idx;
+  S.view='vac'; S.sel=-1;
+  rebuildAtoms(false);
+  var h=document.getElementById('vacHint');
+  h.className='hint ok';
+  h.innerHTML='已随机删除 C 原子 <b>#'+(idx+1)+'</b>（分数坐标 '+a.x.toFixed(3)+', '+a.y.toFixed(3)+', '+a.z.toFixed(3)+'）形成 <b>空位</b> ✓ 周边键连自动断开，当前化学式 <b>'+formula(P.sup)+'</b>。再次点击可重新随机选位；满意后提交。';
+  gate(); stat();
 }
-function resetDop(){
-  S.ops.forEach(function(op){
-    var a=S.atoms[op.idx];
-    if(op.t==='R') a.el=op.prevEl; else a.vac=false;
-  });
-  S.ops=[];
-  rebuildAtoms(false); paintSel(); updateSelBox(); gate();
-  document.getElementById('dopHint').className='hint';
-  document.getElementById('dopHint').textContent='已恢复为未修饰结构。';
+function resetMod(key){
+  var P=S[key];
+  if(!P.sup) return;
+  P.sup=buildSup(); P.opIdx=-1;
+  S.view=key; S.sel=-1;
+  rebuildAtoms(false);
+  var h=document.getElementById(key==='dop'?'dopHint':'vacHint');
+  h.className='hint';
+  h.textContent='已恢复为未修饰超胞，可重新随机修饰。';
+  gate(); stat();
 }
 
-/* ================= 第 5 步：摘要 / POSCAR / CIF / 提交 ================= */
-function poscarText(){
-  var V=cellVecs(S.sc), vis=[];
-  S.atoms.forEach(function(a){ if(!a.vac) vis.push(a); });
+/* ================= POSCAR / CIF / 提交 ================= */
+function poscarText(list, mult){
+  var V=cellVecs(mult), vis=[];
+  list.forEach(function(a){ if(!a.vac) vis.push(a); });
   var els=[],cnt=[];
   vis.forEach(function(a){
     var i=els.indexOf(a.el);
     if(i<0){ els.push(a.el); cnt.push(1); } else cnt[i]++;
   });
-  var L='crystal model built in simulation1 (P1'+(S.sc?', 3x3x1 supercell':'')+')\n1.0\n'
+  var L='crystal model built in simulation1 (P1'+(mult===3?', 3x3x1 supercell':'')+')\n1.0\n'
     +V.map(function(v){ return '  '+v[0].toFixed(6)+'  '+v[1].toFixed(6)+'  '+v[2].toFixed(6); }).join('\n')+'\n'
     +'  '+els.join('  ')+'\n  '+cnt.join('  ')+'\nDirect\n';
   vis.forEach(function(a){ L+='  '+a.x.toFixed(6)+'  '+a.y.toFixed(6)+'  '+a.z.toFixed(6)+'\n'; });
   return L;
 }
-function cifText(){
-  var vis=[]; S.atoms.forEach(function(a){ if(!a.vac) vis.push(a); });
-  var m=S.sc?3:1;
+function cifText(list, mult){
+  var vis=[]; list.forEach(function(a){ if(!a.vac) vis.push(a); });
+  var m=mult;
   var L='data_global\n_chemical_name_common "crystal model (simulation1)"\n'
     +'_cell_length_a '+(S.a*m).toFixed(5)+'\n_cell_length_b '+(S.b*m).toFixed(5)+'\n_cell_length_c '+S.c.toFixed(5)+'\n'
     +'_cell_angle_alpha '+S.al.toFixed(2)+'\n_cell_angle_beta '+S.be.toFixed(2)+'\n_cell_angle_gamma '+S.ga.toFixed(2)+'\n'
@@ -867,22 +911,31 @@ function cifText(){
   });
   return L;
 }
-function refreshSum(){
-  var seeds=S.seeds.filter(function(s){ return s; });
-  var ops=S.log.length? S.log.map(function(l){ return '  '+l; }).join('\n') : '  （无）';
-  document.getElementById('sumBox').innerHTML=
-    '晶格：'+latStr()+'\n'
-    +'空间群：'+toSub(S.sgHm)+'（No.'+S.sgNo+'，'+S.nops+' 个对称操作）'+(S.p1?' → P1 显式':'')+'\n'
-    +'不对称单元：'+(seeds.length? seeds.map(function(s){ return s.el+'('+s.x.toFixed(2)+','+s.y.toFixed(2)+','+s.z.toFixed(2)+')'; }).join('  ') : '（无）')+'\n'
-    +'结构：'+(S.sc?'3×3×1 超胞':'单胞')+' · 化学式 '+formula()+' · 原子数 '+countVisible()+(vacCount()?('（含 '+vacCount()+' 个空位）'):'')+'\n'
-    +'操作记录：\n'+ops;
+var PART_CFG={
+  prim:{think:'inThink1', msg:'msgPrim', btn:'btnSubmitPrim', cif:'btnCifPrim',
+        label:'g-C3N4 原胞', fname:'crystal_model_prim_simulation1.cif'},
+  dop: {think:'inThink2', msg:'msgDop',  btn:'btnSubmitDop', cif:'btnCifDop',
+        label:'O 掺杂 3x3x1 超胞', fname:'crystal_model_O_dop_simulation1.cif'},
+  vac: {think:'inThink3', msg:'msgVac',  btn:'btnSubmitVac', cif:'btnCifVac',
+        label:'C 空位 3x3x1 超胞', fname:'crystal_model_C_vac_simulation1.cif'}
+};
+function partStruct(kind){
+  if(kind==='prim') return S.atoms.length ? {list:S.atoms, mult:1, op:''} : null;
+  var P=S[kind];
+  if(!P.sup || P.ver!==S.primVer || P.opIdx<0) return null;
+  var a=P.sup[P.opIdx];
+  var op = kind==='dop'
+    ? '随机选中 N 原子 #'+(P.opIdx+1)+'（'+a.x.toFixed(3)+', '+a.y.toFixed(3)+', '+a.z.toFixed(3)+'）替换为 O'
+    : '随机选中 C 原子 #'+(P.opIdx+1)+'（'+a.x.toFixed(3)+', '+a.y.toFixed(3)+', '+a.z.toFixed(3)+'）删除形成空位';
+  return {list:P.sup, mult:3, op:op};
 }
-function downloadCif(){
-  if(!S.sc){ alert('请先完成 3×3×1 超胞'); return; }
-  var blob=new Blob([cifText()],{type:'text/plain'});
+function downloadCif(kind){
+  var st=partStruct(kind==='prim'?'prim':kind);
+  if(!st){ alert('请先完成该部分的结构（原胞 / 扩超胞 + 修饰）'); return; }
+  var blob=new Blob([cifText(st.list, st.mult)],{type:'text/plain'});
   var el=document.createElement('a');
   el.href=URL.createObjectURL(blob);
-  el.download='crystal_model_simulation1.cif';
+  el.download=PART_CFG[kind].fname;
   el.click(); URL.revokeObjectURL(el.href);
 }
 
@@ -892,47 +945,54 @@ function goalAck(){
   if(m) m.style.display = 'none';
 }
 
-function submitStruct(){
-  var msg=document.getElementById('subMsg');
+function submitPart(kind){
+  var cfg=PART_CFG[kind];
+  var msg=document.getElementById(cfg.msg);
   if(!user || !TOKEN){
     msg.className='hint err'; msg.textContent='未登录无法提交（访客模式请先返回首页用「访客体验」进入，或使用学生账号登录）。'; return;
   }
-  var think=document.getElementById('inThink').value.trim();
+  var st=partStruct(kind);
+  if(!st){
+    msg.className='hint err';
+    msg.textContent=kind==='prim'?'请先添加不对称单元原子。':'请先扩超胞并完成随机修饰。';
+    return;
+  }
+  var think=(document.getElementById(cfg.think).value||'').trim();
   var seeds=S.seeds.filter(function(s){ return s; });
   var seedStr=seeds.length? seeds.map(function(s){ return s.el+' ('+s.x.toFixed(3)+', '+s.y.toFixed(3)+', '+s.z.toFixed(3)+')'; }).join('；') : '（无）';
-  var content='【① 结构建模 · 结构提交】\n'
+  var primLog=S.log.length? S.log.map(function(l){return '  '+l;}).join('\n') : '  （无）';
+  var content='【① 结构建模 · '+cfg.label+'】\n'
     +'学生：'+(user.guest?'访客':user.name)+'（'+user.sid+'）\n'
     +'提交时间：'+new Date().toLocaleString('zh-CN')+'\n\n'
-    +'一、晶胞参数\n  '+latStr()+'\n  空间群：'+toSub(S.sgHm)+'（No.'+S.sgNo+'，'+S.nops+' 个对称操作）'+(S.p1?' → 已确认 P1 显式':'')+'\n\n'
-    +'二、不对称单元（学生输入的独立原子）\n  '+seedStr+'\n\n'
-    +'三、建模步骤\n'+(S.log.length?S.log.map(function(l){return '  '+l;}).join('\n'):'  （无）')+'\n\n'
-    +'四、最终结构\n  '+(S.sc?'3×3×1 超胞':'单胞')+' · 化学式 '+formula().replace(/<\/?sub>/g,'')+' · 显式原子数 '+countVisible()
-    +(vacCount()?('（含 '+vacCount()+' 个空位）'):'')+'\n\n'
+    +'一、晶胞参数\n  '+latStr()+'\n  空间群：'+toSub(S.sgHm)+'（No.'+S.sgNo+'，'+S.nops+' 个对称操作）\n\n'
+    +'二、不对称单元（学生输入的独立原子，坐标已归一化到 [0,1)）\n  '+seedStr+'\n\n'
+    +'三、建模过程\n'+primLog+'\n'
+    +(st.op?('  扩 3×3×1 超胞（'+S.atoms.length+' → '+st.list.length+' 原子）\n  '+st.op+'\n'):'')
+    +'\n四、最终结构\n  '+(st.mult===3?'3×3×1 超胞':'单胞')+' · 化学式 '+formula(st.list).replace(/<\/?sub>/g,'')
+    +' · 显式原子数 '+countVisible(st.list)+(vacCount(st.list)?('（含 '+vacCount(st.list)+' 个空位）'):'')+'\n\n'
     +(think?('五、我的思考\n  '+think.replace(/\n/g,'\n  ')+'\n\n'):'')
-    +'六、POSCAR（最终结构）\n'+poscarText();
-  document.getElementById('btnSubmit').disabled=true;
+    +'六、POSCAR（最终结构）\n'+poscarText(st.list, st.mult);
+  document.getElementById(cfg.btn).disabled=true;
   msg.className='hint'; msg.textContent='正在提交…';
   fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({token:TOKEN,kind:'结构建模',step:'① 结构建模',
-      title:'晶体结构建模：'+formula().replace(/<\/?sub>/g,'')+'（'+toSub(S.sgHm)+' · No.'+S.sgNo+'）',
+      title:'晶体结构建模 · '+cfg.label.replace('3x3x1','3×3×1')+'（'+toSub(S.sgHm)+' · No.'+S.sgNo+'）',
       content:content})})
     .then(function(r){return r.json();})
     .then(function(res){
-      document.getElementById('btnSubmit').disabled=false;
+      document.getElementById(cfg.btn).disabled=false; gate();
       if(res && res.ok){
         msg.className='hint ok';
-        msg.innerHTML='提交成功 ✓ 教师将在管理端「提交与打分」中查看你的结构与建模思考并打分。可以继续修改结构后再次提交（每次提交都会记录）。'+'<div class="hint">第①层完成 ✓ 从顶部导航进入 <a href="simulation2.html"><b>第②层 · 计算方法与参数确定</b></a> 继续实验。</div>';
+        msg.innerHTML='提交成功 ✓ 教师将在管理端「提交与打分」中查看你的结构与建模思考并打分。可以继续修改后再次提交（每次提交都会记录）。'
+          +'<div class="hint">第①层各部分完成后，从顶部导航进入 <a href="simulation2.html"><b>第②层 · 计算方法与参数确定</b></a> 继续实验。</div>';
       } else {
         msg.className='hint err';
         msg.textContent=(res&&res.msg)||('提交失败：'+JSON.stringify(res).slice(0,120));
       }
     })
-    .catch(function(){ document.getElementById('btnSubmit').disabled=false;
+    .catch(function(){ document.getElementById(cfg.btn).disabled=false; gate();
       msg.className='hint err'; msg.textContent='服务器连接失败，请稍后重试。'; });
 }
-
-/* 定时刷新摘要（第 5 步可见时） */
-setInterval(function(){ if(S.sc && document.getElementById('stp5').style) refreshSum(); },2000);
 
 /* 初始 */
 gate(); stat();
