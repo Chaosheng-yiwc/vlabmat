@@ -48,6 +48,7 @@
         --gold:#c9a227;--green:#2e8b57;--red:#c0392b;--card:#fff}
   *{margin:0;padding:0;box-sizing:border-box}
   sub,sup{font-size:.72em;line-height:0;position:relative;vertical-align:baseline}
+  i{font-family:"Times New Roman",Times,serif;font-weight:600}
   sub{bottom:-.25em}
   body{font-family:"Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);height:100vh;
        display:flex;flex-direction:column;overflow:hidden}
@@ -181,17 +182,17 @@
       </div>
 
       <div class="row">
-        <label><i>a</i> <input id="inA" type="number" step="0.001" min="0.3" placeholder="4.744"> Å</label>
-        <label><i>b</i> <input id="inB" type="number" step="0.001" min="0.3" placeholder="4.744"> Å</label>
-        <label><i>c</i> <input id="inC" type="number" step="0.001" min="0.3" placeholder="9.193"> Å</label>
+        <label><i>a</i> <input id="inA" type="number" step="0.001" min="0.3"> Å</label>
+        <label><i>b</i> <input id="inB" type="number" step="0.001" min="0.3"> Å</label>
+        <label><i>c</i> <input id="inC" type="number" step="0.001" min="0.3"> Å</label>
       </div>
       <div class="row">
-        <label><i>α</i> <input id="inAl" type="number" step="0.1" min="10" max="170" placeholder="90"> °</label>
-        <label><i>β</i> <input id="inBe" type="number" step="0.1" min="10" max="170" placeholder="90"> °</label>
-        <label><i>γ</i> <input id="inGa" type="number" step="0.1" min="10" max="170" placeholder="120"> °</label>
+        <label><i>α</i> <input id="inAl" type="number" step="0.1" min="10" max="170"> °</label>
+        <label><i>β</i> <input id="inBe" type="number" step="0.1" min="10" max="170"> °</label>
+        <label><i>γ</i> <input id="inGa" type="number" step="0.1" min="10" max="170"> °</label>
         <button id="btnLat" onclick="confirmLat()">确认晶格参数</button>
       </div>
-      <div class="hint" id="latHint"><b>先选空间群，再填晶格常数</b>：选定空间群后，晶格参数按该晶系的对称性自动约束（灰框为锁定项）。晶格常数<b>不做对错检查</b>——本层考察建模操作本身，任意合法数值右侧均可实时显示。层状 g-C<sub>3</sub>N<sub>4</sub> 的参考值：<i>a</i> ≈ 4.744 Å、<i>c</i> ≈ 9.193 Å（平台计算结构）或 <i>a</i> ≈ 4.782 Å、<i>c</i> ≈ 9.974 Å（教学 CIF）。</div>
+      <div class="hint" id="latHint"><b>先选空间群，再填晶格常数</b>：选定空间群后，晶格参数按该晶系的对称性自动约束（灰框为锁定项）。晶格常数<b>不做对错检查</b>——本层考察建模操作本身，任意合法数值右侧均可实时显示。</div>
 
       <div id="atomBlock" class="locked" style="margin-top:10px;border-top:1px dashed var(--line);padding-top:8px">
         <div class="row">
@@ -204,14 +205,13 @@
           <button id="btnAddAtom" onclick="addAtom()">添加并展开</button>
         </div>
         <div class="row">
-          <button class="ghost" onclick="fillDemoNaCl()">示例：NaCl（Fm-3m，2 个独立原子）</button>
           <button class="ghost" onclick="clearAtoms()">清空原子</button>
         </div>
         <div id="atomTblBox"><table id="atomTbl"></table></div>
-        <div class="hint" id="atomHint">输入<b>不对称单元</b>（独立原子）的分数坐标，点击「添加并展开」，系统按所选空间群的对称操作自动生成晶胞内全部等效原子（与 spglib / qvasp -c2p 的对称展开同源）。<b>坐标允许任意数值</b>：1.1、2.1、−0.1 都可以填，提交时自动归一化到 [0,1)——1.1 → 0.1、2.1 → 0.1、−0.1 → 0.9。右侧实时显示球棍模型；表格中 ★ 为你输入的原子，· 为对称生成的等效原子（删除 ★ 会连同其等效原子一起删除）。</div>
+        <div class="hint" id="atomHint"></div>
 
         <div class="row" style="margin-top:10px">
-          <label style="flex:1;min-width:100%">我的建模思考（选这个空间群和这些不对称原子的理由？展开后原子的位置是否符合预期？）<br>
+          <label style="flex:1;min-width:100%">我的建模思考<br>
           <textarea id="inThink1" rows="2" style="width:100%;margin-top:5px"></textarea></label>
         </div>
         <div class="row">
@@ -313,7 +313,7 @@ fetch('spg_ops.json').then(function(r){ return r.json(); }).then(function(d){
   fillSGSelect();
 }).catch(function(){
   var sel=document.getElementById('inSG');
-  sel.innerHTML='<option value="166">R-3m（No.166）</option><option value="1">P1（No.1）</option>';
+  sel.innerHTML='<option value="1" selected>P1（No.1）</option><option value="166">R-3m（No.166）</option>';
   document.getElementById('sysBadge').textContent='空间群数据加载失败，仅内置 2 群';
   sel.disabled=false;
   applySysUI();
@@ -328,7 +328,7 @@ function fillSGSelect(){
     if(!gs.length) return;
     h+='<optgroup label="'+SYS_CN[sys]+'晶系">';
     gs.forEach(function(g){
-      h+='<option value="'+g.no+'"'+(g.no===166?' selected':'')+'>'+toSub(g.hm)+'（No.'+g.no+'）</option>';
+      h+='<option value="'+g.no+'"'+(g.no===1?' selected':'')+'>'+toSub(g.hm)+'（No.'+g.no+'）</option>';
     });
     h+='</optgroup>';
   });
@@ -339,7 +339,7 @@ function fillSGSelect(){
 /* ================= 状态 ================= */
 var S = {
   a:0,b:0,c:0, al:90,be:90,ga:120,
-  sgNo:166, sgHm:'R-3m', sys:'hexagonal', nops:0,
+  sgNo:1, sgHm:'P1', sys:'triclinic', nops:1,
   latOK:false,
   atoms:[],            /* 原胞原子 {el,x,y,z,vac,seedIdx,origin} */
   seeds:[],            /* 不对称单元 {el,x,y,z}（null=已删除） */
@@ -615,18 +615,9 @@ function gate(){
 }
 
 /* ================= 第 1 部分：空间群 + 晶格 + 不对称单元 ================= */
-var SYS_PLACEHOLDER={
-  triclinic:  {a:'4.0',   b:'5.0',   c:'6.0',   al:'80',  be:'95',  ga:'110'},
-  monoclinic: {a:'5.0',   b:'6.0',   c:'5.0',   al:'90',  be:'101', ga:'90'},
-  orthorhombic:{a:'4.0',  b:'5.0',   c:'6.0',   al:'90',  be:'90',  ga:'90'},
-  tetragonal: {a:'4.0',   b:'4.0',   c:'6.0',   al:'90',  be:'90',  ga:'90'},
-  trigonal:   {a:'4.744', b:'4.744', c:'9.193', al:'90',  be:'90',  ga:'120'},
-  hexagonal:  {a:'4.744', b:'4.744', c:'9.193', al:'90',  be:'90',  ga:'120'},
-  cubic:      {a:'5.64',  b:'5.64',  c:'5.64',  al:'90',  be:'90',  ga:'90'}
-};
 function applySysUI(){
   var sel=document.getElementById('inSG');
-  var g=SGBYNO[sel.value] || SGBYNO[166];
+  var g=SGBYNO[sel.value] || SGBYNO[1];
   if(!g){ return; }
   if(S.atoms.length && !confirm('切换空间群后，此前按旧空间群展开的原子将全部清空，继续？')){
     sel.value=S.sgNo; return;
@@ -644,17 +635,17 @@ function applySysUI(){
     hexagonal:  [1,'=a','free',90,90,120],
     cubic:      [1,'=a','=ac',90,90,90]
   }[g.sys];
-  function cfg(id, mode, phKey){
-    var e=document.getElementById(id), ph=SYS_PLACEHOLDER[g.sys][phKey];
-    if(mode==='free'){ e.disabled=false; if(!e.value) e.placeholder=ph; return; }
+  function cfg(id, mode){
+    var e=document.getElementById(id);
+    if(mode==='free'){ e.disabled=false; e.placeholder=''; return; }
     e.disabled=true;
     if(mode==='=a'||mode==='=ac'){ e.value=''; e.placeholder=mode; }
     else { e.value=mode; }
   }
-  cfg('inA','free','a');
-  cfg('inB',plan[1],'b');
-  cfg('inC',plan[2],'c');
-  cfg('inAl',plan[3],'al'); cfg('inBe',plan[4],'be'); cfg('inGa',plan[5],'ga');
+  cfg('inA','free');
+  cfg('inB',plan[1]);
+  cfg('inC',plan[2]);
+  cfg('inAl',plan[3]); cfg('inBe',plan[4]); cfg('inGa',plan[5]);
   /* 切换空间群 → 旧展开原子失效 */
   if(S.atoms.length){
     clearAtoms(true);
@@ -767,23 +758,6 @@ function clearAtoms(silent){
     document.getElementById('atomHint').textContent='已清空全部原子，可重新添加不对称单元。';
   }
   invalidatePrim(); rebuildAtoms(false); renderAtomTbl(); gate();
-}
-function fillDemoNaCl(){
-  var ready = S.latOK && S.sys==='cubic' && Math.abs(S.a-5.64)<0.001;
-  if(!ready){
-    if(S.atoms.length && !confirm('示例将重置当前晶格与原子，继续？')) return;
-    clearAtoms(true);
-    document.getElementById('inSG').value='225';
-    applySysUI();
-    document.getElementById('inA').value=5.64;
-    confirmLat();
-    if(!S.latOK) return;
-  }
-  addSeedDirect('Na',0,0,0);
-  addSeedDirect('Cl',0.5,0.5,0.5);
-  document.getElementById('atomHint').className='hint ok';
-  document.getElementById('atomHint').innerHTML='示例完成：NaCl，空间群 Fm-3m（No.225），<i>a</i> = 5.64 Å。只输入了 <b>2 个独立原子</b>——Na (0,0,0) 与 Cl (½,½,½)，对称展开得到 4+4 = <b>8 个原子</b>（多重性各 4）✓ 可在此基础上修改，也可清空后从零开始建模自己的结构。';
-  renderAtomTbl(); gate();
 }
 function addSeedDirect(el,x,y,z){
   var imgs=expandSeed(el,x,y,z);
