@@ -209,11 +209,7 @@
     <div class="stp-card">
       <div class="stp-head"><span>② 选择计算方法</span><span class="dot" id="dot2">2</span></div>
       <div class="stp-body">
-        <label style="font-size:12.5px;color:var(--sub)">平面波截断能 ENCUT</label>
-        <select class="sel" id="encut">
-          <option value="500" selected>500 eV（第②层收敛测试选定）</option>
-        </select>
-        <div class="hint">收敛判据回顾：相邻两档截断能之间带隙变化 &lt; 0.01 eV 即视为收敛。第②层数据 400→450 变化约 0.009 eV（尚有可见变化），450→500 仅 0.001 eV、500→550 仅 0.0001 eV（已收敛），故取 500 eV 在收敛平台上留出安全裕度。</div>
+        <div class="hint">使用第2步选定的平面波截断能和K点密度。</div>
         <label style="font-size:12.5px;color:var(--sub);display:block;margin-top:7px">交换关联泛函</label>
         <select class="sel" id="func">
           <option value="PBE" selected>PBE（GGA 半局域泛函）</option>
@@ -581,7 +577,7 @@ function planAvailable(sys, strain, encut, func){
 }
 function applyPlanLock(){
   var hint = document.getElementById('funcHint');
-  hint.innerHTML = 'PBE 流水：结构优化 → SCF → 非自洽能带（ICHARG=11）→ 光学吸收（LOPTICS）四步；HSE06 流水：PBE 波函数初猜 + 一次杂化自洽同时完成 SCF 与能带。本层 ENCUT 固定 500 eV（第②层收敛测试选定：≥450 eV 后带隙变化 &lt; 0.002 eV），两种泛函均可提交，第④步判读以你本次计算结果为准。';
+  hint.innerHTML = 'PBE 流水：结构优化 → SCF → 非自洽能带（ICHARG=11）→ 光学吸收（LOPTICS）四步；HSE06 流水：PBE 波函数初猜 + 一次杂化自洽同时完成 SCF 与能带。';
 }
 
 /* 各体系显示名称（计算结果一律来自集群真实计算，经 PRECALC 结果库返回）。
@@ -597,10 +593,7 @@ function applyStructOK(res, name){
   STATE.structOK = true;
   var msg = document.getElementById('structMsg');
   msg.style.color = 'var(--green)';
-  msg.innerHTML = '✓ 结构校验通过：' + chem(name) + '（' + res.comp + '，' + res.natoms + ' 原子，' +
-    (res.matched === 'bulk' ? 'R3m 三层原胞' : '单层 slab') +
-    (res.max_dev != null ? '，最大原子偏差 ' + res.max_dev.toFixed(3) + ' Å' : '') +
-    '）。已载入右侧模型，可继续第①步。';
+  msg.innerHTML = '✓ 结构校验通过。';
   document.getElementById('dot0').className = 'dot ok';
   document.getElementById('dot0').textContent = '✓';
   document.getElementById('poscarBox').style.display = '';
@@ -645,14 +638,7 @@ function hideStruct(){
   document.querySelector('.legend').style.display = 'none';
 }
 
-/* ================= ①② 参数选择（第②层：体系固定为本征 ε=0） ================= */
-document.getElementById('encut').onchange = function(){
-  STATE.encut = parseInt(this.value);
-  STATE.computed = false;
-  STATE.realDone = false; STATE.real = null;
-  document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
-  applyPlanLock();
-};
+/* ================= ①② 参数选择（第②层：体系固定为本征 ε=0，ENCUT/K 沿用第②层选定值） ================= */
 document.getElementById('func').onchange = function(){
   STATE.func = this.value;
   STATE.computed = false;
