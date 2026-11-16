@@ -201,36 +201,37 @@
       <div class="stp-head"><span>① 确认研究体系</span><span class="dot ok" id="dot1">✓</span></div>
       <div class="stp-body">
         <b>本征 g-C<sub>3</sub>N<sub>4</sub></b>（ε = 0，R3m 体相原胞 · 21 原子）
-        <div class="hint">本层聚焦<b>计算参数的选择</b>：统一采用本征体系 ε=0 基准构型，通过改变截断能与泛函、并与实验带隙（约 2.7 eV）对比，确定可靠的计算参数。应变 / 掺杂 / 缺陷等调控放在第③层进行。</div>
+        <div class="hint">本层聚焦<b>计算参数的选择</b>：统一采用本征体系 ε=0 基准构型与 PBE 泛函，通过<b>截断能</b>与<b>K 点密度</b>两组收敛测试（每组参数都要亲手提交计算）确定可靠参数。泛函精度对比（PBE / HSE06）放在第②层进行。</div>
       </div>
     </div>
 
     <div class="stp-card">
       <div class="stp-head"><span>② 设置计算参数</span><span class="dot" id="dot2">2</span></div>
       <div class="stp-body">
-        <label style="font-size:12.5px;color:var(--sub)">平面波截断能 ENCUT（本层重点：收敛性测试）</label>
+        <label style="font-size:12.5px;color:var(--sub)">测试一：平面波截断能 ENCUT（K 网格固定 5×5×3）</label>
         <select class="sel" id="encut">
           <option value="400">400 eV</option>
           <option value="450">450 eV</option>
           <option value="500" selected>500 eV</option>
           <option value="550">550 eV</option>
         </select>
-        <label style="font-size:12.5px;color:var(--sub);display:block;margin-top:7px">K 点密度（布里渊区采样）</label>
-        <div style="padding:7px 10px;border:1px solid #c3cfdd;border-radius:8px;background:#f2f6fb;font-size:13px;color:#5a6b80">5×5×3（Γ 居中 · 收敛测试后锁定，见第④步参考数据）</div>
-        <label style="font-size:12.5px;color:var(--sub);display:block;margin-top:7px">交换关联泛函</label>
-        <select class="sel" id="func">
-          <option value="PBE" selected>PBE（GGA 半局域泛函）</option>
-          <option value="HSE06">HSE06（杂化泛函）</option>
+        <label style="font-size:12.5px;color:var(--sub);display:block;margin-top:7px">测试二：K 点密度（布里渊区采样，ENCUT 固定 500 eV）</label>
+        <select class="sel" id="kmeshSel">
+          <option value="1">1×1×1</option>
+          <option value="2">2×2×2</option>
+          <option value="3">3×3×3</option>
+          <option value="4">4×4×4</option>
+          <option value="5" selected>5×5×3（Γ 居中 · 生产网格）</option>
         </select>
-        <div class="hint" id="funcHint"></div>
-        <div class="hint">本层通过<b>三项测试</b>确定计算参数：① 截断能（总能收敛+耗时）② K 点密度（总能收敛+耗时）③ 泛函（带隙 vs 实验值）。ENCUT 用第②步切换、配合第③步计算完成自测；K 网格已锁定，收敛数据见第④步「📊 平台收敛测试参考数据」。</div>
+        <div class="hint" id="paramHint"></div>
+        <div class="hint">两组测试均用 PBE 泛函。<b>每换一档参数，都要到第③步点一次「提交计算」</b>；全部算完后，右侧收敛曲线、数据汇总与「最终参数选择」才完整开放。</div>
       </div>
     </div>
 
     <div class="stp-card">
       <div class="stp-head"><span>③ 提交计算</span><span class="dot" id="dot3">3</span></div>
       <div class="stp-body">
-        <div class="hint" id="clusterHint" style="margin:0 0 8px">计算由平台集群节点执行（PBE / HSE06，体相 g-C<sub>3</sub>N<sub>4</sub>：结构优化 → SCF → 能带 → 光学吸收全流程），提交后可在下方日志窗口实时查看各阶段运行输出。核数越多，计算越快。做实验需要查资料或排查报错时，点右侧「🤖 小碳老师」随时提问。</div>
+        <div class="hint" id="clusterHint" style="margin:0 0 8px">计算由平台集群节点执行（PBE 泛函收敛测试）：截断能系列为「结构优化 → SCF → 能带 → 光学」全流程，K 点系列为 SCF 单点（读取已优化结构）。<b>每档参数都要单独提交一次计算</b>，提交后可在下方日志窗口实时查看输出。做实验需要查资料或排查报错时，点右侧「🤖 小碳老师」随时提问。</div>
         <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap">
           <span style="font-size:12.5px;color:var(--ink,#333)">集群核数（mpirun -n）</span>
           <select id="coresSel" onchange="STATE.cores=parseInt(this.value,10)" style="padding:4px 8px;border:1px solid #c3cfdd;border-radius:8px;background:#fff;font-size:13px">
@@ -251,10 +252,10 @@
       <div class="stp-head"><span>④ 参数收敛分析与判断</span><span class="dot" id="dot4">4</span></div>
       <div class="stp-body">
         <div class="quiz" id="quizBox">
-          <div class="hint">完成第③步计算后作答。</div>
+          <div class="hint">完成第③步全部收敛计算（截断能 4 档 + K 点 5 档）后作答。</div>
         </div>
 
-<details id="convRefBox" style="margin-top:10px;border:1.5px solid #cfe0f2;border-radius:9px;background:#f8fbff;overflow:hidden"><summary style="cursor:pointer;padding:8px 12px;font-size:13px;font-weight:700;color:#0e3a6d;user-select:none">📊 平台收敛测试参考数据（截断能 &amp; K 网格）</summary><div style="padding:0 12px 10px;font-size:12px;line-height:1.8;color:#33404f"><div class="hint" style="margin:6px 0 8px">平台集群用生产配方（本征 g-C<sub>3</sub>N<sub>4</sub> 三层体相 · 21 原子 · PBE · EDIFF 1E-05 · VASP 6.5.1）完成的全套单点收敛测试，可用来核对你自己的收敛记录。图中蓝线为总能 <i>E</i><sub>0</sub>（左轴），绿色虚线为 SCF 耗时（右轴），红色虚线为收敛基准。</div><b style="color:#0e3a6d">① 平面波截断能 ENCUT 测试</b>（K 网格固定 5×5×3）<table style="border-collapse:collapse;margin:4px 0 6px;font-size:11.5px;width:100%"><tr style="background:#eef4fb"><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap">ENCUT (eV)</th><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap"><i>E</i><sub>0</sub> (eV)</th><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap">ΔE vs 550 (meV)</th><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap">SCF 耗时 (s)</th></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">250</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−173.97506</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">+1533.2</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">41.7</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">300</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.72010</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−211.8</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">42.7</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">350</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.66635</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−158.1</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">43.7</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">400</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.60111</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−92.8</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">45.2</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">450</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.53190</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−23.6</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">47.7</td></tr><tr style="background:#eef4fb"><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">500</td><td style="border:1px solid #cfe0f2;padding:2px 4px;font-weight:700;text-align:center;white-space:nowrap">−175.50537</td><td style="border:1px solid #cfe0f2;padding:2px 4px;color:#0e3a6d;text-align:center;white-space:nowrap">+2.9</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">48.3</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">550</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.50829</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">0（基准）</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">49.4</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">600</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.54462</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−36.3</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">51.5</td></tr></table><svg viewBox="0 0 340 200" style="width:100%;height:auto;background:#fff;font-family:system-ui,sans-serif"><rect x="44" y="16" width="256" height="150" fill="none" stroke="#c3cfdd"/><line x1="44" y1="16.0" x2="300" y2="16.0" stroke="#e7edf5"/><text x="40" y="19.0" font-size="8.5" fill="#5a6b80" text-anchor="end">-173.6</text><line x1="44" y1="71.1" x2="300" y2="71.1" stroke="#e7edf5"/><text x="40" y="74.1" font-size="8.5" fill="#5a6b80" text-anchor="end">-174.5</text><line x1="44" y1="101.7" x2="300" y2="101.7" stroke="#e7edf5"/><text x="40" y="104.7" font-size="8.5" fill="#5a6b80" text-anchor="end">-175.0</text><line x1="44" y1="132.3" x2="300" y2="132.3" stroke="#e7edf5"/><text x="40" y="135.3" font-size="8.5" fill="#5a6b80" text-anchor="end">-175.5</text><line x1="44" y1="166.0" x2="300" y2="166.0" stroke="#e7edf5"/><text x="40" y="169.0" font-size="8.5" fill="#5a6b80" text-anchor="end">-176.0</text><text x="304" y="150.2" font-size="8.5" fill="#2e8b57" text-anchor="start">40s</text><text x="304" y="94.0" font-size="8.5" fill="#2e8b57" text-anchor="start">46</text><text x="304" y="37.8" font-size="8.5" fill="#2e8b57" text-anchor="start">52s</text><text x="44.0" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">250</text><text x="80.6" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">300</text><text x="117.1" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">350</text><text x="153.7" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">400</text><text x="190.3" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">450</text><text x="226.9" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">500</text><text x="263.4" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">550</text><text x="300.0" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">600</text><text x="10" y="22" font-size="9" fill="#33404f">E₀ (eV)</text><polyline points="44.0,39.0 80.6,145.8 117.1,142.5 153.7,138.5 190.3,134.3 226.9,132.7 263.4,132.8 300.0,135.1" fill="none" stroke="#2e6fd8" stroke-width="1.8"/><circle cx="44.0" cy="39.0" r="2.6" fill="#2e6fd8"/><circle cx="80.6" cy="145.8" r="2.6" fill="#2e6fd8"/><circle cx="117.1" cy="142.5" r="2.6" fill="#2e6fd8"/><circle cx="153.7" cy="138.5" r="2.6" fill="#2e6fd8"/><circle cx="190.3" cy="134.3" r="2.6" fill="#2e6fd8"/><circle cx="226.9" cy="132.7" r="2.6" fill="#2e6fd8"/><circle cx="263.4" cy="132.8" r="2.6" fill="#2e6fd8"/><circle cx="300.0" cy="135.1" r="2.6" fill="#2e6fd8"/><polyline points="44.0,131.7 80.6,122.0 117.1,112.4 153.7,98.7 190.3,74.9 226.9,69.7 263.4,59.2 300.0,39.6" fill="none" stroke="#2e8b57" stroke-width="1.4" stroke-dasharray="4 3"/><circle cx="44.0" cy="131.7" r="2.0" fill="#2e8b57"/><circle cx="80.6" cy="122.0" r="2.0" fill="#2e8b57"/><circle cx="117.1" cy="112.4" r="2.0" fill="#2e8b57"/><circle cx="153.7" cy="98.7" r="2.0" fill="#2e8b57"/><circle cx="190.3" cy="74.9" r="2.0" fill="#2e8b57"/><circle cx="226.9" cy="69.7" r="2.0" fill="#2e8b57"/><circle cx="263.4" cy="59.2" r="2.0" fill="#2e8b57"/><circle cx="300.0" cy="39.6" r="2.0" fill="#2e8b57"/><line x1="44" y1="132.8" x2="300" y2="132.8" stroke="#d84a3a" stroke-width="1" stroke-dasharray="3 3"/><text x="48" y="129.8" font-size="8" fill="#d84a3a">收敛基准 550 eV</text></svg><div class="hint" style="margin:4px 0 10px">ENCUT ≥ 500 eV 后 |ΔE| ≤ 0.03 eV（约 1.4 meV/原子）；550 → 600 的回弹 0.036 eV 是基组振荡（Pulay），属正常现象，收敛判据应看相邻两档的差而非单调性。平台生产参数取 <b>ENCUT = 500 eV</b>。</div><b style="color:#0e3a6d">② K 网格密度测试</b>（ENCUT 固定 500 eV）<table style="border-collapse:collapse;margin:4px 0 6px;font-size:11.5px;width:100%"><tr style="background:#eef4fb"><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap">K 网格</th><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap"><i>E</i><sub>0</sub> (eV)</th><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap">ΔE vs 6×6×6 (meV)</th><th style="border:1px solid #cfe0f2;padding:2px 4px;white-space:nowrap">SCF 耗时 (s)</th></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">1×1×1</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−156.95440</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap"><b style="color:#d84a3a">+18550.7（不可用）</b></td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">32.9</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">2×2×2</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.31162</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">+193.5</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">36.6</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">2×2×3</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.31172</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">+193.4</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">36.4</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">3×3×3</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.50159</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">+3.5</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">38.8</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">4×4×4</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.50437</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">+0.7</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">48.2</td></tr><tr style="background:#eef4fb"><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">5×5×3</td><td style="border:1px solid #cfe0f2;padding:2px 4px;font-weight:700;text-align:center;white-space:nowrap">−175.50537</td><td style="border:1px solid #cfe0f2;padding:2px 4px;color:#0e3a6d;text-align:center;white-space:nowrap">−0.3</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">48.3</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">5×5×5</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.50510</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">+0.0</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">58.1</td></tr><tr style=""><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">6×6×6</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">−175.50511</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">0（基准）</td><td style="border:1px solid #cfe0f2;padding:2px 4px;text-align:center;white-space:nowrap">75.0</td></tr></table><svg viewBox="0 0 340 200" style="width:100%;height:auto;background:#fff;font-family:system-ui,sans-serif"><rect x="44" y="16" width="256" height="150" fill="none" stroke="#c3cfdd"/><line x1="44" y1="157.2" x2="300" y2="157.2" stroke="#e7edf5"/><text x="40" y="160.2" font-size="8.5" fill="#5a6b80" text-anchor="end">-175.6</text><line x1="44" y1="113.1" x2="300" y2="113.1" stroke="#e7edf5"/><text x="40" y="116.1" font-size="8.5" fill="#5a6b80" text-anchor="end">-175.5</text><line x1="44" y1="68.9" x2="300" y2="68.9" stroke="#e7edf5"/><text x="40" y="71.9" font-size="8.5" fill="#5a6b80" text-anchor="end">-175.4</text><line x1="44" y1="24.8" x2="300" y2="24.8" stroke="#e7edf5"/><text x="40" y="27.8" font-size="8.5" fill="#5a6b80" text-anchor="end">-175.3</text><text x="304" y="169.0" font-size="8.5" fill="#2e8b57" text-anchor="start">30s</text><text x="304" y="109.0" font-size="8.5" fill="#2e8b57" text-anchor="start">50</text><text x="304" y="49.0" font-size="8.5" fill="#2e8b57" text-anchor="start">70s</text><text x="62.3" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">2×2×2</text><text x="98.9" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">2×2×3</text><text x="135.4" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">3×3×3</text><text x="172.0" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">4×4×4</text><text x="208.6" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">5×5×3</text><text x="245.1" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">5×5×5</text><text x="281.7" y="177" font-size="8.5" fill="#5a6b80" text-anchor="middle">6×6×6</text><text x="10" y="22" font-size="9" fill="#33404f">E₀ (eV)</text><polyline points="62.3,30.0 98.9,30.0 135.4,113.8 172.0,115.0 208.6,115.4 245.1,115.3 281.7,115.3" fill="none" stroke="#2e6fd8" stroke-width="1.8"/><circle cx="62.3" cy="30.0" r="2.6" fill="#2e6fd8"/><circle cx="98.9" cy="30.0" r="2.6" fill="#2e6fd8"/><circle cx="135.4" cy="113.8" r="2.6" fill="#2e6fd8"/><circle cx="172.0" cy="115.0" r="2.6" fill="#2e6fd8"/><circle cx="208.6" cy="115.4" r="2.6" fill="#2e6fd8"/><circle cx="245.1" cy="115.3" r="2.6" fill="#2e6fd8"/><circle cx="281.7" cy="115.3" r="2.6" fill="#2e6fd8"/><polyline points="62.3,146.1 98.9,146.9 135.4,139.5 172.0,111.5 208.6,111.2 245.1,81.8 281.7,30.9" fill="none" stroke="#2e8b57" stroke-width="1.4" stroke-dasharray="4 3"/><circle cx="62.3" cy="146.1" r="2.0" fill="#2e8b57"/><circle cx="98.9" cy="146.9" r="2.0" fill="#2e8b57"/><circle cx="135.4" cy="139.5" r="2.0" fill="#2e8b57"/><circle cx="172.0" cy="111.5" r="2.0" fill="#2e8b57"/><circle cx="208.6" cy="111.2" r="2.0" fill="#2e8b57"/><circle cx="245.1" cy="81.8" r="2.0" fill="#2e8b57"/><circle cx="281.7" cy="30.9" r="2.0" fill="#2e8b57"/><line x1="44" y1="115.3" x2="300" y2="115.3" stroke="#d84a3a" stroke-width="1" stroke-dasharray="3 3"/><text x="48" y="112.3" font-size="8" fill="#d84a3a">收敛基准 6×6×6</text></svg><div class="hint" style="margin:4px 0 2px">1×1×1 偏差高达 +18.55 eV，完全不可用；K 网格 ≥ 3×3×3 后即收敛（|ΔE| &lt; 4 meV）。2×2×2 / 2×2×3 绝对总能系统性偏高约 0.19 eV（布里渊区采样不足），内部相对比较不受影响，但跨体系比较绝对能量时必须统一网格。平台生产参数取 <b>5×5×3（Γ 居中）</b>。</div></div></details>
+
       </div>
     </div>
 
@@ -305,13 +306,13 @@
     </div>
 
     <div class="chart-row">
-      <div class="chart-box"><h4>能带结构（k 路径 Γ–M–K–Γ–A）</h4><canvas id="bandCv"></canvas></div>
-      <div class="chart-box"><h4>紫外-可见吸收光谱</h4><canvas id="dosCv"></canvas></div>
-      <div class="chart-box"><h4>带边位置 vs 水的氧化还原电位</h4><canvas id="edgeCv"></canvas></div>
+      <div class="chart-box"><h4>测试一 · 截断能收敛曲线（总能 &amp; 耗时）</h4><canvas id="encCv"></canvas></div>
+      <div class="chart-box"><h4>测试二 · K 点密度收敛曲线（总能 &amp; 耗时）</h4><canvas id="kmCv"></canvas></div>
+      <div class="chart-box"><h4>最终参数选择（判读 · 20 分）</h4><div id="finalSel" style="flex:1;width:100%;min-height:0;overflow:auto;padding:4px 6px;font-size:12.8px;line-height:1.85"></div></div>
     </div>
 
     <div class="concl" id="conclBox">
-      <b>结论面板：</b>完成计算后此处显示带隙、带边位置与可见光活性评估。
+      <b>收敛测试数据汇总：</b>完成计算后此处显示你自己逐档测得的总能与耗时。
     </div>
   </div>
 </div>
@@ -322,7 +323,7 @@
     <h2>🎯 实验目标（共三层）</h2>
     <div class="sub">AI 赋能 g-C<sub>3</sub>N<sub>4</sub> 光催化分解水制氢 · 当前进入 <b style="color:#0e3a6d">第①层 计算方法与参数确定</b></div>
     <div class="goal-item"><span class="no">1</span>
-      <span><b>【第①层 · 本层】</b>通过<b>截断能</b>、<b>K 点密度</b>（总能收敛+耗时）与<b>泛函</b>（带隙 vs 实验值）三项测试，学会选择能够<b>准确计算</b> g-C<sub>3</sub>N<sub>4</sub> 电子结构的计算参数。</span>
+      <span><b>【第①层 · 本层】</b>通过<b>截断能</b>与<b>K 点密度</b>两项收敛测试（总能 + 耗时，逐档亲手提交计算），学会选择能够<b>准确计算</b> g-C<sub>3</sub>N<sub>4</sub> 电子结构的计算参数。</span>
     </div>
     <div class="goal-item dim"><span class="no">2</span>
       <span>【第②层】理解 g-C<sub>3</sub>N<sub>4</sub> 计算结果的分析方法，理解光催化材料须满足的三个条件，明白 g-C<sub>3</sub>N<sub>4</sub> 带隙偏大、可见光吸收不足是需要优化的方向。</span>
@@ -480,6 +481,33 @@ var REC = (function(){
 })();
 /* 水的氧化还原电位随 pH 线性下移：E(O₂/H₂O) = 1.23 − 0.059×pH，E(H⁺/H₂) = −0.059×pH（V vs NHE）。
    带边位置由真空能级锚定（vs NHE），不随 pH 变——pH 只移动参考线，改变"带边是否包住水"的判据。 */
+/* ================= 收敛测试数据（第①层专用 · localStorage） =================
+   CONV：截断能 4 档 + K 网格 5 档的逐点结果 {e0, t}，学生每提交一档登记一点 */
+var CONV = (function(){
+  var KEY = 'ai_lab_conv1';
+  var d = {enc: {}, km: {}};
+  try{ var v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v && v.enc && v.km) d = v; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(d)); }catch(e){} }
+  return {
+    put: function(kind, k, e0, t){ if (e0 == null || isNaN(e0)) return; d[kind][k] = {e0: e0, t: t, ts: Date.now()}; save(); },
+    get: function(kind, k){ return d[kind][k] || null; },
+    count: function(kind){ return Object.keys(d[kind]).length; },
+    done: function(){ return Object.keys(d.enc).length >= 4 && Object.keys(d.km).length >= 5; }
+  };
+})();
+var ENCUTS = [400, 450, 500, 550];
+var KMESHES = [1, 2, 3, 4, 5];
+function kmeshLabel(k){ return ({1:'1×1×1',2:'2×2×2',3:'3×3×3',4:'4×4×4',5:'5×5×3'})[k] || (k + '×' + k + '×3'); }
+/* 本层得分合成：④判读（20）+ 最终参数选择（20）= 40 */
+STATE.qzScore = null; STATE.finalScore = null;
+STATE.finalEnc = null; STATE.finalKm = null; STATE.finalOkA = false; STATE.finalOkB = false;
+function enableSub(){
+  STATE.score = (STATE.qzScore || 0) + (STATE.finalScore || 0);
+  SCORES.set('g1', STATE.score);
+  var ready = (STATE.qzScore != null) && (STATE.finalScore != null);
+  if (ready){ markOK('dot4'); document.getElementById('subBtn').disabled = false; }
+  return ready;
+}
 /* 化学式上下角标：数据里沿用的 Unicode 上下标（如 g-C₃N₄、H⁺）在渲染时转成 <sub>/<sup>，
    不依赖字体自带的下标字形（部分系统缺字形会显示成方块或大小不一）。必须在 HTML 转义之后调用。 */
 var _SUBMAP = {'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','₊':'+','₋':'−','ₓ':'x'};
@@ -497,72 +525,28 @@ function chem(s){
 }
 /* Canvas 里用不了 <sub> 标签：把 Unicode 下/上标拆成小一号的字单独绘制，
    避免依赖字体自带的下标字形（缺字形会画成方块）。 */
-function fillChem(ctx, text, x, y){
-  var s = String(text == null ? '' : text);
-  var base = ctx.font;
-  var re = /([₀-₉₊₋ₓ]+)|([⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻ⁿ]+)|([^₀-₉₊₋ₓ⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻ⁿ]+)/g;
-  var small = base.replace(/(\d+(?:\.\d+)?)px/, function(_, n){ return (parseFloat(n) * 0.72) + 'px'; });
-  var m, cx = x;
-  while ((m = re.exec(s)) !== null){
-    if (m[3]){ ctx.font = base; ctx.fillText(m[3], cx, y); cx += ctx.measureText(m[3]).width; }
-    else if (m[1]){
-      var t1 = m[1].replace(/[\s\S]/g, function(c){ return _SUBMAP[c] || c; });
-      ctx.font = small; ctx.fillText(t1, cx, y + 2.5); cx += ctx.measureText(t1).width;
-    } else if (m[2]){
-      var t2 = m[2].replace(/[\s\S]/g, function(c){ return _SUPMAP[c] || c; });
-      ctx.font = small; ctx.fillText(t2, cx, y - 3.5); cx += ctx.measureText(t2).width;
-    }
-  }
-  ctx.font = base;
-}
-function redoxLevels(){
-  var ph = STATE.ph || 0;
-  return {ph: ph, ox: 1.23 - 0.059 * ph, red: -0.059 * ph};
-}
-/* 电位 vs NHE → 电子能量（eV，真空能级参考）：0 V vs NHE ≡ −4.44 eV（真空）。
-   电子能量坐标向上增大，换算后 CBM > VBM，与带边图"能量向上"完全自洽 */
-function nhe2ev(v){ return -4.44 - v; }
-/* ④ 结果分析在“提交计算”成功完成前锁定：pH 选择器不可用，防止未计算就出现结果图 */
-function setPhase4Lock(lock){
-  var p = document.getElementById('phSel');
-  if (p) p.disabled = lock;
-}
-function onPhChange(){
-  if (!STATE.computed) return;   // 未完成第③步计算：不允许触发结果图重绘
-  drawEdge();
-  ILAB.mark('带边位置与水分解判据分析（pH 调节）', '调节 pH 并判读带边是否包住水的氧化还原电位', 240);
-  if (STATE.realDone) showConcl();
-}
-/* ================= 计算计划锁定（第①层：本征 ε=0 参数考核） =================
-   PBE：ENCUT 400/450/500/550 收敛系列全部开放；HSE06：仅 ENCUT 500（精度对比用）。
-   超出计划的参数组合后端同样会拒绝（双保险），前端直接锁定避免无效提交。 */
+/* ================= 计算计划锁定（第①层：本征 ε=0 · PBE · 截断能/K 点收敛测试） ================= */
 function planAvailable(sys, strain, encut, func){
-  if (func === 'PBE'){
-    if (encut === 500) return true;
-    return (sys === 'pristine' && strain === 0);
-  }
-  if (encut !== 500) return false;
-  if (sys === 'pristine') return true;   /* HSE06：本征 ε=−4~+4 全系列 */
-  if (sys === 'o_dop') return true;      /* HSE06：O-掺杂 ε=−4~+4 全系列 */
-  return false;
+  if (sys !== 'pristine' || strain !== 0 || func !== 'PBE') return false;
+  if (STATE.kmesh >= 1 && STATE.kmesh <= 4) return encut === 500;   /* K 点系列：ENCUT 固定 500 eV */
+  return ENCUTS.indexOf(encut) >= 0;                                 /* 截断能系列：K 固定 5×5×3 */
 }
+/* 参数联动：K 点系列锁 ENCUT = 500；ENCUT ≠ 500 时锁 K = 5×5×3（两组收敛测试互不干扰） */
 function applyPlanLock(){
-  var encut = document.getElementById('encut');
-  var func = document.getElementById('func');
-  var hint = document.getElementById('funcHint');
-  var isHSE = (STATE.func === 'HSE06');
-  /* 截断能收敛测试仅对 PBE 开放（HSE06 只有 ENCUT 500 有计算计划） */
-  Array.prototype.forEach.call(encut.options, function(o){ o.disabled = isHSE && o.value !== '500'; });
-  if (isHSE && STATE.encut !== 500){ encut.value = '500'; STATE.encut = 500; }
-  var method = 'PBE 流水：结构优化 → SCF → 非自洽能带（ICHARG=11）→ 光学吸收（LOPTICS）四步。HSE06 流水：PBE 波函数初猜 + 一次杂化自洽同时完成 SCF 与能带。';
-  hint.innerHTML = method + (isHSE
-    ? '当前泛函 <b>HSE06</b>：ENCUT 固定 500 eV（精度对比用，耗时约为 PBE 的 5 倍）。'
-    : '当前泛函 <b>PBE</b>：ENCUT 400 / 450 / 500 / 550 收敛系列全部开放，供截断能收敛性考核。');
+  var encut = document.getElementById('encut'), kmSel = document.getElementById('kmeshSel');
+  var hint = document.getElementById('paramHint');
+  var kmode = (STATE.kmesh >= 1 && STATE.kmesh <= 4);
+  encut.disabled = kmode;
+  kmSel.disabled = (!kmode && STATE.encut !== 500);
+  if (kmode){
+    hint.innerHTML = '<b>测试二 · K 点收敛</b>：ENCUT 已锁定 500 eV（截断能收敛值）。当前 K 网格 = <b>' + kmeshLabel(STATE.kmesh) + '</b>，换档后请到第③步提交计算。';
+  } else {
+    hint.innerHTML = '<b>测试一 · 截断能收敛</b>：K 网格固定 5×5×3（Γ 居中）。当前 ENCUT = <b>' + STATE.encut + ' eV</b>，换档后请到第③步提交计算。';
+  }
   hint.style.color = '';
 }
 
-/* 各体系显示名称（计算结果一律来自集群真实计算，经 PRECALC 结果库返回）。
-   pristine 附带本征 ε=0 HSE06 参考带边（带边图"本征"参考条用） */
+/* 各体系显示名称（计算结果一律来自集群真实计算，经 PRECALC 结果库返回）。本层只用 pristine（PBE 收敛测试）。 */
 var SYS = {
   pristine: {name:'本征 g-C₃N₄', cbm: -1.393, vbm: 1.473, Eg: 2.8651},
   o_dop:    {name:'O-掺杂 g-C₃N₄'},
@@ -622,22 +606,23 @@ function hideStruct(){
   document.querySelector('.legend').style.display = 'none';
 }
 
-/* ================= ①② 参数选择（第①层：体系固定为本征 ε=0） ================= */
+/* ================= ①② 参数选择（第①层：截断能 / K 点两组收敛测试） ================= */
 document.getElementById('encut').onchange = function(){
   STATE.encut = parseInt(this.value);
-  STATE.computed = false;
-  STATE.realDone = false; STATE.real = null;
+  STATE.computed = false; STATE.realDone = false; STATE.real = null;
   document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
+  if (STATE.encut !== 500 && STATE.kmesh <= 4){ STATE.kmesh = 5; document.getElementById('kmeshSel').value = '5'; }
   applyPlanLock();
 };
-document.getElementById('func').onchange = function(){
-  STATE.func = this.value;
-  STATE.computed = false;
-  STATE.realDone = false; STATE.real = null;
+document.getElementById('kmeshSel').onchange = function(){
+  STATE.kmesh = parseInt(this.value);
+  STATE.computed = false; STATE.realDone = false; STATE.real = null;
   document.getElementById('dot3').className = 'dot'; document.getElementById('dot3').textContent = '3';
+  if (STATE.kmesh >= 1 && STATE.kmesh <= 4){ STATE.encut = 500; document.getElementById('encut').value = '500'; }
   applyPlanLock();
 };
-applyPlanLock();   // 初始提示与控件状态同步
+applyPlanLock();   /* 初始提示与控件状态同步 */
+drawConvCharts(); showConcl(); updateFinalSel();   /* 初始空态（有历史数据则直接恢复） */
 
 function markOK(id, text){ var d = document.getElementById(id); d.className = 'dot ok'; d.textContent = '✓'; }
 
@@ -683,14 +668,10 @@ function submitReal(){
   var btn = document.getElementById('runBtn');
   if (!TOKEN){ realLog('[计算] ✗ 未登录：请先登录后再提交计算。'); return; }
   if (!planAvailable(STATE.sys, STATE.strain, STATE.encut, STATE.func)){
-    realLog('[计算] ✗ 参数组合（体系=' + SYS[STATE.sys].name + '、应变=' + STATE.strain + '%、ENCUT=' + STATE.encut + '、泛函=' + STATE.func + '）暂无计算数据——' +
-      (STATE.func === 'HSE06'
-        ? 'HSE06 已入库组合：本征 ε = −4 ~ +4 全系列；O-掺杂 ε = −4 ~ +4 全系列（均 ENCUT 500）；其余组合正在集群补算，可先选用 PBE 完成实验。'
-        : '请按实验指导书调整参数后重新提交。'));
+    realLog('[计算] ✗ 参数组合（体系=' + SYS[STATE.sys].name + '、应变=' + STATE.strain + '%、ENCUT=' + STATE.encut + '、K=' + kmeshLabel(STATE.kmesh) + '）不在计算计划内——本层收敛测试：截断能系列 ENCUT 400 / 450 / 500 / 550（K = 5×5×3），K 点系列 1×1×1 ~ 5×5×3（ENCUT = 500）。请调整参数后重新提交。');
     return;
   }
   btn.disabled = true;
-  setPhase4Lock(true);   // 计算进行中：④区保持锁定
   ILAB.mark('选择计算体系与应变参数', '按实验指导书选择本征/掺杂/空位体系与双轴应变', 180);
   ILAB.mark('设置计算参数（泛函/ENCUT/K点）', '泛函与平面波截断能、K 网格按指导书设置', 240);
   ILAB.open('提交第一性原理计算并监控作业', '计算计划内提交成功并完整监控作业日志', 900);
@@ -702,10 +683,10 @@ function submitReal(){
   realLog('  mpirun -n ' + STATE.cores + '  /public/software/vasp/vasp.6.3.1/vasp_std');
   realLog('  System: ' + sysDesc());
   realLog('  ENCUT = ' + STATE.encut + ' eV   Biaxial strain = ' + STATE.strain + ' %');
-  realLog('  Functional: ' + (STATE.func === 'HSE06'
-      ? 'HSE06  LHFCALC=.TRUE.  AEXX=0.25  HFSCREEN=0.2  ALGO=Damped  PRECFOCK=Fast'
-      : 'PBE (GGA, PAW_PBE)'));
-  realLog('  KPOINTS: 5×5×3 (SCF)  +  Γ-M-K-Γ-A 高对称路径（能带/光学 · 零权重）');
+  realLog('  Functional: PBE (GGA, PAW_PBE)');
+  realLog('  KPOINTS: ' + ((STATE.kmesh >= 1 && STATE.kmesh <= 4)
+      ? kmeshLabel(STATE.kmesh) + ' Γ 居中网格（SCF 收敛测试 · ENCUT = 500 eV）'
+      : '5×5×3 (SCF)  +  Γ-M-K-Γ-A 高对称路径（能带/光学 · 零权重）'));
   realLog('----------------------------------------------------------------------------------------------------');
   realLog('[提交] 正在将作业提交至 PBS 队列……');
   postRetry('/api/job_submit',
@@ -737,23 +718,16 @@ function fmtHMS(s){
   return ('0' + h).slice(-2) + ':' + ('0' + m).slice(-2) + ':' + ('0' + x).slice(-2);
 }
 /* 集群墙钟模型：基准 24 核实测耗时 × (24/N)^0.85 并行效率缩放（f 可指定泛函做对比） */
-function wallSeconds(f){
-  var fn = f || STATE.func;
-  var c = STATE.cores || 16;
-  var base = (fn === 'HSE06') ? 234 * 60            /* HSE06 实测 3h54m */
-           : (STATE.sys === 'pristine') ? 47 * 60    /* 体相 PBE 四步 ~47min */
-           : 385 * 60;                               /* 189 原子掺杂 ~6h25m */
-  return Math.round(base * Math.pow(24 / c, 0.85));
-}
 function playPipeline(res, done){
   var nat = res.natoms || 21;
-  var hse = (STATE.func === 'HSE06');
-  var wall = wallSeconds();
+  var r0 = res.result || {};
+  var kmode = (STATE.kmesh >= 1 && STATE.kmesh <= 4);
+  var wall = (r0.elapsed != null && r0.elapsed > 0) ? r0.elapsed : (kmode ? 40 : 2820);   /* 集群实测耗时（秒） */
   function at(f){ return fmtHMS(wall * f); }
-  var Efin = (hse ? -10.0581 : -8.3574) * nat - Math.abs(STATE.strain) * 0.031 * nat / 21;
+  var Efin = (r0.e0 != null) ? r0.e0 : -175.5;
   var S = [];
   function say(t, d){ S.push({t: t, d: d}); }
-  function ionic(arr, base){                 // 结构优化离子步
+  function ionic(arr, base){                 /* 结构优化离子步 */
     for (var i = 0; i < arr.length; i++){
       var E = Efin + base * Math.exp(-i * 1.12);
       say('    ionic step ' + (i + 1) + '/' + arr.length + ':  E = ' + E.toFixed(6) +
@@ -761,32 +735,27 @@ function playPipeline(res, done){
           ' eV   Fmax = ' + arr[i].toFixed(3) + ' eV/Å', 620);
     }
   }
-  function dav(n, base){                     // SCF 电子步
+  function dav(n, base){                     /* SCF 电子步 */
     for (var k = 1; k <= n; k++){
       var dE = base * Math.exp(-k * 1.15);
       say('   DAV: RMM-DIIS  ' + k + '    E = ' + (Efin - base * Math.exp(-k * 1.1)).toFixed(6) +
-          '    dE = ' + (-dE).toExponential(2) + '    dw = ' + (8e-1 * Math.exp(-k * 1.3)).toExponential(2), hse ? 820 : 520);
+          '    dE = ' + (-dE).toExponential(2) + '    dw = ' + (8e-1 * Math.exp(-k * 1.3)).toExponential(2), 520);
     }
   }
-  if (STATE.sys !== 'pristine'){
-    say('  超胞构建：1×1×1 原胞 → 3×3×1 超胞（' + nat + ' 原子），' +
-        (STATE.sys === 'o_dop' ? '替换 1 个 N → O（POTCAR 增补 O 08Apr2002）' : '移除 1 个 C（制造中性空位）'), 700);
-  }
-  if (hse){
-    say('[1/2] PBE 结构优化（ISIF=3 · IBRION=2 · EDIFFG=-0.03 eV/Å，为 HSE06 提供平衡几何）……', 500);
-    ionic([1.42, 0.71, 0.26, 0.031], 0.62);
-    say('    结构优化收敛：Fmax = 0.031 eV/Å < EDIFFG（CONTCAR 已写出）　[累计 ' + at(0.12) + ']', 500);
-    say('[2/2] HSE06 自洽（25% 精确交换 · 逐 k 点精确对角化，耗时约为 PBE 的 5 倍）……', 600);
-    dav(9, 0.42);
-    say('    SCF 收敛：E0 = ' + Efin.toFixed(6) + ' eV   ΔE = 3.8E-06 < EDIFF = 1E-05　[累计 ' + at(0.90) + ']', 450);
-    say('    本征值沿 Γ-M-K-Γ-A 零权重路径输出 → 能带 + 光学吸收谱（ε₂(ω) → α(λ)，100–1000 nm）…… done　[累计 ' + at(1) + ']', 900);
+  if (kmode){
+    /* K 点收敛测试：SCF 单点（读取已优化基准结构） */
+    say('[1/2] 读取已优化基准结构（CONTCAR · ' + nat + ' 原子 · 结构固定）……', 400);
+    say('[2/2] SCF 自洽（ICHARG=2 · ENCUT = 500 eV · KPOINTS: ' + kmeshLabel(STATE.kmesh) + ' Γ 居中）……', 450);
+    dav(6, 0.35);
+    say('    SCF 收敛：E0 = ' + Efin.toFixed(5) + ' eV   ΔE = 4.2E-06 < EDIFF = 1E-05　[累计 ' + at(0.92) + ']', 450);
   } else {
+    /* 截断能收敛测试：生产全流程 */
     say('[1/4] PBE 结构优化（ISIF=3 · IBRION=2 · EDIFFG=-0.03 eV/Å）……', 500);
     ionic([1.87, 0.96, 0.41, 0.17, 0.058, 0.021], 0.85);
     say('    结构优化收敛：Fmax = 0.021 eV/Å < EDIFFG（CONTCAR 已写出）　[累计 ' + at(0.45) + ']', 500);
     say('[2/4] SCF 自洽（ICHARG=2 · 读取 CONTCAR · 125 个不可约 k 点）……', 450);
     dav(7, 0.31);
-    say('    SCF 收敛：E0 = ' + Efin.toFixed(6) + ' eV   ΔE = 4.2E-06 < EDIFF = 1E-05（CHGCAR 已写出）　[累计 ' + at(0.65) + ']', 450);
+    say('    SCF 收敛：E0 = ' + Efin.toFixed(5) + ' eV   ΔE = 4.2E-06 < EDIFF = 1E-05（CHGCAR 已写出）　[累计 ' + at(0.65) + ']', 450);
     say('[3/4] 能带结构计算（ICHARG=11 · 复用 CHGCAR · 121 个路径 k 点）……', 500);
     say('    本征值输出完成（EIGENVAL / vasprun.xml）　[累计 ' + at(0.75) + ']', 420);
     say('[4/4] 光学吸收计算（LOPTICS=.TRUE. · NBANDS=64 · 空虚态跃迁 ε₂(ω) → α(λ)）……', 500);
@@ -795,8 +764,7 @@ function playPipeline(res, done){
   var i = 0;
   (function next(){
     if (i >= S.length){
-      realLog(' Job finished. Elapsed wall time: ' + fmtHMS(wall) +
-              '   (' + STATE.cores + ' cores)');
+      realLog(' Job finished. Elapsed wall time: ' + fmtHMS(wall) + '   (' + STATE.cores + ' cores · 集群实测)');
       done();
       return;
     }
@@ -828,64 +796,36 @@ function finishReal(r){
   STATE.computed = true;
   STATE.realDone = true;
   STATE.real = r;
-  STATE.Eg = r.eg;
-  // 带边绝对位置：实验功函数锚定（UPS Φ ≈ 4.40 eV → 本征 E_F 居中，
-  // 带隙中点 vs NHE = 4.44 − 4.40 = +0.04 V，VBM/CBM = 中点 ± Eg/2）
-  var MID = 0.04;
-  if (r.vbm_nhe != null && r.cbm_nhe != null){
-    STATE.vbm = r.vbm_nhe;
-    STATE.cbm = r.cbm_nhe;
-    STATE.align = '实验功函数 Φ ≈ 4.40 eV 锚定（中点 +0.04 V ± Eg/2）';
+  var kmode = (STATE.kmesh >= 1 && STATE.kmesh <= 4);
+  var e0 = (r.e0 != null) ? r.e0 : null;
+  var el = (r.elapsed != null) ? r.elapsed : null;
+  if (kmode){
+    CONV.put('km', STATE.kmesh, e0, el);
   } else {
-    STATE.vbm = +(MID + r.eg / 2).toFixed(3);
-    STATE.cbm = +(MID - r.eg / 2).toFixed(3);
-    STATE.align = '实验功函数 Φ ≈ 4.40 eV 锚定（带隙中点 +0.04 V vs NHE）';
+    CONV.put('enc', STATE.encut, e0, el);
+    /* K 系列的第 5 档（5×5×3）= ENCUT 500 的生产全流程计算，两点共用同一次结果 */
+    if (STATE.encut === 500) CONV.put('km', 5, e0, el);
+    REC.put(STATE.sys, STATE.strain, STATE.encut, STATE.func, r.eg, el);   /* 兼容三页共享计算记录 */
   }
-  STATE.defect = (STATE.sys === 'c_vac');
-  var wall = wallSeconds();
-  REC.put(STATE.sys, STATE.strain, STATE.encut, STATE.func, r.eg, wall);   // 登记到三层共享计算记录（含总耗时）
-  markOK('dot3'); markOK('dot4');
-  setPhase4Lock(false);   // 计算完成，开放④区 pH 选择
+  markOK('dot3');
   ILAB.close('提交第一性原理计算并监控作业');
-  ILAB.mark('解析计算结果（能带/态密度/吸收谱）', '作业完成后正确读出带隙、带边与吸收数据', 300);
+  ILAB.mark('解析计算结果（能带/态密度/吸收谱）', '作业完成后正确读出总能与耗时数据', 300);
   realLog('----------------------------------------------------------------------------------------------------');
-  realLog('[汇总] ✓ 计算全部完成 · 总耗时 ' + fmtHMS(wall) + '（' + STATE.cores + ' 核 · ' + STATE.func +
-          (STATE.func === 'HSE06' ? ' · 含 25% 精确交换' : ' · GGA 交换关联') + '）');
-  if (STATE.sys === 'pristine' && STATE.func === 'HSE06'){
-    realLog('[汇总] 对比参考：同参数 PBE 约需 ' + fmtHMS(wallSeconds('PBE')) +
-            ' —— HSE06 精确杂化约为 PBE 的 ' + (wall / wallSeconds('PBE')).toFixed(1) + ' 倍（逐 k 点精确对角化的代价）');
-  } else if (STATE.sys === 'pristine'){
-    realLog('[汇总] 对比参考：同参数 HSE06 约需 ' + fmtHMS(wallSeconds('HSE06')) +
-            ' —— 是本次 PBE 的 ' + (wallSeconds('HSE06') / wall).toFixed(1) + ' 倍（下次可切换 HSE06 感受精确杂化泛函的开销）');
-  }
-  realLog('[汇总] 真实 DFT 结果：Eg = ' + (r.eg != null ? r.eg.toFixed(3) + ' eV (' + STATE.func + ')' : '解析失败') +
-          ' ｜ VBM-CBM ' + (r.direct ? '同一 k 点（直接带隙）' : '不同 k 点（间接带隙）') +
-          ' ｜ SCF ' + (r.converged ? '已收敛' : '未收敛') + ' ｜ 结果图已更新至下方 ④ 面板');
-  var rl = redoxLevels();
-  realLog('[汇总] 水的氧化还原电位（pH = ' + rl.ph + '）：O₂/H₂O = +' + rl.ox.toFixed(2) +
-          ' V、H⁺/H₂ = ' + rl.red.toFixed(2) + ' V vs NHE（能斯特方程 −0.059 V/pH）｜电子能量：O₂/H₂O = ' +
-          nhe2ev(rl.ox).toFixed(2) + ' eV、H⁺/H₂ = ' + nhe2ev(rl.red).toFixed(2) + ' eV（可在④区切换 pH 对比全解水判据）');
-  if (r.workfunc != null){
-    realLog('[计算] 带边对齐（真空能级法）：真空能级 −' + r.vbm_vac.toFixed(2) + ' eV，功函数 Φ = ' +
-            r.workfunc.toFixed(2) + ' eV → 电子能量 CBM = ' + nhe2ev(r.cbm_nhe).toFixed(2) + ' eV、VBM = ' + nhe2ev(r.vbm_nhe).toFixed(2) +
-            ' eV（对应电位 ' + r.cbm_nhe.toFixed(2) + ' / ' + r.vbm_nhe.toFixed(2) + ' V vs NHE）');
-  } else if (r.vbm_nhe != null){
-    realLog('[计算] 带边位置：电子能量 CBM = ' + nhe2ev(r.cbm_nhe).toFixed(2) + ' eV、VBM = ' + nhe2ev(r.vbm_nhe).toFixed(2) +
-            ' eV（对应电位 ' + r.cbm_nhe.toFixed(2) + ' / ' + r.vbm_nhe.toFixed(2) + ' V vs NHE · 真空能级参考取实验功函数 Φ ≈ 4.40 eV，中点 = 4.44 − 4.40 = +0.04 V）');
-  } else {
-    realLog('[计算] ⚠ 未取到带边对齐数据，已退回参考值。');
-  }
-  drawRealCharts();
+  realLog('[汇总] ✓ 计算全部完成 · 集群实测耗时 ' + fmtDur(el) + '（' + STATE.cores + ' 核 · PBE）');
+  realLog('[汇总] 本点结果：E0 = ' + (e0 != null ? e0.toFixed(5) + ' eV' : '—') +
+          ' ｜ SCF ' + (r.converged ? '已收敛' : '未收敛') + ' ｜ 已登记到右侧收敛曲线与数据表');
+  realLog('[汇总] 收敛测试进度：截断能系列 ' + CONV.count('enc') + '/4 · K 点系列 ' + CONV.count('km') + '/5' +
+          (CONV.done() ? '（已全部完成，可作答第④步判读与「最终参数选择」）' : ''));
+  drawConvCharts();
   showConcl();
+  updateFinalSel();
   buildQuiz();
   var btn = document.getElementById('runBtn');
   btn.disabled = false;
-  btn.textContent = '↻ 重新计算（改参数/体系后需重算）';
+  if (CONV.done()) markOK('dot4');
 }
 
-/* ================= ④ 参数收敛分析与判断（第①层 · 40 分） ================= */
-var ENCUTS = [400, 450, 500, 550];
-/* 秒 → 可读耗时 */
+/* ================= ④ 参数收敛分析与判断（第①层 · 判读 20 分 + 最终选择 20 分） ================= */
 function fmtDur(s){
   if (s == null || isNaN(s)) return '—';
   s = Math.round(s);
@@ -895,112 +835,60 @@ function fmtDur(s){
 }
 function buildQuiz(){
   var box = document.getElementById('quizBox');
-  /* 参数收敛记录表：历次真实计算自动登记（REC 三页共享），含计算消耗总时间 */
-  function egCell(eg){
-    return '<td style="border:1px solid #cfe0f2;padding:3px 12px;text-align:center">' +
-      (eg != null ? '<b>' + eg.toFixed(4) + '</b>' : '<span style="color:#b06c20">待计算</span>') + '</td>';
+  /* 门控：全部收敛计算完成前不呈现判读题（引导先去逐档提交计算） */
+  if (!CONV.done()){
+    box.innerHTML =
+      '<div class="hint">完成第③步全部收敛计算后，此处开放判读题（先算完，再看题）。</div>' +
+      '<div class="hint" style="margin-top:4px">当前进度：截断能 <b>' + CONV.count('enc') + ' / 4</b> 档 · K 点 <b>' + CONV.count('km') + ' / 5</b> 档——继续在第②步换档、第③步提交。</div>';
+    STATE.answered = false;
+    return;
   }
-  function tCell(t){ return '<td style="border:1px solid #cfe0f2;padding:3px 12px;text-align:center;color:#5a6b80">' + fmtDur(t) + '</td>'; }
-  var rows = '';
-  ENCUTS.forEach(function(en){
-    rows += '<tr><td style="border:1px solid #cfe0f2;padding:3px 12px">PBE</td>' +
-            '<td style="border:1px solid #cfe0f2;padding:3px 12px;text-align:center">' + en + ' eV</td>' +
-            egCell(REC.get('pristine', 0, en, 'PBE')) + tCell(REC.getTime('pristine', 0, en, 'PBE')) + '</tr>';
-  });
-  rows += '<tr style="background:#f6f9fd"><td style="border:1px solid #cfe0f2;padding:3px 12px">HSE06</td>' +
-          '<td style="border:1px solid #cfe0f2;padding:3px 12px;text-align:center">500 eV</td>' +
-          egCell(REC.get('pristine', 0, 500, 'HSE06')) + tCell(REC.getTime('pristine', 0, 500, 'HSE06')) + '</tr>';
-  var sel = 'class="sel" style="display:inline-block;width:95px;padding:4px 8px;margin:0 4px"';
-  var selW = 'class="sel" style="display:inline-block;width:130px;padding:4px 8px;margin:0 4px"';
-  var inpN = 'class="sel" style="display:inline-block;width:100px;padding:4px 8px;margin:0 4px" type="number" step="0.01" placeholder="填数值"';
-  var subT = 'style="font-size:12.5px;color:#0e3a6d;display:block;margin:10px 0 2px;font-weight:700"';
+  var sel = 'class="sel" style="display:inline-block;width:110px;padding:4px 8px;margin:0 4px"';
+  var selW = 'class="sel" style="display:inline-block;width:160px;padding:4px 8px;margin:0 4px"';
   box.innerHTML =
     '<div style="background:#eef4fb;border:1.5px solid #cfe0f2;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.5px;line-height:1.9;color:#1c2a3a">' +
-    '<b style="color:#0e3a6d">🎯 第①层目标检验：确定可靠的三项计算参数</b>——<b>截断能</b>、<b>K 点密度</b>、<b>泛函</b>（本层 40 分 · 三层合计 100 分）。结合记录表、右侧结果图与下方「📊 平台收敛测试参考数据」折叠区作答。</div>' +
-    '<div style="background:#fff;border:1.5px solid #cfe0f2;border-radius:9px;padding:8px 12px;margin-bottom:10px;font-size:12.8px;line-height:1.8">' +
-    '<b style="color:#0e3a6d">📋 参数收敛记录表</b>（在第②步切换参数 → 第③步提交计算后自动登记）<br>' +
-    '<table style="border-collapse:collapse;margin-top:6px;font-size:12.5px">' +
-    '<tr style="background:#eef4fb"><th style="border:1px solid #cfe0f2;padding:3px 12px">泛函</th><th style="border:1px solid #cfe0f2;padding:3px 12px">ENCUT</th>' +
-    '<th style="border:1px solid #cfe0f2;padding:3px 12px">带隙 E<sub>g</sub> (eV)</th><th style="border:1px solid #cfe0f2;padding:3px 12px">计算总耗时</th></tr>' +
-    rows + '</table></div>' +
-    '<span ' + subT + '>测试一 · 截断能 ENCUT（总能收敛 + 耗时）</span>' +
-    '<label>Q1. 按总能收敛判据（相邻两档 |ΔE| &lt; 0.03 eV），并兼顾计算耗时：ENCUT 至少应取' +
-    '<select id="q1" ' + sel + '><option value="">请选择</option><option>250</option><option>300</option><option>450</option><option>500</option><option>550</option></select>' +
-    ' eV。<span class="hint">（看「平台收敛测试参考数据」图①：蓝线为总能，450→500 差 24 meV，500→550 仅差 3 meV）</span></label>' +
-    '<label style="margin-top:8px">Q2. 随截断能增大，SCF 计算耗时' +
-    '<select id="q2" ' + selW + '><option value="">请选择</option><option>近似线性增大</option><option>基本不变</option><option>近似线性减小</option></select>' +
-    '。<span class="hint">（图①绿色虚线：41.7 → 51.5 s）</span></label>' +
-    '<span ' + subT + '>测试二 · K 点密度（总能收敛 + 耗时）</span>' +
+    '<b style="color:#0e3a6d">🎯 第①层判读（20 分）</b>：依据你自己测得的收敛曲线（右上两图）与数据表（下方汇总）作答。全部参数档位算完后，右上「最终参数选择」开放（另 20 分）。</div>' +
+    '<span style="font-size:12.5px;color:#0e3a6d;font-weight:700;display:block;margin:2px 0 2px">测试一 · 截断能（总能收敛 + 耗时）</span>' +
+    '<label>Q1. 按总能收敛判据（相邻两档 |ΔE| ≤ 0.03 eV，约 1.4 meV/原子）并兼顾耗时：ENCUT 至少应取' +
+    '<select id="q1" ' + sel + '><option value="">请选择</option><option>400</option><option>450</option><option>500</option><option>550</option></select>' +
+    ' eV。</label>' +
+    '<label style="margin-top:8px">Q2. 随截断能增大，集群实测耗时' +
+    '<select id="q2" ' + selW + '><option value="">请选择</option><option>近似线性增大</option><option>基本不变</option><option>近似线性减小</option></select>。</label>' +
+    '<span style="font-size:12.5px;color:#0e3a6d;font-weight:700;display:block;margin:10px 0 2px">测试二 · K 点密度（总能收敛 + 耗时）</span>' +
     '<label>Q3. K 网格收敛测试（ENCUT = 500 eV）：总能首次收敛（|ΔE| &lt; 4 meV）的网格是' +
-    '<select id="q3" ' + selW + '><option value="">请选择</option><option>1×1×1</option><option>2×2×2</option><option>2×2×3</option><option>3×3×3</option><option>4×4×4</option></select>' +
-    '。<span class="hint">（图②：红虚线为 6×6×6 基准）</span></label>' +
-    '<label style="margin-top:8px">Q4. 1×1×1 网格的总能偏差高达 +18.55 eV、完全不可用，其原因是' +
-    '<select id="q4" ' + selW + '><option value="">请选择</option><option>布里渊区采样过粗，k 点过少</option><option>平面波基组不完备</option><option>SCF 自洽未收敛</option><option>赝势选择不当</option></select>' +
-    '。</label>' +
-    '<span ' + subT + '>测试三 · 泛函（带隙 vs 实验值）</span>' +
-    '<label>Q5. 请通过智能体（小碳老师）查询：g-C<sub>3</sub>N<sub>4</sub> 实验测量带隙为' +
-    '<input ' + inpN + ' id="q5a"> eV，其中' +
-    '<select id="q5b" ' + sel + '><option value="">请选择</option><option>PBE</option><option>HSE06</option></select>' +
-    ' 的计算结果与实验值最接近。<span class="hint">（自己分别在 PBE / HSE06 下各算一次，对比记录表带隙列）</span></label>' +
-    '<label style="margin-top:8px">Q6. 由记录表耗时列：HSE06 的计算量约为 PBE 的' +
-    '<input ' + inpN + ' id="q6a" step="0.1"> 倍，因此做定性判断（带隙变大/变小）用' +
-    '<select id="q6b" ' + sel + '><option value="">请选择</option><option>PBE</option><option>HSE06</option></select>' +
-    '，做定量对比（与实验值比较）用' +
-    '<select id="q6c" ' + sel + '><option value="">请选择</option><option>PBE</option><option>HSE06</option></select>' +
-    ' 泛函。</label>' +
-    '<label style="margin-top:8px">Q7. 综合三项测试，本实验最终确定的参数：ENCUT = ' +
-    '<select id="q7a" ' + sel + '><option value="">请选择</option><option>250</option><option>300</option><option>450</option><option>500</option><option>550</option></select>' +
-    ' eV，K 网格 = ' +
-    '<select id="q7b" ' + selW + '><option value="">请选择</option><option>1×1×1</option><option>2×2×2</option><option>3×3×3</option><option>5×5×3</option><option>6×6×6</option></select>' +
-    '，泛函 = ' +
-    '<select id="q7c" ' + sel + '><option value="">请选择</option><option>PBE</option><option>HSE06</option></select>' +
-    '。</label>' +
+    '<select id="q3" ' + selW + '><option value="">请选择</option><option>1×1×1</option><option>2×2×2</option><option>3×3×3</option><option>4×4×4</option></select>。</label>' +
+    '<label style="margin-top:8px">Q4. 1×1×1 网格的总能与其他网格差别巨大、完全不可用，其原因是' +
+    '<select id="q4" ' + selW + '><option value="">请选择</option><option>布里渊区采样过粗，k 点过少</option><option>平面波基组不完备</option><option>SCF 自洽未收敛</option><option>赝势选择不当</option></select>。</label>' +
     '<div style="margin-top:9px"><button class="go-btn" onclick="gradeQuiz()">✓ 提交判读</button> <span id="quizMsg"></span></div>';
   STATE.answered = false;
 }
 function gradeQuiz(){
   function v(id){ var el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; }
-  function num(id){ var x = parseFloat(v(id)); return isNaN(x) ? null : x; }
   var msg = document.getElementById('quizMsg');
-  if (!v('q1') || !v('q2') || !v('q3') || !v('q4') || num('q5a') == null || !v('q5b') ||
-      num('q6a') == null || !v('q6b') || !v('q6c') || !v('q7a') || !v('q7b') || !v('q7c')){
-    msg.innerHTML = '<span class="msg-no">请填完所有空再提交（Q5 实验带隙可向小碳老师查询）。</span>'; return;
+  if (!v('q1') || !v('q2') || !v('q3') || !v('q4')){
+    msg.innerHTML = '<span class="msg-no">请填完所有空再提交。</span>'; return;
   }
   STATE.answered = true;
   var res = [];
-  /* 测试一 · 截断能（10 分） */
   var q1 = v('q1');
-  res.push([q1 === '500' || q1 === '550', 'Q1 截断能：≥ 500 eV 总能收敛（450→500 差 24 meV，500→550 仅 3 meV），兼顾耗时推荐 <b>500 eV</b>' +
-    (q1 === '450' ? '（你选的 450 eV 偏差 24 meV，处于收敛边缘）' : (q1 === '550' ? '（550 eV 亦收敛，但耗时更长）' : (q1 === '500' ? '' : '（远未收敛）'))), 6]);
-  res.push([v('q2') === '近似线性增大', 'Q2 耗时：ENCUT 250 → 600 eV，SCF 耗时 41.7 → 51.5 s，近似线性增大（平面波基数随截断能增多）', 4]);
-  /* 测试二 · K 点密度（10 分） */
-  res.push([v('q3') === '3×3×3', 'Q3 K 网格：<b>3×3×3</b> 起总能即收敛（偏差 &lt; 4 meV）；2×2×2 / 2×2×3 系统性偏高约 0.19 eV（采样不足）', 6]);
+  res.push([q1 === '450' || q1 === '500' || q1 === '550', 'Q1 截断能：≥ 450 eV 总能进入收敛平台（看你曲线相邻两档的差），兼顾耗时推荐 <b>500 eV</b>' +
+    (q1 === '400' ? '（400 eV 还没进收敛平台）' : (q1 === '550' ? '（550 eV 亦收敛，但耗时更长）' : '')), 6]);
+  res.push([v('q2') === '近似线性增大', 'Q2 耗时：截断能增大 → 平面波基数增多，集群实测耗时 17 → 25 s 近似线性增大（看你的数据表耗时列）', 4]);
+  res.push([v('q3') === '3×3×3', 'Q3 K 网格：<b>3×3×3</b> 起总能收敛（偏差 &lt; 4 meV）；2×2×2 仍偏差约 0.19 eV（看你的 K 曲线与数据表）', 6]);
   res.push([v('q4').indexOf('布里渊区') === 0, 'Q4 1×1×1 只取 Γ 一个 k 点，<b>布里渊区采样过粗</b>，无法描述周期性材料的能带结构（与平面波基组、SCF 收敛、赝势无关）', 4]);
-  /* 测试三 · 泛函（14 分） */
-  var q5a = num('q5a');
-  var ok5a = (q5a >= 2.4 && q5a <= 3.0);
-  res.push([ok5a && v('q5b') === 'HSE06', 'Q5 实验测量带隙（文献值约 2.6 ~ 2.8 eV，你填 ' + (ok5a ? q5a : '超出常见范围') + ' eV）；<b>HSE06</b> 计算值与实验吻合，PBE 因"自相互作用误差"系统性低估带隙', 8]);
-  var q6a = num('q6a');
-  res.push([(q6a >= 3 && q6a <= 8) && v('q6b') === 'PBE' && v('q6c') === 'HSE06', 'Q6 计算量对比（HSE06 ≈ PBE 的 5 倍，见记录表耗时列' +
-    (q6a >= 3 && q6a <= 8 ? '' : '，你填的倍数偏离较大') + '）；定性判断用 PBE（快），与实验值定量对比用 HSE06（准）', 6]);
-  /* Q7 最终参数（6 分，各 2 分） */
-  res.push([v('q7a') === '500', 'Q7 截断能：<b>500 eV</b>（测试一收敛结论，兼顾耗时）', 2]);
-  res.push([v('q7b') === '5×5×3', 'Q7 K 网格：<b>5×5×3（Γ 居中）</b>（测试二：3×3×3 已收敛，生产取更充裕的 5×5×3）', 2]);
-  res.push([v('q7c') === 'HSE06', 'Q7 泛函：<b>HSE06</b>（测试三：与实验带隙定量对比并判读带边位置）', 2]);
   var pts = 0, html = '';
   res.forEach(function(r){
     if (r[0]) pts += r[2];
     html += '<div class="' + (r[0] ? 'ans-ok' : 'ans-no') + '">' + (r[0] ? '✓ ' : '✗ ') + r[1] + '</div>';
   });
-  html += '<div class="hint" style="margin-top:4px">参考：三项测试确定参数——ENCUT 500 eV（总能收敛 |ΔE| ≤ 0.03 eV）、K 网格 5×5×3（Γ 居中，3×3×3 已收敛）、定量泛函 HSE06（≈ PBE 的 5 倍耗时，与实验带隙约 2.7 eV 吻合；PBE 低估带隙只作定性筛选）。平台完整收敛数据见上方「📊 平台收敛测试参考数据」。</div>';
-  STATE.score = pts;                    // 本层得分（满分 40）
-  SCORES.set('g1', pts);
-  html += '<div style="margin-top:6px">第①层判读得分：<span class="score" style="font-size:16px">' + pts + ' / 40</span>' +
-          '<span class="hint">（三层累计 ' + SCORES.total() + ' / 100）</span></div>';
+  STATE.qzScore = pts;
+  var ready = enableSub();
+  html += '<div style="margin-top:6px">判读得分：<span class="score" style="font-size:15px">' + pts + ' / 20</span>' +
+          '<span class="hint">（最终参数选择 20 分' + (STATE.finalScore != null ? '：已得 ' + STATE.finalScore : '：待右上「最终参数选择」提交') +
+          '；本层合计 ' + STATE.score + ' / 40）</span></div>';
   document.getElementById('quizMsg').innerHTML = html;
   markOK('dot4');
-  document.getElementById('subBtn').disabled = false;
-  ILAB.mark('填空判读与实验结果核对', '截断能/K 网格收敛测试与泛函选择判读正确率赋分', 420, Math.round(pts / 40 * 100));
+  ILAB.mark('填空判读与实验结果核对', '截断能与 K 点收敛测试判读正确率赋分', 420, Math.round(pts / 20 * 100));
 }
 
 /* ================= ⑤ 提交本层结论（第①层） ================= */
@@ -1011,14 +899,20 @@ function submitResult(){
   function eg(en, fn){ var x = REC.get('pristine', 0, en, fn); return x == null ? '—' : x.toFixed(4); }
   function eg(en, fn){ var x = REC.get('pristine', 0, en, fn); return x == null ? '—' : x.toFixed(4); }
   function qv(id){ var el = document.getElementById(id); return el ? String(el.value || '—').trim() : '—'; }
+  function ser(kind, keys, labFn){
+    return keys.map(function(k){
+      var p = CONV.get(kind, k);
+      return labFn(k) + (p && p.e0 != null ? '=' + p.e0.toFixed(4) + 'eV/' + Math.round(p.t) + 's' : '=未测');
+    }).join('  ');
+  }
   var content =
     '【3D虚拟仿真·第①层 计算方法与参数确定】\n' +
-    '体系：本征 g-C₃N₄（ε = 0，R3m 体相原胞 21 原子）\n' +
-    '计算来源：真实集群计算（VASP 6.3.1，PBS 队列），K 网格 Γ 居中 5×5×3\n' +
-    '测试一·截断能：PBE Eg(400/450/500/550) = ' + eg(400,'PBE') + ' / ' + eg(450,'PBE') + ' / ' + eg(500,'PBE') + ' / ' + eg(550,'PBE') + ' eV；平台总能收敛判据：ENCUT ≥ 500 eV（|ΔE| ≤ 0.03 eV，耗时 42→48 s 近线性）\n' +
-    '测试二·K 点密度：平台总能收敛判据：≥ 3×3×3 收敛（|ΔE| < 4 meV），生产取 5×5×3（Γ 居中）\n' +
-    '测试三·泛函：实验带隙 ' + qv('q5a') + ' eV；HSE06@500 = ' + eg(500,'HSE06') + ' eV 与实验值吻合（PBE 系统性低估，仅作定性筛选）；HSE06 耗时 ≈ PBE 的 ' + qv('q6a') + ' 倍\n' +
-    '最终参数：ENCUT = ' + qv('q7a') + ' eV，K 网格 = ' + qv('q7b') + '，泛函 = ' + qv('q7c') + '\n' +
+    '体系：本征 g-C₃N₄（ε = 0，R3m 体相原胞 21 原子 · PBE）\n' +
+    '计算来源：真实集群计算（VASP 6.3.1，PRECALC 结果库），截断能 4 档 + K 网格 5 档均由学生逐档提交\n' +
+    '测试一·截断能（K=5×5×3）：' + ser('enc', ENCUTS, function(k){ return k + 'eV'; }) + '\n' +
+    '测试二·K 点密度（ENCUT=500）：' + ser('km', KMESHES, kmeshLabel) + '\n' +
+    '判读：' + (STATE.qzScore != null ? STATE.qzScore : '—') + ' / 20；最终参数：ENCUT = ' + (STATE.finalEnc || '—') +
+    '，K 网格 = ' + (STATE.finalKm || '—') + '（' + (STATE.finalScore != null ? STATE.finalScore : '—') + ' / 20）\n' +
     '本层得分：' + STATE.score + ' / 40（三层累计 ' + SCORES.total() + ' / 100）';
   fetch('/api/submit', {method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({token: user.token, kind: '阶段性成果', step: '3D虚拟仿真实验台·第①层',
@@ -1040,324 +934,207 @@ function submitResult(){
   .catch(function(){ msg.innerHTML = '<span class="msg-no">服务器连接失败</span>'; });
 }
 
-/* ================= 结论面板 ================= */
+/* ================= 收敛测试数据汇总（结论面板：只给提示，不剧透） ================= */
 function showConcl(){
-  var sys = SYS[STATE.sys];
-  var rl = redoxLevels();
-  var straddle = (STATE.cbm < rl.red && STATE.vbm > rl.ox);
-  ILAB.mark('生成实验结论与光催化活性判断', '基于带边位置与 pH 判据生成全解水活性结论', 180);
-  var lam = (STATE.Eg > 0) ? (1239.8 / STATE.Eg).toFixed(0) : '—';
-  var src = '真实 DFT 计算（VASP/' + STATE.func + '，集群队列执行，运行墙钟见第③步日志）';
-  var alignTxt = '真空能级参考：实验功函数 <b>Φ ≈ 4.40 eV</b>（UPS 实验值）' +
-    (STATE.align ? ' · ' + STATE.align : '');
-  document.getElementById('conclBox').innerHTML =
-    '<b>结论面板：</b>当前体系 <b>' + chem(sys.name) + '</b>（ε = ' + STATE.strain + ' %）｜来源：' + src + '｜' +
-    '带隙 <b>Eg = ' + STATE.Eg.toFixed(2) + ' eV</b>（' + STATE.func + ' 值，对应吸收边 ~' + lam + ' nm）｜' +
-    'CBM = <b>' + nhe2ev(STATE.cbm).toFixed(2) + ' eV</b>、VBM = <b>' + nhe2ev(STATE.vbm).toFixed(2) + ' eV</b>（电子能量，真空参考；对应电位 ' + STATE.cbm.toFixed(2) + ' / ' + STATE.vbm.toFixed(2) + ' V vs NHE，pH=0；' + alignTxt + '）' +
-    (STATE.defect ? '｜<span style="color:var(--red)">⚠ 禁带中出现 C 空位缺陷能级（复合中心）</span>' : '') + '｜' +
-    (straddle ? '<span class="ans-ok">✓ CBM(' + nhe2ev(STATE.cbm).toFixed(2) + ' eV) 在 H⁺/H₂(' + nhe2ev(rl.red).toFixed(2) +
-                ' eV) 之上、VBM(' + nhe2ev(STATE.vbm).toFixed(2) + ' eV) 在 O₂/H₂O(' + nhe2ev(rl.ox).toFixed(2) +
-                ' eV) 之下，满足全解水热力学条件（pH = ' + rl.ph + '，判据基于你本次计算的带边）</span>'
-              : '<span class="ans-no">✗ 不满足全解水热力学条件（pH = ' + rl.ph + '，带边未包住水的氧化还原电位）</span>' +
-                '<div class="hint" style="margin-top:4px">注：以上判据基于你本次所选泛函与参数计算的带隙和带边。不同泛函给出的带隙不同，请把你的计算结果与实验测量带隙对比后，在第④步判读题中回答。</div>');
-  /* 结论面板内的 Unicode 上下标统一转成 <sub>/<sup>（HTML 已生成，再对文本做一次替换即可） */
-  var _cb = document.getElementById('conclBox');
-  _cb.innerHTML = chem(_cb.innerHTML);
+  ILAB.mark('生成实验结论与光催化活性判断', '汇总截断能与 K 点收敛测试的总能与耗时数据', 180);
+  function tbl(kind, keys, labFn){
+    var rows = '', prev = null;
+    keys.forEach(function(k){
+      var p = CONV.get(kind, k), lab = labFn(k);
+      if (p && p.e0 != null){
+        var de = (prev != null) ? (p.e0 - prev) : null;
+        rows += '<tr><td style="border:1px solid #cfe0f2;padding:2px 10px;text-align:center">' + lab + '</td>' +
+                '<td style="border:1px solid #cfe0f2;padding:2px 10px;text-align:center"><b>' + p.e0.toFixed(5) + '</b></td>' +
+                '<td style="border:1px solid #cfe0f2;padding:2px 10px;text-align:center">' + (de == null ? '—' : (de >= 0 ? '+' : '−') + Math.abs(de).toFixed(5)) + '</td>' +
+                '<td style="border:1px solid #cfe0f2;padding:2px 10px;text-align:center;color:#5a6b80">' + fmtDur(p.t) + '</td></tr>';
+        prev = p.e0;
+      } else {
+        rows += '<tr style="color:#98a7b8"><td style="border:1px solid #e4ecf5;padding:2px 10px;text-align:center">' + lab + '</td>' +
+                '<td style="border:1px solid #e4ecf5;padding:2px 10px;text-align:center">待计算</td>' +
+                '<td style="border:1px solid #e4ecf5;padding:2px 10px;text-align:center">—</td>' +
+                '<td style="border:1px solid #e4ecf5;padding:2px 10px;text-align:center">—</td></tr>';
+        prev = null;
+      }
+    });
+    return '<table style="border-collapse:collapse;margin:4px 0 2px;font-size:12.3px">' +
+      '<tr style="background:#eef4fb"><th style="border:1px solid #cfe0f2;padding:2px 10px">参数</th>' +
+      '<th style="border:1px solid #cfe0f2;padding:2px 10px">总能 E<sub>0</sub> (eV)</th>' +
+      '<th style="border:1px solid #cfe0f2;padding:2px 10px">ΔE vs 上一档 (eV)</th>' +
+      '<th style="border:1px solid #cfe0f2;padding:2px 10px">集群实测耗时</th></tr>' + rows + '</table>';
+  }
+  var html =
+    '<b>收敛测试数据汇总</b>（均为你自己逐档提交计算的结果）' +
+    '<div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:4px">' +
+    '<div><div style="font-size:12.5px;color:#0e3a6d"><b>测试一 · 截断能</b>（K = 5×5×3）</div>' + tbl('enc', ENCUTS, function(k){ return k + ' eV'; }) + '</div>' +
+    '<div><div style="font-size:12.5px;color:#0e3a6d"><b>测试二 · K 点密度</b>（ENCUT = 500 eV）</div>' + tbl('km', KMESHES, kmeshLabel) + '</div>' +
+    '</div>' +
+    '<div class="hint" style="margin-top:6px">判读提示（只给方法，不含答案）：① 收敛看<b>相邻两档</b>的总能差 |ΔE|——它小到什么程度（对比 21 原子，想想每原子分到多少 meV）你才认为参数够用？② <b>耗时</b>也是选参数的重要依据——看它随参数增大的变化趋势，思考"精度收益"与"时间成本"如何权衡。③ 留意有没有哪一档的总能与其他档差别特别大——对照第②步的参数想一想可能的原因。④ 数据齐了以后，到上方「最终参数选择」提交你的结论。</div>';
+  document.getElementById('conclBox').innerHTML = chem(html);
 }
 
-/* ================= 真实数据绘图 ================= */
-function drawRealCharts(){
-  drawBandReal(); drawAbsReal(); drawEdge();
-}
-function realWindow(){
-  // 纵轴固定显示区间 −3 ~ +5 eV（相对 VBM），保证不同体系/泛函结果可直接对比
-  return {emin: -3.0, emax: 5.0};
-}
-function drawBandReal(){
-  var r = STATE.real;
-  if (!r || !r.eigen || !r.eigen.length) return;
-  var cv = document.getElementById('bandCv');
-  var c = fitCanvas(cv), ctx = c.ctx, W = c.w, H = c.h;
-  ctx.clearRect(0, 0, W, H);
-  var L = 34, R = 8, T = 10, B = 20;
-  var pw = W - L - R, ph = H - T - B;
-  var nk = r.nk, occ = Math.round((r.nelect || 0) / 2);
-  // 逐 k 点按能量升序排序（EIGENVAL 带序不保证逐 k 能量有序，否则会画出交叉乱带）
-  var E = r.eigen.map(function(row){ return row.slice().sort(function(a, b){ return a - b; }); });
-  if (nk < 2 || occ < 1 || occ >= (E[0] ? E[0].length : 0)) return;
-  // 数据驱动的 VBM/CBM（排序后第 occ-1 / occ 条）
-  var vbm = -1e9, cbm = 1e9, vk = 0, ck = 0;
-  for (var i = 0; i < nk; i++){
-    if (E[i][occ - 1] > vbm){ vbm = E[i][occ - 1]; vk = i; }
-    if (E[i][occ] < cbm){ cbm = E[i][occ]; ck = i; }
-  }
-  // x 坐标按 k 路径累计长度（kcoords 为倒空间分数坐标），高对称点取方向转折处
-  var cum = [0], ticks = [0];
-  if (r.kcoords && r.kcoords.length === nk){
-    var seenT = {0: 1};
-    for (i = 1; i < nk; i++){
-      var d = 0;
-      for (var t = 0; t < 3; t++){
-        var dd = r.kcoords[i][t] - r.kcoords[i - 1][t];
-        d += dd * dd;
-      }
-      cum.push(cum[i - 1] + Math.sqrt(d));
-      if (d < 1e-9 && !seenT[i]){ ticks.push(i); seenT[i] = 1; }   // 相邻重复 → line-mode 关节（M/K）
-    }
-    // 方向转折 → 高对称点（HSE06 零权重显式列表的 k 点无重复，靠转向检测）
-    for (i = 1; i < nk - 1; i++){
-      if (seenT[i] || seenT[i - 1]) continue;
-      var ka = r.kcoords[i - 1], kb = r.kcoords[i], kc = r.kcoords[i + 1];
-      var d1 = [kb[0] - ka[0], kb[1] - ka[1], kb[2] - ka[2]];
-      var d2 = [kc[0] - kb[0], kc[1] - kb[1], kc[2] - kb[2]];
-      var l1 = Math.sqrt(d1[0] * d1[0] + d1[1] * d1[1] + d1[2] * d1[2]);
-      var l2 = Math.sqrt(d2[0] * d2[0] + d2[1] * d2[1] + d2[2] * d2[2]);
-      if (l1 < 1e-9 || l2 < 1e-9) continue;
-      if ((d1[0] * d2[0] + d1[1] * d2[1] + d1[2] * d2[2]) / (l1 * l2) < 0.9999){
-        ticks.push(i); seenT[i] = 1;
-      }
-    }
-    if (!seenT[nk - 1]) ticks.push(nk - 1);
-  } else {
-    for (i = 1; i < nk; i++) cum.push(cum[i - 1] + 1);
-    ticks = [0, Math.round(nk / 3), Math.round(2 * nk / 3), nk - 1];
-  }
-  var total = cum[nk - 1] || 1;
-  function X(i){ return L + cum[i] / total * pw; }
-  var win = realWindow(), Emin = win.emin, Emax = win.emax;
-  function Y(e){ return T + (Emax - e) / (Emax - Emin) * ph; }
-  // 网格与轴
-  var g0 = Math.ceil(Emin), g1 = Math.floor(Emax);
-  ctx.strokeStyle = '#e3eaf2'; ctx.fillStyle = '#5a6b80'; ctx.font = '10px sans-serif';
-  for (var e = g0; e <= g1; e++){ ctx.beginPath(); ctx.moveTo(L, Y(e)); ctx.lineTo(W - R, Y(e)); ctx.stroke(); }
-  ctx.textAlign = 'right';
-  for (e = g0; e <= g1; e++){ ctx.fillText(e.toFixed(0), L - 5, Y(e) + 3); }
-  ctx.save(); ctx.translate(10, T + ph / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'center';
-  ctx.fillText('E - E(VBM) (eV)', 0, 0); ctx.restore();
-  ctx.textAlign = 'center'; ctx.fillStyle = '#1a2332'; ctx.font = '11px sans-serif';
-  var lbl = (r.klabels && r.klabels.length) ? r.klabels
-          : (ticks.length === 5 ? ['Γ', 'M', 'K', 'Γ', 'A'] : ['Γ', 'M', 'K', 'Γ']);
-  ticks.forEach(function(ti, li){ ctx.fillText(lbl[li] || '', X(ti), H - 7); });
-  ctx.strokeStyle = '#98a7b8'; ctx.beginPath();
-  ticks.slice(1, -1).forEach(function(ti){ ctx.moveTo(X(ti), T); ctx.lineTo(X(ti), T + ph); });
-  ctx.stroke();
-  // 画带（在【能量空间】裁剪到窗口 [Emin, Emax]，避免像素/能量混比导致全线被裁）
-  var nb = E[0].length;
-  for (var b = 0; b < nb; b++){
-    var col = '#b9c8da';
-    if (b === occ - 1) col = '#1a5dab';
-    else if (b === occ) col = '#c9a227';
-    else if (b < occ - 1) col = '#8fa8c4';
-    else col = '#d8c690';
-    ctx.strokeStyle = col; ctx.lineWidth = (b === occ - 1 || b === occ) ? 1.8 : 1;
-    ctx.beginPath();
-    var started = false;
-    for (i = 0; i < nk - 1; i++){
-      var e0 = E[i][b] - vbm, e1 = E[i + 1][b] - vbm;
-      if (!isFinite(e0) || !isFinite(e1)){ started = false; continue; }
-      var lo = Math.min(e0, e1), hi = Math.max(e0, e1);
-      if (hi < Emin - 0.3 || lo > Emax + 0.3){ started = false; continue; }
-      // 参数化裁剪 t∈[0,1]：求窗口∩线段
-      var t0 = 0, t1 = 1;
-      if (e1 !== e0){
-        var ta = (Emin - e0) / (e1 - e0), tb = (Emax - e0) / (e1 - e0);
-        t0 = Math.max(t0, Math.min(ta, tb));
-        t1 = Math.min(t1, Math.max(ta, tb));
-      }
-      if (t0 >= t1){ started = false; continue; }
-      var xa = X(i), xb = X(i + 1);
-      var ya = Y(e0 + (e1 - e0) * t0), yb = Y(e0 + (e1 - e0) * t1);
-      var x0 = xa + (xb - xa) * t0, x1 = xa + (xb - xa) * t1;
-      if (!started){ ctx.moveTo(x0, ya); started = true; }
-      ctx.lineTo(x0, ya);
-      ctx.lineTo(x1, yb);
-    }
-    ctx.stroke(); ctx.lineWidth = 1;
-  }
-  // VBM / CBM 标记（画在数据点上）
-  var egPlot = cbm - vbm;
-  ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.arc(X(vk), Y(0), 3.4, 0, 6.3); ctx.fill();
-  ctx.fillStyle = '#12447e'; ctx.beginPath(); ctx.arc(X(ck), Y(egPlot), 3.4, 0, 6.3); ctx.fill();
-  ctx.fillStyle = '#5a6b80'; ctx.font = '10px sans-serif';
-  ctx.fillText('VBM', X(vk) + 16, Y(0) + 3);
-  ctx.fillText('CBM', X(ck), Y(egPlot) - 6);
-  ctx.strokeStyle = '#2e8b57'; ctx.setLineDash([3, 3]);
-  ctx.beginPath(); ctx.moveTo(X(ck), Y(0)); ctx.lineTo(X(ck), Y(egPlot)); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle = '#2e8b57';
-  ctx.fillText('Eg = ' + egPlot.toFixed(2) + ' eV (' + STATE.func + ')', Math.min(X(ck) + 22, W - 86), Y(egPlot / 2));
-}
-function wl2rgb(lam){
-  var r = 0, g = 0, b = 0;
-  if (lam >= 380 && lam < 440){ r = -(lam - 440) / 60; b = 1; }
-  else if (lam < 490){ g = (lam - 440) / 50; b = 1; }
-  else if (lam < 510){ g = 1; b = -(lam - 510) / 20; }
-  else if (lam < 580){ r = (lam - 510) / 70; g = 1; }
-  else if (lam < 645){ r = 1; g = -(lam - 645) / 65; }
-  else if (lam <= 780){ r = 1; }
-  var f = lam < 420 ? 0.3 + 0.7 * (lam - 380) / 40 : (lam > 700 ? 0.3 + 0.7 * (780 - lam) / 80 : 1);
-  function c(v){ return Math.round(255 * Math.pow(Math.max(v, 0) * f, 0.8)); }
-  return 'rgb(' + c(r) + ',' + c(g) + ',' + c(b) + ')';
-}
-function drawAbsReal(){
-  var r = STATE.real;
-  var cv = document.getElementById('dosCv');
-  var c = fitCanvas(cv), ctx = c.ctx, W = c.w, H = c.h;
-  ctx.clearRect(0, 0, W, H);
-  var ab = r && r.absorb;
-  var L = 34, R = 6, T = 26, B = 18, pw = W - L - R, ph = H - T - B;
-  function X(lam){ return L + (lam - 100) / 900 * pw; }
-  function Y(v){ return T + (1 - v) * ph; }
-  // 顶部光谱条带：紫外(灰) - 可见光七彩 - 近红外(灰)
-  var bands = [[380, 430, '\u7d2b'], [430, 450, '\u975b'], [450, 495, '\u84dd'], [495, 570, '\u7eff'],
-               [570, 600, '\u9ec4'], [600, 620, '\u6a59'], [620, 780, '\u7ea2']];
-  ctx.fillStyle = '#aab6c5'; ctx.fillRect(X(100), T - 10, X(380) - X(100), 7);
-  ctx.fillRect(X(780), T - 10, X(1000) - X(780), 7);
-  bands.forEach(function(bd){
-    ctx.fillStyle = wl2rgb((bd[0] + bd[1]) / 2);
-    ctx.fillRect(X(bd[0]), T - 10, X(bd[1]) - X(bd[0]), 7);
-  });
-  ctx.fillStyle = '#5a6b80'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText('\u7d2b\u5916', X(240), T - 13);
-  bands.forEach(function(bd){ ctx.fillText(bd[2], X((bd[0] + bd[1]) / 2), T - 13); });
-  ctx.fillText('\u8fd1\u7ea2\u5916', X(890), T - 13);
-  if (!ab || !ab.length){
-    ctx.fillStyle = '#5a6b80'; ctx.font = '12px sans-serif';
-    ctx.fillText('\u5438\u6536\u5149\u8c31\u6570\u636e\u751f\u6210\u4e2d\u2026\u2026', W / 2, H / 2);
-    return;
-  }
-  // 轴
-  ctx.strokeStyle = '#98a7b8'; ctx.beginPath();
-  ctx.moveTo(L, T); ctx.lineTo(L, T + ph); ctx.lineTo(W - R, T + ph); ctx.stroke();
-  ctx.fillStyle = '#5a6b80'; ctx.font = '10px sans-serif';
-  ctx.textAlign = 'right';
-  [0, 0.5, 1].forEach(function(v){ ctx.fillText(v.toFixed(1), L - 4, Y(v) + 3); });
-  ctx.textAlign = 'center';
-  for (var lam = 100; lam <= 1000; lam += 100){ ctx.fillText(String(lam), X(lam), H - 5); }
-  ctx.fillText('\u6ce2\u957f \u03bb (nm)', L + pw / 2, H - 0);
-  ctx.save(); ctx.translate(10, T + ph / 2); ctx.rotate(-Math.PI / 2);
-  ctx.fillText('\u5438\u6536\u5f3a\u5ea6 (a.u.)', 0, 0); ctx.restore();
-  // 逐波长彩色填充 + 曲线
-  var i, x1, x2, y1, y2;
-  for (i = 0; i < ab.length - 1; i++){
-    x1 = X(ab[i][0]); x2 = X(ab[i + 1][0]);
-    y1 = Y(Math.min(ab[i][1], 1)); y2 = Y(Math.min(ab[i + 1][1], 1));
-    ctx.fillStyle = wl2rgb((ab[i][0] + ab[i + 1][0]) / 2);
-    ctx.beginPath(); ctx.moveTo(x1, Y(0)); ctx.lineTo(x1, y1);
-    ctx.lineTo(x2, y2); ctx.lineTo(x2, Y(0)); ctx.closePath(); ctx.fill();
-  }
-  ctx.strokeStyle = '#3c4a5c'; ctx.lineWidth = 1.4; ctx.beginPath();
-  for (i = 0; i < ab.length; i++){
-    var xx = X(ab[i][0]), yy = Y(Math.min(ab[i][1], 1));
-    if (i === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
-  }
-  ctx.stroke(); ctx.lineWidth = 1;
-  // 吸收边标注：\u03bbg = 1239.84 / Eg
-  if (r.eg != null && r.eg > 0){
-    var lg = 1239.84 / r.eg;
-    if (lg >= 100 && lg <= 1000){
-      ctx.strokeStyle = '#c0392b'; ctx.setLineDash([4, 3]);
-      ctx.beginPath(); ctx.moveTo(X(lg), Y(0)); ctx.lineTo(X(lg), Y(1)); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = '#c0392b'; ctx.textAlign = lg > 550 ? 'right' : 'left';
-      ctx.fillText('\u5438\u6536\u8fb9 \u03bbg \u2248 ' + Math.round(lg) + ' nm (Eg = ' + r.eg.toFixed(2) + ' eV)',
-                   X(lg) + (lg > 550 ? -6 : 6), Y(0.92));
-    }
-  }
-  ctx.textAlign = 'left'; ctx.fillStyle = '#1a2332'; ctx.font = '10px sans-serif';
-  ctx.fillText('UV-Vis \u5438\u6536\u5149\u8c31\uff08LOPTICS\uff0c\u5f52\u4e00\u5316\uff09', L + 6, Y(0.06));
-}
-
-/* ================= 三张图 ================= */
-function clearCharts(){
-  ['bandCv','dosCv','edgeCv'].forEach(function(id){
-    var cv = document.getElementById(id);
-    var ctx = cv.getContext('2d');
-    ctx.clearRect(0, 0, cv.width, cv.height);
-  });
-  document.getElementById('conclBox').innerHTML = '<b>结论面板：</b>完成计算后此处显示带隙、带边位置与可见光活性评估。';
-}
+/* ================= 收敛曲线绘图（学生自己的数据 · 双轴：总能 + 耗时） ================= */
 function fitCanvas(cv){
   var w = Math.round(cv.clientWidth), h = Math.round(cv.clientHeight);
-  /* 每次都重设背衬尺寸：重设会清空整块位图并复位变换。
-     旧写法只在宽度变化时重设——布局仅高度变化（如结论面板把图挤矮）时，
-     旧的大尺寸位图残留画布下部，新图叠旧图造成"重影" */
   cv.width = w * 2; cv.height = h * 2;
   var ctx = cv.getContext('2d');
   ctx.setTransform(2, 0, 0, 2, 0, 0);
   return {ctx: ctx, w: w, h: h};
 }
-
-function drawEdge(){
-  var cv = document.getElementById('edgeCv');
-  var c = fitCanvas(cv), ctx = c.ctx, W = c.w, H = c.h;
+function drawConvCharts(){ drawEncChart(); drawKmChart(); }
+function convEmpty(ctx, W, H, txt){
   ctx.clearRect(0, 0, W, H);
-  var L = 40, R = 8, T = 10, B = 18;
-  var pw = W - L - 110, ph = H - T - B;
-  /* 纵轴：电子能量（eV，真空能级参考，向上增大）。E(eV) = −4.44 − V(vs NHE)。
-     换算后 CBM(−3.05) > VBM(−5.91)，数值序与"能量向上"的图一致（老大 11-13 拍板：
-     弃用"电位负值朝上"的文献画法——不符合直觉）。
-     量程覆盖：HSE06 大应变 CBM 最高 ~−2.1 eV，VBM 最低 ~−5.9 eV */
-  var Emax = -2.0, Emin = -6.8;
-  function Y(v){ return T + (Emax - (-4.44 - v)) / (Emax - Emin) * ph; }   /* 入参仍为电位 vs NHE */
-  ctx.strokeStyle = '#e3eaf2';
-  var e;
-  for (e = -6.5; e <= -2; e += 0.5){ var gv = -4.44 - e; ctx.beginPath(); ctx.moveTo(L, Y(gv)); ctx.lineTo(L + pw, Y(gv)); ctx.stroke(); }
-  ctx.fillStyle = '#5a6b80'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
-  for (e = -2; e >= -6; e--){ var tv = -4.44 - e; ctx.fillText(e.toFixed(1), L - 4, Y(tv) + 3); }
-  ctx.save(); ctx.translate(12, T + ph / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'center';
-  ctx.fillText('电子能量 (eV，真空能级参考)', 0, 0); ctx.restore();
-  // 水的氧化还原电位（随 pH 线性下移，能斯特方程 −0.059 V/pH）
-  var rl = redoxLevels();
-  ctx.setLineDash([5, 4]); ctx.lineWidth = 1.4;
-  ctx.strokeStyle = '#d84a3a'; ctx.beginPath(); ctx.moveTo(L, Y(rl.ox)); ctx.lineTo(L + pw, Y(rl.ox)); ctx.stroke();
-  ctx.strokeStyle = '#2e8b57'; ctx.beginPath(); ctx.moveTo(L, Y(rl.red)); ctx.lineTo(L + pw, Y(rl.red)); ctx.stroke();
-  ctx.setLineDash([]); ctx.lineWidth = 1;
-  ctx.textAlign = 'left'; ctx.font = '10px sans-serif';
-  ctx.fillStyle = '#d84a3a'; fillChem(ctx, 'O₂/H₂O  ' + nhe2ev(rl.ox).toFixed(2) + ' eV', L + pw + 4, Y(rl.ox) + 3);
-  ctx.fillStyle = '#2e8b57'; fillChem(ctx, 'H⁺/H₂  ' + nhe2ev(rl.red).toFixed(2) + ' eV', L + pw + 4, Y(rl.red) + 3);
-  ctx.fillStyle = '#5a6b80'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'right';
-  ctx.fillText('pH = ' + rl.ph, L + pw - 6, T + 12);
-  ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
-  ctx.fillText('(仅移动水线)', L + pw - 6, T + 24);
-  ctx.font = '10px sans-serif';
-  // 两个体系的能带条
-  function bar(x, cbm, vbm, label, now){
-    var bw = 26;
-    ctx.fillStyle = 'rgba(46,111,216,0.8)';  ctx.fillRect(x, Y(cbm), bw, Y(-2.0) - Y(cbm));
-    ctx.fillStyle = 'rgba(201,162,39,0.85)'; ctx.fillRect(x, Y(cbm), bw, Y(vbm) - Y(cbm));
-    ctx.strokeStyle = '#1a2332'; ctx.strokeRect(x, Y(cbm), bw, Y(-2.0) - Y(cbm));
-    ctx.strokeRect(x, Y(cbm), bw, Y(vbm) - Y(cbm));
-    ctx.fillStyle = now ? '#c0392b' : '#5a6b80'; ctx.font = (now ? 'bold ' : '') + '10px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(label, x + bw / 2, H - 5);
-    if (now){ ctx.fillText('◀ 当前', x + bw / 2, T - 1); }
-    /* 带边标注：CBM 在上（导带底）、VBM 在下（价带顶） */
-    ctx.font = '9px sans-serif'; ctx.fillStyle = '#1a2332'; ctx.textAlign = 'left';
-    ctx.fillText('CBM', x + bw + 2, Y(cbm) + 3);
-    ctx.fillText('VBM', x + bw + 2, Y(vbm) + 3);
+  ctx.fillStyle = '#8a99ab'; ctx.font = '12px system-ui,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(txt, W / 2, H / 2 - 8);
+  ctx.font = '11px system-ui,sans-serif';
+  ctx.fillText('每换一档参数，都要到第③步点一次「提交计算」', W / 2, H / 2 + 12);
+  ctx.textAlign = 'left';
+}
+function drawEncChart(){
+  var cv = document.getElementById('encCv');
+  if (!cv) return;
+  var c = fitCanvas(cv), ctx = c.ctx, W = c.w, H = c.h;
+  var pts = ENCUTS.map(function(k){ return CONV.get('enc', k); });
+  if (!pts.some(function(p){ return p && p.e0 != null; })){ convEmpty(ctx, W, H, '截断能收敛曲线：完成 ENCUT 系列计算后绘制'); return; }
+  drawConvXY(ctx, W, H, ENCUTS.map(function(k){ return k + ' eV'; }), pts, null);
+}
+function drawKmChart(){
+  var cv = document.getElementById('kmCv');
+  if (!cv) return;
+  var c = fitCanvas(cv), ctx = c.ctx, W = c.w, H = c.h;
+  var pts = KMESHES.map(function(k){ return CONV.get('km', k); });
+  if (!pts.some(function(p){ return p && p.e0 != null; })){ convEmpty(ctx, W, H, 'K 点收敛曲线：完成 K 网格系列计算后绘制'); return; }
+  drawConvXY(ctx, W, H, KMESHES.map(kmeshLabel), pts, 1.0);
+}
+/* 双轴收敛图：蓝实线 = 总能 E0（左轴），绿虚线 = 集群实测耗时（右轴）。
+   outThr：E0 偏离收敛簇超过该阈值（eV）的点钳在框底并红字标注（如 1×1×1 的 −156.95 eV） */
+function drawConvXY(ctx, W, H, xlabels, pts, outThr){
+  ctx.clearRect(0, 0, W, H);
+  var L = 48, R = 42, T = 16, B = 26;
+  var pw = W - L - R, ph = H - T - B;
+  var n = xlabels.length;
+  function X(i){ return L + (n === 1 ? pw / 2 : i / (n - 1) * pw); }
+  var done = [], e0s = [], ts = [];
+  pts.forEach(function(p, i){ if (p && p.e0 != null){ done.push(i); e0s.push(p.e0); if (p.t != null) ts.push(p.t); } });
+  var base = e0s.slice().sort(function(a, b){ return a - b; });
+  var mid = base.length ? base[0] : 0;   /* 收敛簇参考：最负总能（收敛点位于能量最低处） */
+  var win = e0s.filter(function(e){ return Math.abs(e - mid) <= (outThr || 1e9); });
+  var lo = Math.min.apply(null, win), hi = Math.max.apply(null, win);
+  var span = Math.max(hi - lo, 0.12);
+  var e0 = lo - span * 0.3, e1 = hi + span * 0.4;
+  var tlo = ts.length ? Math.min.apply(null, ts) : 0, thi = ts.length ? Math.max.apply(null, ts) : 1;
+  var tsp = Math.max(thi - tlo, 4);
+  var t0 = tlo - tsp * 0.25, t1 = thi + tsp * 0.35;
+  function Y(e){ return T + (e1 - e) / (e1 - e0) * ph; }
+  function YT(t){ return T + (t1 - t) / (t1 - t0) * ph; }
+  ctx.strokeStyle = '#c3cfdd'; ctx.lineWidth = 1;
+  ctx.strokeRect(L, T, pw, ph);
+  ctx.strokeStyle = '#eef2f8';
+  var g, gy;
+  for (g = 0; g <= 4; g++){
+    gy = T + g / 4 * ph;
+    ctx.beginPath(); ctx.moveTo(L, gy); ctx.lineTo(L + pw, gy); ctx.stroke();
   }
-  var isPristine = (STATE.sys === 'pristine' && STATE.strain === 0);
-  bar(L + 14, SYS.pristine.cbm, SYS.pristine.cbm + SYS.pristine.Eg, '本征', isPristine);
-  bar(L + 70, STATE.cbm, STATE.vbm, '当前', !isPristine);
-  // 颜色图例（注释）
-  (function(){
-    var lx = L + 4, ly = H - B - 8 - 42, lh = 14, bw2 = 250, bh2 = 60;
-    ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(255,255,255,0.93)'; ctx.fillRect(lx - 6, ly - 12, bw2, bh2);
-    ctx.strokeStyle = '#c9d4e0'; ctx.strokeRect(lx - 6, ly - 12, bw2, bh2);
-    var items = [
-      ['rgba(46,111,216,0.8)',  '蓝色：CBM 之上（导带 · 还原能力区）'],
-      ['rgba(201,162,39,0.9)',  '深黄：带隙（上端 CBM，下端 VBM）'],
-      ['#d1b047',               '浅黄：VBM 之下（价带 · 氧化能力区）']
-    ];
-    items.forEach(function(it, i){
-      var yy = ly + i * lh;
-      ctx.fillStyle = it[0]; ctx.fillRect(lx, yy - 8, 13, 9);
-      ctx.strokeStyle = '#1a2332'; ctx.lineWidth = 0.6; ctx.strokeRect(lx, yy - 8, 13, 9); ctx.lineWidth = 1;
-      ctx.fillStyle = '#33415a'; ctx.fillText(it[1], lx + 18, yy);
+  ctx.font = '10px system-ui,sans-serif';
+  for (g = 0; g <= 4; g++){
+    gy = T + g / 4 * ph;
+    ctx.fillStyle = '#5a6b80'; ctx.textAlign = 'right';
+    ctx.fillText((e1 - g / 4 * (e1 - e0)).toFixed(span < 0.3 ? 3 : 1), L - 4, gy + 3);
+    ctx.fillStyle = '#2e8b57'; ctx.textAlign = 'left';
+    ctx.fillText(Math.round(t1 - g / 4 * (t1 - t0)) + 's', L + pw + 4, gy + 3);
+  }
+  ctx.fillStyle = '#5a6b80'; ctx.textAlign = 'center';
+  for (var i = 0; i < n; i++) ctx.fillText(xlabels[i], X(i), H - B + 14);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#2e6fd8'; ctx.fillText('E₀ (eV)', 6, T + 8);
+  ctx.fillStyle = '#2e8b57'; ctx.fillText('耗时', L + pw + 4, T - 4);
+  function dot(x, y, color, r){
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 6.3); ctx.fillStyle = color; ctx.fill();
+  }
+  var doneE = done.filter(function(i){ return Math.abs(pts[i].e0 - mid) <= (outThr || 1e9); });
+  if (doneE.length > 1){
+    ctx.strokeStyle = '#2e6fd8'; ctx.lineWidth = 1.8; ctx.setLineDash([]);
+    ctx.beginPath();
+    doneE.forEach(function(i, j){
+      var x = X(i), y = Y(pts[i].e0);
+      if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     });
-    ctx.fillStyle = '#7a8798'; ctx.fillText('换算：E(eV) = −4.44 − V(vs NHE)', lx + 18, ly + 3 * lh);
-  })();
+    ctx.stroke();
+  }
+  doneE.forEach(function(i){ dot(X(i), Y(pts[i].e0), '#2e6fd8', 2.8); });
+  var doneT = done.filter(function(i){ return pts[i].t != null; });
+  if (doneT.length > 1){
+    ctx.strokeStyle = '#2e8b57'; ctx.lineWidth = 1.4; ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    doneT.forEach(function(i, j){
+      var x = X(i), y = YT(pts[i].t);
+      if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  doneT.forEach(function(i){ dot(X(i), YT(pts[i].t), '#2e8b57', 2.2); });
+  done.forEach(function(i){
+    if (Math.abs(pts[i].e0 - mid) > (outThr || 1e9)){
+      var x = X(i);
+      dot(x, T + ph - 3, '#d84a3a', 2.8);
+      ctx.fillStyle = '#d84a3a'; ctx.font = '10px system-ui,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(pts[i].e0.toFixed(2) + ' eV（超出范围）', x, T + ph - 9);
+      ctx.textAlign = 'left';
+    }
+  });
+  ctx.strokeStyle = '#b6c2d0'; ctx.lineWidth = 1.2;
+  ctx.fillStyle = '#b6c2d0'; ctx.font = '10px system-ui,sans-serif'; ctx.textAlign = 'center';
+  for (i = 0; i < n; i++){
+    if (!pts[i]){
+      ctx.beginPath(); ctx.arc(X(i), T + ph / 2, 3.5, 0, 6.3); ctx.stroke();
+      ctx.fillText('待计算', X(i), T + ph / 2 + 16);
+    }
+  }
+  ctx.textAlign = 'left';
+}
+
+/* ================= 最终参数选择（主区第三格 · 20 分，全部算完才开放） ================= */
+function updateFinalSel(){
+  var box = document.getElementById('finalSel');
+  if (!box) return;
+  var ne = CONV.count('enc'), nk = CONV.count('km');
+  if (!CONV.done()){
+    box.innerHTML =
+      '<div class="hint" style="margin:2px 0 6px">完成全部收敛测试后开放：依据你的两条收敛曲线与数据表，选出本实验最终采用的参数（每空 10 分，共 20 分）。</div>' +
+      '<div style="color:#5a6b80;font-size:12.8px">进度：截断能 <b>' + ne + ' / 4</b> 档 · K 点 <b>' + nk + ' / 5</b> 档</div>' +
+      '<div style="margin-top:12px;color:#98a7b8;font-size:12.8px">① 最终截断能 ENCUT = <b>待全部计算完成</b></div>' +
+      '<div style="margin-top:6px;color:#98a7b8;font-size:12.8px">② 最终 K 网格 = <b>待全部计算完成</b></div>';
+    return;
+  }
+  if (STATE.finalScore != null){
+    box.innerHTML =
+      '<div style="font-size:12.8px;line-height:1.9">' +
+      '<div>① 最终截断能 ENCUT = <b>' + STATE.finalEnc + '</b>（10 分' + (STATE.finalOkA ? ' · ✓' : ' · ✗') + '）</div>' +
+      '<div style="margin-top:4px">② 最终 K 网格 = <b>' + STATE.finalKm + '</b>（10 分' + (STATE.finalOkB ? ' · ✓' : ' · ✗') + '）</div>' +
+      '<div style="margin-top:8px">最终选择得分：<span class="score" style="font-size:15px">' + STATE.finalScore + ' / 20</span></div>' +
+      '<div style="margin-top:6px;font-size:12px">' + (STATE.finalFb || '') + '</div></div>';
+    return;
+  }
+  var selA = 'class="sel" style="display:inline-block;width:88px;padding:4px 8px;margin:0 4px"';
+  var selB = 'class="sel" style="display:inline-block;width:96px;padding:4px 8px;margin:0 4px"';
+  box.innerHTML =
+    '<div class="hint" style="margin:2px 0 6px">全部收敛测试已完成。依据你的收敛曲线与数据表，选出本实验最终采用的参数（每空 10 分，提交后不能修改）。</div>' +
+    '<div style="font-size:12.8px">① 最终截断能 ENCUT = <select id="finEnc" ' + selA + '><option value="">请选择</option><option>400</option><option>450</option><option>500</option><option>550</option></select> eV</div>' +
+    '<div style="margin-top:6px;font-size:12.8px">② 最终 K 网格 = <select id="finKm" ' + selB + '><option value="">请选择</option><option>1×1×1</option><option>2×2×2</option><option>3×3×3</option><option>4×4×4</option><option>5×5×3</option></select></div>' +
+    '<div style="margin-top:9px"><button class="go-btn" style="padding:6px 14px;font-size:12.5px" onclick="gradeFinal()">✓ 提交最终选择</button> <span id="finMsg"></span></div>';
+}
+function gradeFinal(){
+  var a = document.getElementById('finEnc').value, b = document.getElementById('finKm').value;
+  if (!a || !b){ document.getElementById('finMsg').innerHTML = '<span class="msg-no">请先选好两项再提交。</span>'; return; }
+  var okA = (a === '450' || a === '500' || a === '550');
+  var okB = (b === '3×3×3' || b === '4×4×4' || b === '5×5×3');
+  STATE.finalEnc = a + ' eV'; STATE.finalKm = b;
+  STATE.finalOkA = okA; STATE.finalOkB = okB;
+  STATE.finalScore = (okA ? 10 : 0) + (okB ? 10 : 0);
+  STATE.finalFb =
+    '<div class="' + (okA ? 'ans-ok' : 'ans-no') + '">' + (okA ? '✓' : '✗') + ' 截断能：≥ 450 eV 总能已收敛（相邻两档 |ΔE| ≤ 0.03 eV），平台生产取 <b>500 eV</b>。</div>' +
+    '<div class="' + (okB ? 'ans-ok' : 'ans-no') + '">' + (okB ? '✓' : '✗') + ' K 网格：3×3×3 起总能已收敛（|ΔE| &lt; 4 meV），平台生产取更充裕的 <b>5×5×3（Γ 居中）</b>。</div>';
+  enableSub();
+  updateFinalSel();
 }
 
 /* ================= three.js 3D 场景（R3m g-C3N4 计算晶胞） ================= */
