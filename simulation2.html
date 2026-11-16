@@ -212,7 +212,7 @@
     <div class="stp-card">
       <div class="stp-head"><span>② 设置计算参数</span><span class="dot" id="dot2">2</span></div>
       <div class="stp-body">
-        <label style="font-size:12.5px;color:var(--sub)">测试一：平面波截断能 ENCUT（K 网格固定 5×5×3）</label>
+        <label style="font-size:12.5px;color:var(--sub)">测试一：平面波截断能（总能量随截断能大小的变化）</label>
         <select class="sel" id="encut">
           <option value="400">400 eV</option>
           <option value="450">450 eV</option>
@@ -220,7 +220,8 @@
           <option value="550">550 eV</option>
           <option value="600">600 eV</option>
         </select>
-        <label style="font-size:12.5px;color:var(--sub);display:block;margin-top:7px">测试二：K 点密度（布里渊区采样，ENCUT 固定 500 eV）</label>
+        <div class="hint" id="paramHint"></div>
+        <label style="font-size:12.5px;color:var(--sub);display:block;margin-top:7px">测试二：K 点密度（总能量随K点密度的变化）</label>
         <select class="sel" id="kmeshSel">
           <option value="1">1×1×1</option>
           <option value="2">2×2×1</option>
@@ -236,15 +237,13 @@
           若不顾比例直接取 n×n×n（如 6×6×6），c 方向的采样密度将是 a、b 方向的 2 倍——既浪费计算量，也不符合收敛测试"逐向等密度加密"的本意。
           </div>
         </details>
-        <div class="hint" id="paramHint"></div>
-        <div class="hint">两组测试均用 PBE 泛函。<b>每换一档参数，都要到第③步点一次「提交计算」</b>；全部算完后，右侧收敛曲线、数据汇总与「最终参数选择」才完整开放。</div>
       </div>
     </div>
 
     <div class="stp-card">
       <div class="stp-head"><span>③ 提交计算</span><span class="dot" id="dot3">3</span></div>
       <div class="stp-body">
-        <div class="hint" id="clusterHint" style="margin:0 0 8px">计算由平台集群节点执行（PBE 泛函收敛测试）：截断能系列为「结构优化 → SCF → 能带 → 光学」全流程，K 点系列为 SCF 单点（读取已优化结构）。<b>每档参数都要单独提交一次计算</b>，提交后可在下方日志窗口实时查看输出。做实验需要查资料或排查报错时，点右侧「🤖 小碳老师」随时提问。</div>
+        <div class="hint" id="clusterHint" style="margin:0 0 8px">计算由平台集群节点执行（PBE 泛函收敛测试）：截断能和K点收敛性测试，均为 SCF 单点（读取已优化结构）。<b>每档参数都要单独提交一次计算</b>，提交后可在下方日志窗口实时查看输出。做实验需要查资料或排查报错时，点右侧「🤖 小碳老师」随时提问。</div>
         <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap">
           <span style="font-size:12.5px;color:var(--ink,#333)">集群核数（mpirun -n）</span>
           <select id="coresSel" onchange="STATE.cores=parseInt(this.value,10)" style="padding:4px 8px;border:1px solid #c3cfdd;border-radius:8px;background:#fff;font-size:13px">
@@ -549,6 +548,7 @@ function planAvailable(sys, strain, encut, func){
   return ENCUTS.indexOf(encut) >= 0;                                 /* 截断能系列：K 固定 5×5×3 */
 }
 /* 参数联动：K 点系列锁 ENCUT = 500；ENCUT ≠ 500 时锁 K = 5×5×3（两组收敛测试互不干扰） */
+var PBE_TAIL = '两组测试均用 PBE 泛函。<b>每换一档参数，都要到第③步点一次「提交计算」</b>；全部算完后，右侧收敛曲线、数据汇总与「最终参数选择」才完整开放。';
 function applyPlanLock(){
   var encut = document.getElementById('encut'), kmSel = document.getElementById('kmeshSel');
   var hint = document.getElementById('paramHint');
@@ -556,9 +556,9 @@ function applyPlanLock(){
   encut.disabled = kmode;
   kmSel.disabled = (!kmode && STATE.encut !== 500);
   if (kmode){
-    hint.innerHTML = '<b>测试二 · K 点收敛</b>：ENCUT 已锁定 500 eV（截断能收敛值）。当前 K 网格 = <b>' + kmeshLabel(STATE.kmesh) + '</b>，换档后请到第③步提交计算。';
+    hint.innerHTML = '<b>测试二 · K 点收敛</b>：ENCUT 已锁定 500 eV（截断能收敛值）。当前 K 网格 = <b>' + kmeshLabel(STATE.kmesh) + '</b>，换档后请到第③步提交计算。 ' + PBE_TAIL;
   } else {
-    hint.innerHTML = '<b>测试一 · 截断能收敛</b>：K 网格固定 5×5×3（Γ 居中）。当前 ENCUT = <b>' + STATE.encut + ' eV</b>，换档后请到第③步提交计算。';
+    hint.innerHTML = '<b>测试一 · 截断能收敛</b>：K 网格设置 5×5×3（高密度水平）。当前 ENCUT = <b>' + STATE.encut + ' eV</b>，换档后请到第③步提交计算。 ' + PBE_TAIL;
   }
   hint.style.color = '';
 }
