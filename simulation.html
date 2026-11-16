@@ -861,14 +861,15 @@ function buildQuiz(){
     '<div style="background:#eef4fb;border:1.5px solid #cfe0f2;border-radius:9px;padding:9px 13px;margin-bottom:10px;font-size:13.5px;line-height:1.9;color:#1c2a3a">' +
     '<b style="color:#0e3a6d">🎯 第①层判读（20 分）</b>：依据你自己测得的收敛曲线（右上两图）与数据表（下方汇总）作答。全部参数档位算完后，右上「最终参数选择」开放（另 20 分）。</div>' +
     '<span style="font-size:12.5px;color:#0e3a6d;font-weight:700;display:block;margin:2px 0 2px">测试一 · 截断能（总能收敛 + 耗时）</span>' +
-    '<label>Q1. 按总能收敛判据（相邻两档 |ΔE| ≤ 0.03 eV，约 1.4 meV/原子）并兼顾耗时：ENCUT 至少应取' +
-    '<select id="q1" ' + sel + '><option value="">请选择</option><option>400</option><option>450</option><option>500</option><option>550</option><option>600</option></select>' +
-    ' eV。</label>' +
+    '<label>Q1. 你的总能曲线并不单调：400→500 逐步回升，550→600 又突然跳低。造成这种非单调行为的主要原因是' +
+    '<select id="q1" ' + selW + '><option value="">请选择</option><option>FFT 网格随截断能跳档（基组振荡）</option><option>SCF 自洽未收敛</option><option>K 点采样随截断能变化</option><option>赝势文件不一致</option></select>' +
+    '。</label>' +
     '<label style="margin-top:8px">Q2. 随截断能增大，集群实测耗时' +
     '<select id="q2" ' + selW + '><option value="">请选择</option><option>近似线性增大</option><option>基本不变</option><option>近似线性减小</option></select>。</label>' +
     '<span style="font-size:12.5px;color:#0e3a6d;font-weight:700;display:block;margin:10px 0 2px">测试二 · K 点密度（总能收敛 + 耗时）</span>' +
-    '<label>Q3. K 网格收敛测试（ENCUT = 500 eV）：总能首次收敛（|ΔE| &lt; 4 meV）的网格是' +
-    '<select id="q3" ' + selW + '><option value="">请选择</option><option>1×1×1</option><option>2×2×1</option><option>3×3×2</option><option>4×4×2</option></select>。</label>' +
+    '<label>Q3. K 测试用比例网格（c ≈ 2a，倒空间 z 向密度约为 xy 一半）：2×2×1 偏差高达 0.21 eV、3×3×2 起即收敛，说明总能对哪个方向的 k 采样最敏感？' +
+    '<select id="q3" ' + selW + '><option value="">请选择</option><option>c 方向（面外层间）</option><option>a、b 方向（面内）</option><option>三个方向同等敏感</option><option>与 k 采样无关</option></select>' +
+    '。</label>' +
     '<label style="margin-top:8px">Q4. 1×1×1 网格的总能与其他网格差别巨大、完全不可用，其原因是' +
     '<select id="q4" ' + selW + '><option value="">请选择</option><option>布里渊区采样过粗，k 点过少</option><option>平面波基组不完备</option><option>SCF 自洽未收敛</option><option>赝势选择不当</option></select>。</label>' +
     '<div style="margin-top:9px"><button class="go-btn" onclick="gradeQuiz()">✓ 提交判读</button> <span id="quizMsg"></span></div>';
@@ -882,11 +883,9 @@ function gradeQuiz(){
   }
   STATE.answered = true;
   var res = [];
-  var q1 = v('q1');
-  res.push([q1 === '450' || q1 === '500' || q1 === '550' || q1 === '600', 'Q1 截断能：≥ 450 eV 总能进入收敛平台（看你曲线相邻两档的差），兼顾耗时推荐 <b>500 eV</b>' +
-    (q1 === '400' ? '（400 eV 还没进收敛平台）' : (q1 === '550' ? '（550 eV 亦收敛，但耗时更长）' : (q1 === '600' ? '（600 eV 亦收敛，但性价比更低：耗时最长，且 550→600 出现基组振荡回弹）' : ''))), 6]);
+  res.push([v('q1').indexOf('FFT') === 0, 'Q1 非单调行为：VASP 按截断能自动选 FFT 精细网格——550→600 时 xy 由 56 跳到 60，增强电荷离散化表达改变导致能量跳 36 meV，属正常基组振荡；SCF 判据 EDIFF=1E-5 的噪声仅 1e-5 eV 量级，不足以解释', 6]);
   res.push([v('q2') === '近似线性增大', 'Q2 耗时：截断能增大 → 平面波基数增多，集群实测耗时 17 → 26 s 近似线性增大（看你的数据表耗时列）', 4]);
-  res.push([v('q3') === '3×3×2', 'Q3 K 网格：<b>3×3×2</b> 起总能收敛（与最密网格偏差 &lt; 4 meV）；2×2×1 仍偏差约 0.21 eV（看你的 K 曲线与数据表）', 6]);
+  res.push([v('q3').indexOf('c 方向') === 0, 'Q3 各向异性采样：2×2×1 在 c* 方向只取了 Γ 点，层间色散完全没采到；c ≈ 2a 使比例网格 z 向点数减半，z 由 1→2 带来主要收敛增益（3×3×2 起与最密网格偏差 &lt; 4 meV）', 6]);
   res.push([v('q4').indexOf('布里渊区') === 0, 'Q4 1×1×1 只取 Γ 一个 k 点，<b>布里渊区采样过粗</b>，无法描述周期性材料的能带结构（与平面波基组、SCF 收敛、赝势无关）', 4]);
   var pts = 0, html = '';
   res.forEach(function(r){
@@ -1105,6 +1104,20 @@ function drawConvXY(ctx, W, H, xlabels, pts, outThr){
 }
 
 /* ================= 最终参数选择（主区第三格 · 20 分，全部算完才开放） ================= */
+function chipGroup(id, vals){
+  return '<span id="' + id + '" data-v="" style="display:inline-flex;flex-wrap:wrap;gap:5px;margin:0 4px;vertical-align:middle">' +
+    vals.map(function(v){
+      return '<span class="chip" data-v="' + v + '" onclick="pickChip(this)" style="cursor:pointer;border:1.5px solid #c9d6e6;border-radius:13px;padding:2px 10px;font-size:12px;background:#fff;color:#243b53;user-select:none">' + v + '</span>';
+    }).join('') + '</span>';
+}
+function pickChip(el){
+  var box = el.parentNode;
+  [].forEach.call(box.children, function(c){
+    c.style.background = '#fff'; c.style.color = '#243b53'; c.style.borderColor = '#c9d6e6'; c.style.fontWeight = '';
+  });
+  el.style.background = '#2e6fd8'; el.style.color = '#fff'; el.style.borderColor = '#2e6fd8'; el.style.fontWeight = '700';
+  box.dataset.v = el.getAttribute('data-v');
+}
 function updateFinalSel(){
   var box = document.getElementById('finalSel');
   if (!box) return;
@@ -1126,16 +1139,14 @@ function updateFinalSel(){
       '<div style="margin-top:6px;font-size:12px">' + (STATE.finalFb || '') + '</div></div>';
     return;
   }
-  var selA = 'class="sel" style="display:inline-block;width:88px;padding:4px 8px;margin:0 4px"';
-  var selB = 'class="sel" style="display:inline-block;width:96px;padding:4px 8px;margin:0 4px"';
   box.innerHTML =
-    '<div class="hint" style="margin:2px 0 6px">全部收敛测试已完成。依据你的收敛曲线与数据表，选出本实验最终采用的参数（每空 10 分，提交后不能修改）。</div>' +
-    '<div style="font-size:12.8px">① 最终截断能 ENCUT = <select id="finEnc" ' + selA + '><option value="">请选择</option><option>400</option><option>450</option><option>500</option><option>550</option></select> eV</div>' +
-    '<div style="margin-top:6px;font-size:12.8px">② 最终 K 网格 = <select id="finKm" ' + selB + '><option value="">请选择</option><option>1×1×1</option><option>2×2×1</option><option>3×3×2</option><option>4×4×2</option><option>5×5×3</option><option>6×6×3</option></select></div>' +
+    '<div class="hint" style="margin:2px 0 6px">全部收敛测试已完成。依据你的收敛曲线与数据表，选出本实验最终采用的参数（每项 10 分，提交后不能修改）。</div>' +
+    '<div style="font-size:12.8px">① 最终截断能 ENCUT = ' + chipGroup('finEnc', ['400', '450', '500', '550', '600']) + ' eV</div>' +
+    '<div style="margin-top:8px;font-size:12.8px">② 最终 K 网格 = ' + chipGroup('finKm', ['1×1×1', '2×2×1', '3×3×2', '4×4×2', '5×5×3', '6×6×3']) + '</div>' +
     '<div style="margin-top:9px"><button class="go-btn" style="padding:6px 14px;font-size:12.5px" onclick="gradeFinal()">✓ 提交最终选择</button> <span id="finMsg"></span></div>';
 }
 function gradeFinal(){
-  var a = document.getElementById('finEnc').value, b = document.getElementById('finKm').value;
+  var a = document.getElementById('finEnc').dataset.v, b = document.getElementById('finKm').dataset.v;
   if (!a || !b){ document.getElementById('finMsg').innerHTML = '<span class="msg-no">请先选好两项再提交。</span>'; return; }
   var okA = (a === '450' || a === '500' || a === '550');
   var okB = (b === '3×3×2' || b === '4×4×2' || b === '5×5×3' || b === '6×6×3');
