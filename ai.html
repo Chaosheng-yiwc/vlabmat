@@ -119,6 +119,9 @@
   .foot{font-size:11.5px;color:#9aa7b6;text-align:center;padding:6px 0 10px;flex-shrink:0}
   body.embed .foot{display:none}
   body.embed .chat{border-radius:0;border:0}
+  /* 禁止复制：学生须对照小碳老师的调研结果手动誊写，防止直接搬运答案（输入框除外） */
+  body{-webkit-user-select:none;user-select:none}
+  input,textarea{-webkit-user-select:text;user-select:text}
 </style>
 </head>
 <body>
@@ -164,6 +167,20 @@
 <div class="foot">对话记录将保存供教师查看 · AI 生成内容仍须逐条核验 · 曲阜师范大学 物理工程学院</div>
 
 <script>
+// ---------- 禁复制锁：拦截复制/剪切/右键/拖拽/选中与相关快捷键（输入框除外） ----------
+function _isField(t){ return !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable); }
+function _noCopy(e){ if (!_isField(e.target)) e.preventDefault(); }
+document.addEventListener('copy', _noCopy);
+document.addEventListener('cut', _noCopy);
+document.addEventListener('contextmenu', _noCopy);
+document.addEventListener('dragstart', _noCopy);
+document.addEventListener('selectstart', function(e){ if (!_isField(e.target)) e.preventDefault(); });
+document.addEventListener('keydown', function(e){
+  if (_isField(e.target)) return;
+  var k = (e.key || '').toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && ['c', 'x', 'a', 's', 'u', 'p'].indexOf(k) >= 0) e.preventDefault();
+});
+
 var EMBED = /(^|[?&])embed=1(&|$)/.test(location.search);
 if (EMBED) document.body.className = "embed";
 var user = null, TOKEN = "";
