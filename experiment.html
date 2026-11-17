@@ -641,10 +641,10 @@ function gotoStep(i){
   document.getElementById('stScore').textContent = st[2];
   document.getElementById('stType').textContent  = st[3];
   document.getElementById('stDesc').innerHTML    = chem(esc(st[4]));
-  /* 第 1、2 步（预习测评 / 任务认领）不开放智能体：既不需要，也避免答题时借助 AI */
+  /* 第 1 步（预习测评）开放小碳老师（2026-11-17 老大要求）；第 2 步（任务认领）不开放 */
   document.getElementById('subPanel').style.display = (i <= 2) ? 'none' : '';
   setSubMode(i);                              /* 第 3-6 步：填空作答；其它步骤：自由文本 */
-  if(i <= 2){
+  if(i === 2){
     aiClose();
     document.getElementById('aiFab').style.display = 'none';
   } else {
