@@ -330,7 +330,7 @@
 /* ================= 登录态 ================= */
 var user = null;
 try{ user = JSON.parse(localStorage.getItem('ai_lab_auth') || 'null'); }catch(e){}
-document.getElementById('stuName').textContent = user ? (user.guest ? '访客（体验模式）' : user.name + '（' + user.sid + '）') : '游客（未登录，无法提交）';
+document.getElementById('stuName').textContent = user ? (user.name + '（' + user.sid + '）') : '游客（未登录，无法提交）';
 var TOKEN = user && user.token ? user.token : '';
 
 /* ================= 元素表（共价半径 Å, Jmol 配色） ================= */
@@ -978,7 +978,7 @@ function submitPart(kind){
   var cfg=PART_CFG[kind];
   var msg=document.getElementById(cfg.msg);
   if(!user || !TOKEN){
-    msg.className='hint err'; msg.textContent='未登录无法提交（访客模式请先返回首页用「访客体验」进入，或使用学生账号登录）。'; return;
+    msg.className='hint err'; msg.textContent='未登录无法提交，请使用学生账号登录。'; return;
   }
   var st=partStruct(kind);
   if(!st){
@@ -991,7 +991,7 @@ function submitPart(kind){
   var seedStr=seeds.length? seeds.map(function(s){ return s.el+' ('+s.x.toFixed(3)+', '+s.y.toFixed(3)+', '+s.z.toFixed(3)+')'; }).join('；') : '（无）';
   var primLog=S.log.length? S.log.map(function(l){return '  '+l;}).join('\n') : '  （无）';
   var content='【① 结构建模 · '+cfg.label+'】\n'
-    +'学生：'+(user.guest?'访客':user.name)+'（'+user.sid+'）\n'
+    +'学生：'+user.name+'（'+user.sid+'）\n'
     +'提交时间：'+new Date().toLocaleString('zh-CN')+'\n\n'
     +'一、晶胞参数\n  '+latStr()+'\n  空间群：'+toSub(S.sgHm)+'（No.'+S.sgNo+'，'+S.nops+' 个对称操作）\n\n'
     +'二、不对称单元（学生输入的独立原子，坐标已归一化到 [0,1)）\n  '+seedStr+'\n\n'

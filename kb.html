@@ -172,7 +172,7 @@ function load(){
       if (!res.ok){
         document.getElementById('cards').innerHTML = '';
         msg.innerHTML = '<span style="color:var(--gold)">' + esc(res.msg || '加载失败') +
-          (res.msg && res.msg.indexOf('登录') >= 0 ? '，请先<a href="lab.html" style="color:var(--blue)">返回首页登录</a>（访客亦可浏览）。' : '') + '</span>';
+          (res.msg && res.msg.indexOf('登录') >= 0 ? '，请先<a href="lab.html" style="color:var(--blue)">返回首页登录</a>。' : '') + '</span>';
         return;
       }
       render(res.items || [], res.total || 0);

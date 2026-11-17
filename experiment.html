@@ -324,7 +324,7 @@ var TOKEN = '';
 try{ user = JSON.parse(localStorage.getItem('ai_lab_auth') || 'null'); }catch(e){}
 if(!user){ location.href = 'index.html'; }
 TOKEN = user && user.token ? user.token : '';
-document.getElementById('stuName').textContent = user ? (user.guest ? '访客（体验模式）' : user.name + '（' + user.sid + '）') : '—';
+document.getElementById('stuName').textContent = user ? (user.name + '（' + user.sid + '）') : '—';
 
 /* ---------- 实验空间（ilab-x）步骤埋点 ----------
    与 simulation2.html 内的 ILAB 共用同一 localStorage 轨迹键 ilab_track_<sid>，
