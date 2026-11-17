@@ -805,7 +805,8 @@ function aiClose(){
   dr.classList.remove('open');
   dr.setAttribute('aria-hidden', 'true');
   var fab = document.getElementById('aiFab');
-  if(fab) fab.style.display = (cur > 2 && cur <= NSTEP) ? 'flex' : 'none';
+  /* 关闭抽屉后必须收回侧标签（2026-11-17 老大要求）；仅任务认领与全完成两处不显示 */
+  if(fab) fab.style.display = (cur === 2 || cur === NSTEP + 1) ? 'none' : 'flex';
 }
 function aiToggle(){
   var dr = document.getElementById('aiDrawer');
