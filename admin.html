@@ -313,7 +313,7 @@ function loadSubs(){
       return '<tr>' +
         '<td style="white-space:nowrap">' + esc(s.created_at) + '</td>' +
         '<td><b>' + esc(s.sid) + '</b><br>' + esc(s.name || '—') + '</td>' +
-        '<td>' + esc(s.kind) + '<br><span class="hint">' + esc(s.step || '') + '</span></td>' +
+        '<td>' + esc(s.kind) + (s.kind === '结构建模' ? ' <span class="hint">（满分 10 · 计入仿真台①）</span>' : '') + '<br><span class="hint">' + esc(s.step || '') + '</span></td>' +
         '<td><b>' + esc(s.title) + '</b><br><details><summary>查看内容</summary>' +
         '<pre>' + esc(s.content || '（无正文，见附件）') + '</pre></details></td>' +
         '<td>' + att + '</td>' +
@@ -337,10 +337,12 @@ function saveScore(id){
   });
 }
 
-/* ---------- 成绩总览（100 分制） ---------- */
+/* ---------- 成绩总览（100 分制，与前台四层实验一一对应） ---------- */
 /*
-  预习模块 30 分 = 预习测验 10 分（10 题正确率，自动）+ 过程调研 20 分（AI 按提交报告打分）
-  实验模块 40 分 = 实验过程数据（3D 仿真提交，AI 打分）
+  预习模块 30 分 = 预习测验 10 分（10 题正确率，自动）+ 过程提交 20 分（AI 按板块一提交打分）
+  实验模块 40 分 = 仿真实验台四层自动折算：①结构建模 10（教师批阅最新提交）
+                   + ②计算方法40/③结果分析30/④复合调控30 合计×0.3（前台自动分）；
+                   AI 复核/教师可覆盖，「恢复自动」撤销覆盖
   报告模块 30 分 = 实验报告（教师手动批改）
 */
 var GRADE_ROWS = [];
@@ -350,7 +352,7 @@ function renderGrades(){
     '<div class="toolbar"><button class="btn" onclick="show(\'grades\')">↻ 刷新</button>' +
     '<button class="btn" onclick="toggleLlmCfg()">⚙ AI 打分设置</button>' +
     '<button class="btn" onclick="toggleIlabCfg()">⚙ 实验空间对接</button>' +
-    '<span class="hint">预习测验 10 分（10 题正确率·自动）＋ 过程调研 20 分（AI）＋ 实验数据 40 分（AI）＋ 实验报告 30 分（手动批改）</span></div>' +
+    '<span class="hint">预习测验 10 分（10 题正确率·自动）＋ 过程提交 20 分（AI）＋ 仿真实验台 40 分（前台四层自动：①结构建模 10＋②③④合计×0.3＝30；AI 可复核覆盖）＋ 实验报告 30 分（手动批改）</span></div>' +
     '<div id="llmBox" style="display:none;margin:8px 0;padding:10px;border:1.5px solid #d9e4ef;border-radius:8px;background:#f7fafd">' +
     '<b style="font-size:13px">AI 打分设置（DeepSeek，OpenAI 兼容接口）</b>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;align-items:center">' +
@@ -436,12 +438,23 @@ function loadGrades(){
                                  : '<span class="tag done">' + val + ' / ' + max + '</span>';
         return dot + (fb ? '<div class="hint" title="' + esc(fb) + '">' + esc(fb.slice(0, 42)) + (fb.length > 42 ? '…' : '') + '</div>' : '');
       }
+      function sd(v){ return (v === null || v === undefined) ? '—' : v; }
+      /* 仿真实验台 40 分：四层明细 + 自动折算/AI 覆盖状态 */
+      var simLine = '①' + sd(g.sim1) + '/10 · ②' + sd(g.sim2) + '/40 · ③' + sd(g.sim3) + '/30 · ④' + sd(g.sim4) + '/30';
+      var expTag = (g.experiment === null) ? '<span class="tag pend">未评</span>'
+                 : (g.experiment_auto ? '<span class="tag done">自动</span>' : '<span class="tag done">已覆盖</span>');
+      var expHtml = expTag + '<b style="display:block;font-size:14px;margin:2px 0">' +
+        (g.experiment === null ? '—' : g.experiment) + ' / 40</b>' +
+        '<div class="hint" style="white-space:nowrap">' + simLine + '</div>' +
+        (g.experiment_fb ? '<div class="hint" title="' + esc(g.experiment_fb) + '">' + esc(g.experiment_fb.slice(0, 42)) + (g.experiment_fb.length > 42 ? '…' : '') + '</div>' : '') +
+        '<button class="btn" style="margin-top:3px" onclick="aiScore(\'' + esc(g.sid) + '\',\'experiment\',this)">🤖 AI 复核</button>' +
+        (g.experiment_auto ? '' :
+          '<br><button class="btn mini" style="margin-top:2px" onclick="aiScore(\'' + esc(g.sid) + '\',\'experiment_reset\',this)">↺ 恢复自动</button>');
       return '<tr><td><b>' + esc(g.name) + '</b>' + (g.ilab ? ' <span class="tag done">实验空间</span>' : '') + '<br><span class="hint">' + esc(g.sid) + '</span></td>' +
         '<td style="text-align:center">' + cell(g.quiz, null, 10) + '</td>' +
         '<td style="text-align:center">' + cell(g.research, g.research_fb, 20) +
           '<br><button class="btn" style="margin-top:3px" onclick="aiScore(\'' + esc(g.sid) + '\',\'research\',this)">🤖 AI 打分</button></td>' +
-        '<td style="text-align:center">' + cell(g.experiment, g.experiment_fb, 40) +
-          '<br><button class="btn" style="margin-top:3px" onclick="aiScore(\'' + esc(g.sid) + '\',\'experiment\',this)">🤖 AI 打分</button></td>' +
+        '<td style="text-align:center">' + expHtml + '</td>' +
         '<td style="text-align:center"><input class="scorein" id="rpt-' + esc(g.sid) + '" type="number" step="0.5" min="0" max="30" value="' +
           (g.report === null ? '' : g.report) + '" placeholder="0~30">' +
           '<br><input class="scorein" style="width:120px" id="rptfb-' + esc(g.sid) + '" value="' + esc(g.report_fb || '') + '" placeholder="评语">' +
@@ -449,10 +462,10 @@ function loadGrades(){
         '<td style="text-align:center;font-weight:700;color:' + (done ? '#c9a227' : '#9aa7b6') + ';font-size:15px">' +
           (done ? total.toFixed(1) : '—') + (done ? ' / 100' : '<div class="hint">待评齐</div>') + '</td></tr>';
     });
-    box.innerHTML = '<table><tr><th>学生</th><th>预习测验<br>/10（自动）</th><th>过程调研<br>/20（AI）</th>' +
-      '<th>实验数据<br>/40（AI）</th><th>实验报告<br>/30（手动）</th><th>总分<br>/100</th></tr>' +
+    box.innerHTML = '<table><tr><th>学生</th><th>预习测验<br>/10（自动）</th><th>过程提交<br>/20（AI）</th>' +
+      '<th>仿真实验台<br>/40（①10＋②③④折30·自动）</th><th>实验报告<br>/30（手动）</th><th>总分<br>/100</th></tr>' +
       rows.join('') + '</table>' +
-      '<div class="hint">预习测验分自动取该生历次预习测评中的最高答对题数（允许多次答题）；AI 打分调用 DeepSeek 评阅提交内容（多次提交以最好一次为准）；实验报告由教师手动批改。明细内容见「提交与打分」页。</div>';
+      '<div class="hint">预习测验分自动取该生历次预习测评中的最高答对题数（允许多次答题）；过程提交由 AI 评阅板块一各步提交（多次提交以最好一次为准）；仿真实验台 40 分 = ①结构建模 10 分（教师批阅最新提交）＋ ②计算方法/③结果分析/④复合调控 前台自动分合计×0.3（30 分），AI 复核后覆盖为 AI 评分，「恢复自动」可撤销；实验报告由教师手动批改。明细内容见「提交与打分」页。</div>';
   });
 }
 function aiScore(sid, cat, btn){
