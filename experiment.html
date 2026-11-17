@@ -943,25 +943,25 @@ var FILL_HTML = {
      '<input class="bl blk" id="f1d" placeholder="文献①：作者. 题目. 期刊, 年份">' +
      '<input class="bl blk" id="f1e" placeholder="文献②：作者. 题目. 期刊, 年份"></div></div>' +
      '<div class="fillq"><div class="qn"><b>2.</b> g-C<sub>3</sub>N<sub>4</sub> 作为光催化材料需要改性的地方是' +
-     '<textarea class="blta" id="f2" rows="2" placeholder="如：带隙偏大导致可见光吸收不足、光生载流子复合快、比表面积小、活性位点少……"></textarea></div></div>' +
+     '<textarea class="blta" id="f2" rows="2" placeholder="提示：可检索 g-C3N4 photocatalytic limitations 等关键词查阅文献，思考其在光催化分解水中的短板从何而来，并用查到的依据分条作答，不要照抄本提示。"></textarea></div></div>' +
      '<div class="fillq"><div class="qn"><b>3.</b> 掺杂、缺陷、应变等调控策略在第一性原理计算中的具体实施策略是' +
-     '<textarea class="blta" id="f3" rows="2" placeholder="如：掺杂=构造 3×3×1 超胞替换 O/C 原子；缺陷=移除一个 C 原子形成 C 空位；应变=对晶格施加 ±1%~±4% 双轴应变；均需重算结构弛豫与能带。"></textarea></div></div>' +
+     '<textarea class="blta" id="f3" rows="2" placeholder="提示：可按「模型怎么建（超胞大小、替换/移除/施加应变的方式）→ 算哪些性质 → 结果怎么对比」的思路，查阅文献中的实际做法后分条作答；具体参数以查到的文献为准。"></textarea></div></div>' +
      '<div class="fillq"><div class="qn"><b>4.</b> 第一性原理对 g-C<sub>3</sub>N<sub>4</sub> 光催化材料的研究文献有<span class="tk">（填 1 篇）</span>' +
      '<input class="bl blk" id="f4a" placeholder="文献：作者. 题目. 期刊, 年份">' +
      '<span class="tk">其主要研究结论是（查该论文的全文作答）</span>' +
      '<textarea class="blta" id="f4b" rows="3" placeholder="查阅该论文全文后作答：计算/实验方法、获得的关键数据（带隙、带边位置等）与主要结论。"></textarea></div></div>',
   4: '<div class="fillq"><div class="qn"><b>1.</b> 光催化分解水材料的计算方案是' +
-     '<textarea class="blta" id="f41" rows="2" placeholder="如：以 g-C3N4 为研究对象，第一性原理计算本征 / O-掺杂 / C-空位三个体系的能带结构、带边位置与光学性质，评估其可见光分解水制氢活性。"></textarea></div></div>' +
+     '<textarea class="blta" id="f41" rows="2" placeholder="提示：可围绕「研究对象—计算内容—评估目标」三要素组织：要计算哪些电子结构性质、如何与可见光分解水制氢活性关联；查阅文献后用自己的语言概括。"></textarea></div></div>' +
      '<div class="fillq"><div class="qn"><b>2.</b> 晶体结构选取' +
-     '<input class="bl" id="f42a" placeholder="如：g-C3N4 原胞（注明空间群）">；超胞设置' +
-     '<input class="bl" id="f42b" placeholder="如：3×3×1 超胞，避免掺杂/缺陷的周期性镜像相互作用"></div></div>' +
+     '<input class="bl" id="f42a" placeholder="查阅文献/数据库后填写（注明空间群与出处）">；超胞设置' +
+     '<input class="bl" id="f42b" placeholder="提示：查阅文献中构建超胞的常见做法，并说明选取理由"></div></div>' +
      '<div class="fillq"><div class="qn"><b>3.</b> 典型的计算软件有' +
      '<input class="bl" id="f43a" placeholder="软件①">、' +
      '<input class="bl" id="f43b" placeholder="软件②">' +
      '<span class="tk">（填 2 种即可）</span>，其基本原理是' +
-     '<textarea class="blta" id="f43c" rows="2" placeholder="如：密度泛函理论（DFT）——以电子密度为基本变量，求解 Kohn-Sham 方程得到多电子体系的基态性质（交换关联能用泛函近似处理）。"></textarea></div></div>' +
+     '<textarea class="blta" id="f43c" rows="2" placeholder="提示：可从「以什么为基本变量、求解什么方程、交换关联能如何处理」的思路查阅教材或文献后概括，两种软件可分别说明。"></textarea></div></div>' +
      '<div class="fillq"><div class="qn"><b>4.</b> 计算流程图（用文字按顺序描述各环节）' +
-     '<textarea class="blta" id="f44" rows="2" placeholder="如：建模 → 结构弛豫 → 自洽计算（SCF）→ 能带 / 态密度计算 → 带边对齐与光催化活性分析。"></textarea></div></div>',
+     '<textarea class="blta" id="f44" rows="2" placeholder="提示：按「从建模到性质分析」的先后顺序思考各计算环节及其依赖关系，查阅文献中的计算流程描述后作答。"></textarea></div></div>',
   5: '<div class="fillq"><div class="qn"><b>1.</b> g-C<sub>3</sub>N<sub>4</sub> 原胞的空间群是' +
      '<input class="bl" id="f51" placeholder="查文献/数据库">，晶格常数 a=b=' +
      '<input class="bl" id="f52" placeholder="保留2位小数">Å、c=' +
@@ -972,20 +972,20 @@ var FILL_HTML = {
      '<div class="fillq"><div class="qn"><b>2.</b> 生成的结构文件是' +
      '<input class="bl blk" id="f57" placeholder="文件名 / 格式，如 POSCAR、cif">' +
      '<span class="tk">，核验其正确性的方法与结果是</span>' +
-     '<textarea class="blta" id="f58" rows="2" placeholder="如：与 Materials Project 标准卡片对比空间群和晶格常数一致；用 VESTA 可视化检查三-s-三嗪环连接方式无误。"></textarea></div></div>' +
+     '<textarea class="blta" id="f58" rows="2" placeholder="提示：可从「与标准结构数据（数据库/文献值）对比」和「结构可视化检查」两个方向查阅资料后，写出具体的核验方法与结果。"></textarea></div></div>' +
      '<div class="fillq"><div class="qn"><b>3.</b> g-C<sub>3</sub>N<sub>4</sub> 的能带调控方法（掺杂、缺陷、应变）在本实验中的具体实施是' +
-     '<textarea class="blta" id="f59" rows="2" placeholder="如：O 掺杂=超胞中替换 1 个 C/N 位；C 空位=移除 1 个 C 原子；应变=施加 ±1%~±4% 双轴应变，均重新弛豫后算能带。"></textarea></div></div>',
+     '<textarea class="blta" id="f59" rows="2" placeholder="提示：分别说明三种策略的模型构造方式（替换/移除的对象与位置、应变的施加方式）与算前算后要做的事；具体超胞大小、浓度与应变幅度请查阅文献后填写。"></textarea></div></div>',
   6: '<div class="fillq"><div class="qn"><b>1.</b> VASP 四个输入文件的作用：INCAR——' +
      '<input class="bl blk" id="f61" placeholder="一句话说明">；POSCAR——' +
      '<input class="bl blk" id="f62" placeholder="一句话说明">；KPOINTS——' +
      '<input class="bl blk" id="f63" placeholder="一句话说明">；POTCAR——' +
      '<input class="bl blk" id="f64" placeholder="一句话说明"></div></div>' +
      '<div class="fillq"><div class="qn"><b>2.</b> 平面波截断能（ENCUT）的物理含义是' +
-     '<textarea class="blta" id="f65" rows="2" placeholder="提示：平面波基组的动能上限，决定基组完备程度；过大浪费算力、过小结果不可靠，需收敛测试。"></textarea></div></div>' +
+     '<textarea class="blta" id="f65" rows="2" placeholder="提示：可从「它限制/控制的是什么物理量、对精度与计算量的影响、实际计算中如何确定」三个角度查阅教材或文献后作答。"></textarea></div></div>' +
      '<div class="fillq"><div class="qn"><b>3.</b> 交换关联泛函 PBE 和 HSE06 的物理含义分别是：PBE——' +
-     '<textarea class="blta" id="f66" rows="2" placeholder="提示：广义梯度近似（GGA），交换关联能依赖密度及其梯度，计算便宜但有带隙低估问题。"></textarea>' +
+     '<textarea class="blta" id="f66" rows="2" placeholder="提示：可从「属于哪一类近似、交换关联能如何依赖电子密度、计算成本与精度上的优缺点」的角度查阅资料后作答。"></textarea>' +
      '<span class="tk">；HSE06——</span>' +
-     '<textarea class="blta" id="f67" rows="2" placeholder="提示：杂化泛函，混入 25% 精确 Hartree-Fock 交换，带隙更准但耗时高一个量级。"></textarea></div></div>'
+     '<textarea class="blta" id="f67" rows="2" placeholder="提示：可从「它相对 PBE 混入了什么成分、对哪些性质更准确、计算代价如何变化」的角度查阅资料后作答。"></textarea></div></div>'
 };
 var FILL_FIELDS = {
   3: [['f1a', '第 1 题的「材料种类①」'],
